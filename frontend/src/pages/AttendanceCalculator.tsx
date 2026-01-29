@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calculator, Users, Calendar, CheckCircle, X, Clock } from 'lucide-react';
+import { Calculator, Users, Calendar, CheckCircle, X, Clock, FileSpreadsheet, Download } from 'lucide-react';
 import api from '../services/api';
 import DateFilter from '../components/DateFilter';
 
@@ -93,6 +93,26 @@ const AttendanceCalculator = () => {
             alert(e.response?.data?.detail || 'Lỗi khi tính toán');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleExport = async () => {
+        try {
+            const params = `start_date=${startDate}&end_date=${endDate}${mode === 'single' ? `&employee_id=${employeeId}` : ''}`;
+            const response = await api.get(`/export-attendance?${params}`, {
+                responseType: 'blob'
+            });
+
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `cham_cong_${startDate}_den_${endDate}.xlsx`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode?.removeChild(link);
+        } catch (e) {
+            console.error('Error exporting excel', e);
+            alert('Lỗi khi xuất file Excel');
         }
     };
 
@@ -210,27 +230,53 @@ const AttendanceCalculator = () => {
                     {/* Date Filter Component */}
                     <DateFilter onDateChange={handleDateChange} initialFilterValue="today" />
 
-                    {/* Calculate Button */}
-                    <button
-                        onClick={handleCalculate}
-                        disabled={loading || (mode === 'single' && !employeeId)}
-                        style={{
-                            padding: '14px 24px',
-                            background: loading ? '#64748b' : '#10b981',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '8px',
-                            fontWeight: 600,
-                            cursor: loading ? 'not-allowed' : 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '8px'
-                        }}
-                    >
-                        <Calculator size={20} />
-                        {loading ? 'Đang tính toán...' : 'Tính toán chấm công'}
-                    </button>
+                    {/* Action Buttons */}
+                    <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
+                        <button
+                            onClick={handleCalculate}
+                            disabled={loading || (mode === 'single' && !employeeId)}
+                            style={{
+                                flex: 2,
+                                padding: '14px 24px',
+                                background: loading ? '#64748b' : '#10b981',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '8px',
+                                fontWeight: 600,
+                                cursor: loading ? 'not-allowed' : 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '8px'
+                            }}
+                        >
+                            <Calculator size={20} />
+                            {loading ? 'Đang tính toán...' : 'Tính toán chấm công'}
+                        </button>
+
+                        <button
+                            onClick={handleExport}
+                            disabled={loading}
+                            style={{
+                                flex: 1,
+                                padding: '14px 24px',
+                                background: '#3b82f6',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '8px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '8px'
+                            }}
+                            title="Xuất file Excel"
+                        >
+                            <FileSpreadsheet size={20} />
+                            <span className="desktop-only">Xuất Excel</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 

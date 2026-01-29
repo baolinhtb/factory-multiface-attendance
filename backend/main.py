@@ -2,6 +2,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, UploadFile, File, F
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.responses import StreamingResponse
 import uvicorn
 import cv2
 import asyncio
@@ -9,8 +10,8 @@ import numpy as np
 import base64
 import os
 import shutil
-from typing import List
-
+import io
+import pandas as pd
 from typing import List, Optional
 from datetime import datetime, timedelta
 from pydantic import BaseModel
@@ -392,6 +393,75 @@ async def calculate_attendance(
         "date": f"{s_date} to {e_date}",
         "shifts": result
     }
+
+@app.get("/export-attendance")
+async def export_attendance(
+    employee_id: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(auth.get_current_user)
+):
+    """Xuất dữ liệu chấm công ra file Excel"""
+    if current_user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Only admin can export attendance")
+        
+    # Determine dates
+    s_date = start_date if start_date else datetime.now().strftime("%Y-%m-%d")
+    e_date = end_date if end_date else s_date
+    
+    data_for_export = []
+    
+    if employee_id and employee_id != 'null':
+        # Export single employee
+        results = attendance_calculator.calculate_attendance_dynamic(employee_id, s_date, e_date)
+        for r in results:
+            data_for_export.append({
+                "Mã NV": employee_id,
+                "Ngày": r['date'],
+                "Ca làm việc": r['shift_name'],
+                "Giờ vào": r['check_in'].replace('T', ' ') if r['check_in'] else '-',
+                "Giờ ra": r['check_out'].replace('T', ' ') if r['check_out'] else '-',
+                "Trạng thái": r['status'],
+                "Tăng ca (phút)": r.get('overtime', 0)
+            })
+    else:
+        # Export all employees
+        all_employees = database.get_all_employees()
+        for emp in all_employees:
+            emp_id = emp['employee_id']
+            results = attendance_calculator.calculate_attendance_dynamic(emp_id, s_date, e_date)
+            for r in results:
+                data_for_export.append({
+                    "Mã NV": emp_id,
+                    "Họ tên": emp['full_name'],
+                    "Phòng ban": emp.get('department', '-'),
+                    "Ngày": r['date'],
+                    "Ca làm việc": r['shift_name'],
+                    "Giờ vào": r['check_in'].replace('T', ' ') if r['check_in'] else '-',
+                    "Giờ ra": r['check_out'].replace('T', ' ') if r['check_out'] else '-',
+                    "Trạng thái": r['status'],
+                    "Tăng ca (phút)": r.get('overtime', 0)
+                })
+    
+    if not data_for_export:
+        # Return an empty excel with headers or error
+        df = pd.DataFrame(columns=["Mã NV", "Họ tên", "Phòng ban", "Ngày", "Ca làm việc", "Giờ vào", "Giờ ra", "Trạng thái", "Tăng ca (phút)"])
+    else:
+        df = pd.DataFrame(data_for_export)
+    
+    # Create Excel in memory
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Chấm công')
+    
+    output.seek(0)
+    
+    filename = f"cham_cong_{s_date}_den_{e_date}.xlsx"
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
 
 @app.post("/calculate-attendance-all")
 async def calculate_attendance_all(

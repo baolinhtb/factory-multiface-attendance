@@ -9,3 +9,5 @@ websockets
 psycopg2-binary
 python-dotenv
 ultralytics
+pandas
+openpyxl
