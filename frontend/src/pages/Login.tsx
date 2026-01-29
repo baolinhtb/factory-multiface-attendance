@@ -26,10 +26,8 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         try {
             const response = await api.post('/login', formData);
             localStorage.setItem('token', response.data.access_token);
-            localStorage.setItem('user', JSON.stringify({
-                username: username,
-                role: response.data.role
-            }));
+            const userRes = await api.get('/me');
+            localStorage.setItem('user', JSON.stringify(userRes.data));
             onLoginSuccess();
         } catch (err: any) {
             setError(err.response?.data?.detail || t('login_error'));
@@ -121,10 +119,6 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                         {loading ? t('authenticating') : t('login_btn')}
                     </button>
                 </form>
-
-                <div style={{ marginTop: '20px', textAlign: 'center', fontSize: '0.8rem', color: '#475569' }}>
-                    {t('default_account_note')}
-                </div>
             </div>
         </div>
     );

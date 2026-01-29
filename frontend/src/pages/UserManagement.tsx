@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import api from '../services/api';
-import { UserPlus, Trash2, UserCog, User, Shield, Info } from 'lucide-react';
+import { UserPlus, Trash2, UserCog, User, Shield, Info, Lock } from 'lucide-react';
+import ChangePasswordModal from '../components/ChangePasswordModal';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const UserManagement = () => {
     const { t } = useLanguage();
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
     const [users, setUsers] = useState<any[]>([]);
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [role, setRole] = useState('user');
     const [loading, setLoading] = useState(false);
+    const [passModalUser, setPassModalUser] = useState<{ id: number, username: string } | null>(null);
 
     const fetchUsers = async () => {
         try {
@@ -100,6 +103,9 @@ const UserManagement = () => {
                                             <Trash2 size={18} />
                                         </button>
                                     )}
+                                    <button onClick={() => setPassModalUser({ id: u.id, username: u.username })} style={{ padding: '6px', color: '#fbbf24', background: 'transparent' }}>
+                                        <Lock size={18} />
+                                    </button>
                                 </td>
                             </tr>
                         ))}
@@ -179,6 +185,13 @@ const UserManagement = () => {
                     <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{t('note_user_create')}</p>
                 </div>
             </div>
+            <ChangePasswordModal
+                isOpen={!!passModalUser}
+                onClose={() => setPassModalUser(null)}
+                userId={passModalUser?.id || 0}
+                username={passModalUser?.username}
+                requireCurrentPassword={passModalUser?.username === currentUser?.username}
+            />
         </div>
     );
 };

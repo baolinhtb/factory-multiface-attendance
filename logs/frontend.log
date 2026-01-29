@@ -3,7 +3,8 @@
 > vite
 
 
-  VITE v5.4.21  ready in 116 ms
+  VITE v5.4.21  ready in 130 ms
 
   ➜  Local:   http://localhost:3000/
   ➜  Network: http://172.20.10.2:3000/
+4:38:49 AM [vite] hmr update /src/pages/Login.tsx

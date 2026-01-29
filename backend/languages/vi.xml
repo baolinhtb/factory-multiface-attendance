@@ -263,4 +263,15 @@
     <string name="custom">Tùy chọn</string>
     <string name="language_vi">Tiếng Việt</string>
     <string name="language_en">English</string>
+    <string name="change_password">Đổi mật khẩu</string>
+    <string name="current_password">Mật khẩu hiện tại</string>
+    <string name="error_current_password">Mật khẩu hiện tại không đúng</string>
+    <string name="session_expired">Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.</string>
+    <string name="new_password">Mật khẩu mới</string>
+    <string name="confirm_password">Xác nhận mật khẩu</string>
+    <string name="password_mismatch">Mật khẩu xác nhận không khớp</string>
+    <string name="password_changed_success">Đổi mật khẩu thành công!</string>
+    <string name="error_change_password">Lỗi khi đổi mật khẩu</string>
+    <string name="change_password_title">Đổi mật khẩu cho: </string>
+    <string name="change_own_password_title">Đổi mật khẩu cá nhân</string>
 </resources>

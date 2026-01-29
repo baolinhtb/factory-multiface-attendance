@@ -1,9 +1,11 @@
 import { ReactNode, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Settings, Shield, Clock, History, ChevronDown, ChevronRight, ListChecks, Calculator, Menu, Globe } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, Shield, Clock, History, ChevronDown, ChevronRight, ListChecks, Calculator, Menu, Globe, Lock } from 'lucide-react';
+import ChangePasswordModal from './ChangePasswordModal';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface User {
+    id?: number;
     username: string;
     role: string;
 }
@@ -31,6 +33,7 @@ function Layout({ children, currentUser }: LayoutProps) {
     // Better to use static keys for expansion or just rely on 'label' which is now translated.
     const [expandedMenus, setExpandedMenus] = useState<string[]>(['menu.employee_management', 'menu.system_settings']);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isChangePassOpen, setIsChangePassOpen] = useState(false);
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -271,6 +274,35 @@ function Layout({ children, currentUser }: LayoutProps) {
                         </select>
                     </div>
                     <button
+                        onClick={() => setIsChangePassOpen(true)}
+                        style={{
+                            width: '100%',
+                            padding: '12px',
+                            marginBottom: '8px',
+                            background: 'rgba(59, 130, 246, 0.1)',
+                            color: '#3b82f6',
+                            border: 'none',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontWeight: 600,
+                            fontSize: '0.85rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)';
+                        }}
+                    >
+                        <Lock size={16} />
+                        {t('change_password')}
+                    </button>
+                    <button
                         onClick={handleLogout}
                         style={{
                             width: '100%',
@@ -321,6 +353,11 @@ function Layout({ children, currentUser }: LayoutProps) {
                     {children}
                 </div>
             </div>
+            <ChangePasswordModal
+                isOpen={isChangePassOpen}
+                onClose={() => setIsChangePassOpen(false)}
+                userId={currentUser?.id || 0}
+            />
         </div>
     );
 }

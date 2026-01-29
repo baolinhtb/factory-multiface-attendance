@@ -267,4 +267,15 @@
     <string name="custom">Custom</string>
     <string name="language_vi">Tiếng Việt</string>
     <string name="language_en">English</string>
+    <string name="change_password">Change Password</string>
+    <string name="current_password">Current Password</string>
+    <string name="error_current_password">Incorrect current password</string>
+    <string name="session_expired">Session expired. Please log in again.</string>
+    <string name="new_password">New Password</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="password_mismatch">Passwords do not match</string>
+    <string name="password_changed_success">Password changed successfully!</string>
+    <string name="error_change_password">Error changing password</string>
+    <string name="change_password_title">Change Password for: </string>
+    <string name="change_own_password_title">Change Personal Password</string>
 </resources>

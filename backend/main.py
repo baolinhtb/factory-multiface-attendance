@@ -36,6 +36,10 @@ class EmployeeUpdate(BaseModel):
     department: Optional[str] = None
     assigned_config_id: Optional[int] = None
 
+class ChangePasswordRequest(BaseModel):
+    new_password: str
+    current_password: Optional[str] = None
+
 class ShiftConfigUpdate(BaseModel):
     name: str
     work_days: str = '1,1,1,1,1,1,0'
@@ -107,7 +111,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 
 @app.get("/me")
 async def get_me(current_user: dict = Depends(auth.get_current_user)):
-    return {"username": current_user["username"], "role": current_user["role"]}
+    return {"id": current_user["id"], "username": current_user["username"], "role": current_user["role"]}
 
 # --- User Management (Admin Only) ---
 
@@ -127,6 +131,28 @@ async def add_system_user(username: str = Form(...), password: str = Form(...), 
 async def remove_user(user_id: int, admin: dict = Depends(auth.get_admin_user)):
     database.delete_system_user(user_id)
     return {"message": "User deleted"}
+
+@app.put("/users/{user_id}/password")
+async def change_user_password(
+    user_id: int,
+    request: ChangePasswordRequest,
+    current_user: dict = Depends(auth.get_current_user)
+):
+    # Authorization: Admin can change anyone, User can only change their own
+    if current_user["role"] != "admin":
+        if current_user["id"] != user_id:
+            raise HTTPException(status_code=403, detail="Not authorized to change this user's password")
+            
+    # Verify current password if changing own password
+    if current_user["id"] == user_id:
+        if not request.current_password:
+             raise HTTPException(status_code=400, detail="Current password is required")
+        if not auth.verify_password(request.current_password, current_user["hashed_password"]):
+             raise HTTPException(status_code=400, detail="Incorrect current password")
+            
+    hashed_pass = auth.get_password_hash(request.new_password)
+    database.update_system_user_password(user_id, hashed_pass)
+    return {"message": "Password updated successfully"}
 
 # --- Settings Endpoints (Admin Only) ---
 
