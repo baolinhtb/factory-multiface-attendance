@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { ArrowLeft, User, Phone, Clock, Calendar, CheckCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, User, Phone, Clock, Calendar, CheckCircle, AlertCircle, Camera } from 'lucide-react';
 
 const EmployeeDetail = () => {
     const { id } = useParams();
@@ -13,11 +13,58 @@ const EmployeeDetail = () => {
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
 
+    // Filter states
+    const [filterType, setFilterType] = useState('today');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+
+    useEffect(() => {
+        const now = new Date();
+        // Fix: Use local date parts to avoid UTC shift
+        const formatDate = (date: Date) => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+
+        if (filterType === 'today') {
+            setStartDate(formatDate(now));
+            setEndDate(formatDate(now));
+        } else if (filterType === 'yesterday') {
+            const yesterday = new Date(now);
+            yesterday.setDate(now.getDate() - 1);
+            setStartDate(formatDate(yesterday));
+            setEndDate(formatDate(yesterday));
+        } else if (filterType === 'current_month') {
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+            const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            setStartDate(formatDate(firstDay));
+            setEndDate(formatDate(lastDay));
+        } else if (filterType === 'last_month') {
+            const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);
+            setStartDate(formatDate(firstDay));
+            setEndDate(formatDate(lastDay));
+        } else if (filterType === 'last_7_days') {
+            const last7 = new Date(now);
+            last7.setDate(now.getDate() - 6);
+            setStartDate(formatDate(last7));
+            setEndDate(formatDate(now));
+        }
+    }, [filterType]);
+
+
     const fetchData = async () => {
         try {
+            let attendanceQuery = `/employees/${id}/attendance`;
+            if (startDate && endDate) {
+                attendanceQuery += `?start_date=${startDate}&end_date=${endDate}`;
+            }
+
             const [empRes, attRes, phoneRes, configRes] = await Promise.all([
                 api.get(`/employees/${id}`),
-                api.get(`/employees/${id}/attendance`),
+                api.get(attendanceQuery),
                 api.get(`/employees/${id}/phone`),
                 api.get('/shift-configs')
             ]);
@@ -33,8 +80,10 @@ const EmployeeDetail = () => {
     };
 
     useEffect(() => {
-        fetchData();
-    }, [id]);
+        if (startDate && endDate) {
+            fetchData();
+        }
+    }, [id, startDate, endDate]);
 
     const handleUpdate = async () => {
         setUpdating(true);
@@ -49,6 +98,29 @@ const EmployeeDetail = () => {
             fetchData();
         } catch (e) {
             alert("Lỗi khi cập nhật nhân viên");
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+
+        const file = e.target.files[0];
+        const formData = new FormData();
+        formData.append('file', file);
+
+        setUpdating(true);
+        try {
+            // Upload to new endpoint
+            await api.post(`/employees/${employee.employee_id}/upload-image`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            alert("Cập nhật ảnh và dữ liệu khuôn mặt thành công!");
+            fetchData(); // Reload data to show new image
+        } catch (error: any) {
+            console.error(error);
+            alert(error.response?.data?.detail || "Lỗi khi cập nhật ảnh");
         } finally {
             setUpdating(false);
         }
@@ -83,7 +155,7 @@ const EmployeeDetail = () => {
     };
 
     const processedAttendance = React.useMemo(() => {
-        if (!employee?.config?.shifts) return attendance;
+        if (!employee?.config?.shifts || !startDate || !endDate) return attendance;
 
         const logsByDate: any = {};
         attendance.forEach(log => {
@@ -95,10 +167,11 @@ const EmployeeDetail = () => {
         const today = new Date();
         const nowTimeShort = today.getHours() * 60 + today.getMinutes();
 
-        // Process last 14 days
-        for (let i = 0; i < 14; i++) {
-            const d = new Date();
-            d.setDate(today.getDate() - i);
+        // Iterate date range
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+
+        for (let d = new Date(end); d >= start; d.setDate(d.getDate() - 1)) {
             const dateStr = d.toISOString().split('T')[0];
             const dayOfWeek = (d.getDay() + 6) % 7;
 
@@ -110,7 +183,7 @@ const EmployeeDetail = () => {
                     !dayLogs.find((l: any) => l.shift_name === s.name)
                 );
 
-                const isToday = i === 0;
+                const isToday = dateStr === today.toISOString().split('T')[0];
 
                 // Add existing logs
                 dayLogs.forEach((l: any) => result.push(l));
@@ -139,15 +212,13 @@ const EmployeeDetail = () => {
                 dayLogs.forEach((l: any) => result.push(l));
             }
         }
-
-        // Sort by date desc and shift_start_time asc
         return result.sort((a, b) => {
             if (a.date !== b.date) return b.date.localeCompare(a.date);
             const timeA = a.shift_start_time || (a.check_in ? new Date(a.check_in).toLocaleTimeString('en-US', { hour12: false }).slice(0, 5) : '00:00');
             const timeB = b.shift_start_time || (b.check_in ? new Date(b.check_in).toLocaleTimeString('en-US', { hour12: false }).slice(0, 5) : '00:00');
             return timeA.localeCompare(timeB);
         });
-    }, [attendance, employee]);
+    }, [attendance, employee, startDate, endDate]);
 
     if (loading) return <div style={{ textAlign: 'center', padding: '50px', background: '#0f172a', color: 'white', minHeight: '100vh' }}>Đang tải dữ liệu...</div>;
     if (!employee) return <div style={{ textAlign: 'center', padding: '50px', background: '#0f172a', color: 'white', minHeight: '100vh' }}>Không tìm thấy nhân viên</div>;
@@ -180,11 +251,49 @@ const EmployeeDetail = () => {
                         background: '#334155',
                         margin: '0 auto 15px',
                         padding: '10px',
-                        border: '2px solid #3b82f6'
+                        border: '2px solid #3b82f6',
+                        position: 'relative'
                     }}>
-                        <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <User size={60} color="#3b82f6" />
+                        <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                            {employee.image_path ? (
+                                <img
+                                    src={`http://localhost:8000${employee.image_path}?t=${new Date().getTime()}`}
+                                    alt={employee.full_name}
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                />
+                            ) : (
+                                <User size={60} color="#3b82f6" />
+                            )}
                         </div>
+
+                        {/* Camera Icon Overlay */}
+                        <label
+                            htmlFor="image-upload"
+                            style={{
+                                position: 'absolute',
+                                bottom: '0',
+                                right: '0',
+                                background: '#3b82f6',
+                                borderRadius: '50%',
+                                padding: '8px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                            }}
+                            title="Cập nhật ảnh đại diện"
+                        >
+                            <Camera size={16} color="white" />
+                        </label>
+                        <input
+                            id="image-upload"
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            style={{ display: 'none' }}
+                            disabled={updating}
+                        />
                     </div>
                     <input
                         type="text"
@@ -255,131 +364,240 @@ const EmployeeDetail = () => {
                     </div>
                 </div>
 
-                {/* Logs Section */}
+
+
+                {/* Right Column Content */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                    {/* Attendance History */}
-                    <div style={{
-                        background: '#1e293b',
-                        borderRadius: '12px',
-                        padding: '24px',
-                        border: '1px solid #334155'
-                    }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <Calendar size={22} color="#3b82f6" />
-                                <h3 style={{ fontWeight: 700, fontSize: '1.1rem' }}>Bảng công chi tiết (14 ngày gần nhất)</h3>
+
+                    {/* Summary Statistics */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px' }}>
+                        {[
+                            {
+                                label: 'Tổng ca làm',
+                                value: processedAttendance.filter(l => l.status !== 'absent').length,
+                                sub: `/${processedAttendance.length} ca theo lịch`,
+                                color: '#3b82f6',
+                                icon: Calendar
+                            },
+                            {
+                                label: 'Vi phạm',
+                                value: processedAttendance.filter(l => ['late', 'early', 'early_leave', 'late_and_early'].includes(l.status)).length,
+                                sub: `${processedAttendance.filter(l => ['late', 'late_and_early'].includes(l.status)).length} muộn, ${processedAttendance.filter(l => ['early', 'early_leave', 'late_and_early'].includes(l.status)).length} sớm`,
+                                color: '#f59e0b',
+                                icon: AlertCircle
+                            },
+                            {
+                                label: 'Vắng mặt',
+                                value: processedAttendance.filter(l => l.status === 'absent').length,
+                                sub: 'Không điểm danh',
+                                color: '#ef4444',
+                                icon: User
+                            },
+                            {
+                                label: 'Tăng ca',
+                                value: formatOvertime(processedAttendance.reduce((acc, curr) => acc + (curr.overtime || curr.overtime_minutes || 0), 0)),
+                                sub: 'Tổng thời gian',
+                                color: '#10b981',
+                                icon: Clock
+                            },
+                        ].map((stat, idx) => (
+                            <div key={idx} style={{ background: '#1e293b', padding: '20px', borderRadius: '12px', border: '1px solid #334155' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '10px' }}>
+                                    <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>{stat.label}</div>
+                                    <stat.icon size={20} color={stat.color} />
+                                </div>
+                                <div style={{ fontSize: '1.8rem', fontWeight: 700, color: 'white', marginBottom: '5px' }}>{stat.value}</div>
+                                <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{stat.sub}</div>
                             </div>
-                            <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>* Hiển thị cả ngày nghỉ làm việc</div>
-                        </div>
-                        <div style={{ overflowX: 'auto' }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                                <thead>
-                                    <tr style={{ textAlign: 'left', borderBottom: '2px solid #334155', color: '#94a3b8', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                        <th style={{ padding: '12px 10px' }}>Ngày</th>
-                                        <th style={{ padding: '12px 10px' }}>Ca làm việc</th>
-                                        <th style={{ padding: '12px 10px' }}>Giờ vào</th>
-                                        <th style={{ padding: '12px 10px' }}>Giờ ra</th>
-                                        <th style={{ padding: '12px 10px' }}>Đánh giá</th>
-                                        <th style={{ padding: '12px 10px' }}>Tăng ca</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {processedAttendance.map((log, idx) => {
-                                        const statusInfo = getStatusInfo(log.status, log.shift_name, log.isAllDayAbsent);
-                                        return (
-                                            <tr key={idx} style={{
-                                                borderBottom: '1px solid #334155',
-                                                background: log.status === 'absent' ? 'rgba(239, 68, 68, 0.02)' : 'transparent',
-                                                transition: 'background 0.2s'
-                                            }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseLeave={(e) => e.currentTarget.style.background = log.status === 'absent' ? 'rgba(239, 68, 68, 0.02)' : 'transparent'}>
-                                                <td style={{ padding: '14px 10px', fontSize: '0.9rem' }}>
-                                                    {new Date(log.date).toLocaleDateString('vi-VN', { weekday: 'short', day: '2-digit', month: '2-digit' })}
-                                                </td>
-                                                <td style={{ padding: '14px 10px', color: '#3b82f6', fontWeight: 600 }}>{log.shift_name || '---'}</td>
-                                                <td style={{ padding: '14px 10px', fontWeight: log.check_in ? 600 : 400 }}>
-                                                    {log.check_in ? new Date(log.check_in).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '---'}
-                                                </td>
-                                                <td style={{ padding: '14px 10px', fontWeight: log.check_out ? 600 : 400 }}>
-                                                    {log.check_out ? new Date(log.check_out).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '---'}
-                                                </td>
-                                                <td style={{ padding: '14px 10px' }}>
-                                                    <span style={{
-                                                        padding: '6px 12px',
-                                                        borderRadius: '6px',
-                                                        fontSize: '0.75rem',
-                                                        fontWeight: 700,
-                                                        background: statusInfo.bg,
-                                                        color: statusInfo.color,
-                                                        display: 'inline-block',
-                                                        border: `1px solid ${statusInfo.color}20`
-                                                    }}>
-                                                        {statusInfo.label}
-                                                    </span>
-                                                </td>
-                                                <td style={{ padding: '14px 10px', fontWeight: 600, color: log.overtime > 0 ? '#10b981' : '#94a3b8' }}>
-                                                    {formatOvertime(log.overtime)}
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                    {processedAttendance.length === 0 && (
-                                        <tr><td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
-                                            <Calendar size={40} style={{ opacity: 0.1, marginBottom: '10px' }} /><br />
-                                            Chưa có dữ liệu điểm danh trong 14 ngày qua
-                                        </td></tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
+                        ))}
                     </div>
 
-                    {/* Phone Usage History */}
-                    <div style={{
-                        background: '#1e293b',
-                        borderRadius: '12px',
-                        padding: '24px',
-                        border: '1px solid #334155'
-                    }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-                            <Phone size={22} color="#f59e0b" />
-                            <h3 style={{ fontWeight: 700, fontSize: '1.1rem' }}>Vi phạm sử dụng điện thoại</h3>
-                        </div>
-                        <div style={{ overflowX: 'auto' }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                                <thead>
-                                    <tr style={{ textAlign: 'left', borderBottom: '2px solid #334155', color: '#94a3b8', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                        <th style={{ padding: '12px 10px' }}>Ngày</th>
-                                        <th style={{ padding: '12px 10px' }}>Thời gian vi phạm</th>
-                                        <th style={{ padding: '12px 10px' }}>Xử lý</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {phoneLogs.map((log, idx) => (
-                                        <tr key={idx} style={{ borderBottom: '1px solid #334155' }}>
-                                            <td style={{ padding: '14px 10px' }}>{log.date}</td>
-                                            <td style={{ padding: '14px 10px', fontWeight: 700, color: '#f59e0b' }}>
-                                                {Math.floor(log.phone_seconds / 60)}m {Math.round(log.phone_seconds % 60)}s
-                                            </td>
-                                            <td style={{ padding: '14px 10px' }}>
-                                                {log.phone_seconds > 60 ? (
-                                                    <span style={{ color: '#ef4444', background: '#ef444410', padding: '4px 10px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: 600 }}>
-                                                        <AlertCircle size={14} /> Vi phạm nặng
-                                                    </span>
-                                                ) : (
-                                                    <span style={{ color: '#10b981', background: '#10b98110', padding: '4px 10px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: 600 }}>
-                                                        <CheckCircle size={14} /> Cảnh báo nhẹ
-                                                    </span>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {phoneLogs.length === 0 && (
-                                        <tr><td colSpan={3} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
-                                            Không có ghi nhận vi phạm nào
-                                        </td></tr>
+                    {/* Logs Section */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                        {/* Attendance History */}
+                        <div style={{
+                            background: '#1e293b',
+                            borderRadius: '12px',
+                            padding: '24px',
+                            border: '1px solid #334155'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <Clock size={22} color="#3b82f6" />
+                                    <h3 style={{ fontWeight: 700, fontSize: '1.1rem' }}>Lịch sử điểm danh</h3>
+                                </div>
+
+                                {/* Filter Controls */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                                    <select
+                                        value={filterType}
+                                        onChange={(e) => setFilterType(e.target.value)}
+                                        style={{
+                                            background: '#334155',
+                                            color: 'white',
+                                            border: '1px solid #475569',
+                                            padding: '6px 12px',
+                                            borderRadius: '6px',
+                                            outline: 'none',
+                                            fontSize: '0.9rem'
+                                        }}
+                                    >
+                                        <option value="today">Hôm nay</option>
+                                        <option value="yesterday">Hôm qua</option>
+                                        <option value="current_month">Tháng này</option>
+                                        <option value="last_month">Tháng trước</option>
+                                        <option value="last_7_days">7 ngày qua</option>
+                                        <option value="custom">Tùy chỉnh</option>
+                                    </select>
+
+                                    {filterType === 'custom' && (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                            <input
+                                                type="date"
+                                                value={startDate}
+                                                onChange={(e) => setStartDate(e.target.value)}
+                                                style={{ background: '#334155', color: 'white', border: '1px solid #475569', padding: '5px', borderRadius: '4px' }}
+                                            />
+                                            <span>-</span>
+                                            <input
+                                                type="date"
+                                                value={endDate}
+                                                onChange={(e) => setEndDate(e.target.value)}
+                                                style={{ background: '#334155', color: 'white', border: '1px solid #475569', padding: '5px', borderRadius: '4px' }}
+                                            />
+                                            <button
+                                                onClick={fetchData}
+                                                style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}
+                                            >
+                                                Áp dụng
+                                            </button>
+                                        </div>
                                     )}
-                                </tbody>
-                            </table>
+                                </div>
+                            </div>
+                            <div style={{ overflowX: 'auto' }}>
+                                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                    <thead>
+                                        <tr style={{ textAlign: 'left', borderBottom: '2px solid #334155', color: '#94a3b8', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                            <th style={{ padding: '12px 10px' }}>Ngày</th>
+                                            <th style={{ padding: '12px 10px' }}>Ca làm việc</th>
+                                            <th style={{ padding: '12px 10px' }}>Giờ vào</th>
+                                            <th style={{ padding: '12px 10px' }}>Giờ ra</th>
+                                            <th style={{ padding: '12px 10px' }}>Tổng thời gian</th>
+                                            <th style={{ padding: '12px 10px' }}>Đánh giá</th>
+                                            <th style={{ padding: '12px 10px' }}>Tăng ca</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {processedAttendance.map((log, idx) => {
+                                            const statusInfo = getStatusInfo(log.status, log.shift_name, log.isAllDayAbsent);
+                                            return (
+                                                <tr key={idx} style={{
+                                                    borderBottom: '1px solid #334155',
+                                                    background: log.status === 'absent' ? 'rgba(239, 68, 68, 0.02)' : 'transparent',
+                                                    transition: 'background 0.2s'
+                                                }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseLeave={(e) => e.currentTarget.style.background = log.status === 'absent' ? 'rgba(239, 68, 68, 0.02)' : 'transparent'}>
+                                                    <td style={{ padding: '14px 10px', fontSize: '0.9rem' }}>
+                                                        {new Date(log.date).toLocaleDateString('vi-VN', { weekday: 'short', day: '2-digit', month: '2-digit' })}
+                                                    </td>
+                                                    <td style={{ padding: '14px 10px', color: '#3b82f6', fontWeight: 600 }}>{log.shift_name || '---'}</td>
+                                                    <td style={{ padding: '14px 10px', fontWeight: log.check_in ? 600 : 400 }}>
+                                                        {log.check_in ? new Date(log.check_in).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '---'}
+                                                    </td>
+                                                    <td style={{ padding: '14px 10px', fontWeight: log.check_out ? 600 : 400 }}>
+                                                        {log.check_out ? new Date(log.check_out).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '---'}
+                                                    </td>
+                                                    <td style={{ padding: '14px 10px', fontWeight: 600, color: 'white' }}>
+                                                        {(() => {
+                                                            if (log.check_in && log.check_out) {
+                                                                const diff = new Date(log.check_out).getTime() - new Date(log.check_in).getTime();
+                                                                const minutes = Math.floor(diff / 60000);
+                                                                const h = Math.floor(minutes / 60);
+                                                                const m = minutes % 60;
+                                                                return `${h}h ${m}m`;
+                                                            }
+                                                            return '---';
+                                                        })()}
+                                                    </td>
+                                                    <td style={{ padding: '14px 10px' }}>
+                                                        <span style={{
+                                                            padding: '6px 12px',
+                                                            borderRadius: '6px',
+                                                            fontSize: '0.75rem',
+                                                            fontWeight: 700,
+                                                            background: statusInfo.bg,
+                                                            color: statusInfo.color,
+                                                            display: 'inline-block',
+                                                            border: `1px solid ${statusInfo.color}20`
+                                                        }}>
+                                                            {statusInfo.label}
+                                                        </span>
+                                                    </td>
+                                                    <td style={{ padding: '14px 10px', fontWeight: 600, color: log.overtime > 0 ? '#10b981' : '#94a3b8' }}>
+                                                        {formatOvertime(log.overtime)}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                        {processedAttendance.length === 0 && (
+                                            <tr><td colSpan={7} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+                                                <Calendar size={40} style={{ opacity: 0.1, marginBottom: '10px' }} /><br />
+                                                Chưa có dữ liệu điểm danh trong 14 ngày qua
+                                            </td></tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* Phone Usage History */}
+                        <div style={{
+                            background: '#1e293b',
+                            borderRadius: '12px',
+                            padding: '24px',
+                            border: '1px solid #334155'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                                <Phone size={22} color="#f59e0b" />
+                                <h3 style={{ fontWeight: 700, fontSize: '1.1rem' }}>Vi phạm sử dụng điện thoại</h3>
+                            </div>
+                            <div style={{ overflowX: 'auto' }}>
+                                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                    <thead>
+                                        <tr style={{ textAlign: 'left', borderBottom: '2px solid #334155', color: '#94a3b8', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                            <th style={{ padding: '12px 10px' }}>Ngày</th>
+                                            <th style={{ padding: '12px 10px' }}>Thời gian vi phạm</th>
+                                            <th style={{ padding: '12px 10px' }}>Xử lý</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {phoneLogs.map((log, idx) => (
+                                            <tr key={idx} style={{ borderBottom: '1px solid #334155' }}>
+                                                <td style={{ padding: '14px 10px' }}>{log.date}</td>
+                                                <td style={{ padding: '14px 10px', fontWeight: 700, color: '#f59e0b' }}>
+                                                    {Math.floor(log.phone_seconds / 60)}m {Math.round(log.phone_seconds % 60)}s
+                                                </td>
+                                                <td style={{ padding: '14px 10px' }}>
+                                                    {log.phone_seconds > 60 ? (
+                                                        <span style={{ color: '#ef4444', background: '#ef444410', padding: '4px 10px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: 600 }}>
+                                                            <AlertCircle size={14} /> Vi phạm nặng
+                                                        </span>
+                                                    ) : (
+                                                        <span style={{ color: '#10b981', background: '#10b98110', padding: '4px 10px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: 600 }}>
+                                                            <CheckCircle size={14} /> Cảnh báo nhẹ
+                                                        </span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {phoneLogs.length === 0 && (
+                                            <tr><td colSpan={3} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+                                                Không có ghi nhận vi phạm nào
+                                            </td></tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>

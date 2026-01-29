@@ -1,21 +1,31 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, UploadFile, File, Form, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from fastapi.security import OAuth2PasswordRequestForm
 import uvicorn
 import cv2
 import asyncio
 import numpy as np
 import base64
+import os
+import shutil
 from typing import List
 
 from typing import List, Optional
+from datetime import datetime, timedelta
 from pydantic import BaseModel
 
 from camera_stream import CameraStream
 import database
 import auth
+import attendance_calculator
 
 app = FastAPI()
+
+# Mount static files
+if not os.path.exists("images"):
+    os.makedirs("images")
+app.mount("/images", StaticFiles(directory="images"), name="images")
 
 class EmployeeUpdate(BaseModel):
     full_name: str
@@ -162,8 +172,17 @@ async def add_employee(
     face = max(faces, key=lambda x: (x.bbox[2]-x.bbox[0]) * (x.bbox[3]-x.bbox[1]))
     embedding = face.embedding
     
+    # Save image to disk
+    image_filename = f"{employee_id}.jpg"
+    image_path = f"images/{image_filename}"
+    with open(image_path, "wb") as buffer:
+        buffer.write(contents)
+        
+    # Web accessible URL
+    image_url = f"/images/{image_filename}"
+    
     try:
-        database.add_employee(employee_id, full_name, embedding, position, department, selected_config)
+        database.add_employee(employee_id, full_name, embedding, position, department, selected_config, image_url)
         camera.reload_faces()
         return {"status": "success", "message": f"Employee {full_name} registered successfully"}
     except Exception as e:
@@ -182,9 +201,63 @@ async def update_employee(employee_id: str, data: EmployeeUpdate, admin: dict = 
     camera.reload_faces()
     return {"message": "Employee updated"}
 
+@app.post("/employees/{employee_id}/upload-image")
+async def upload_employee_image(
+    employee_id: str,
+    file: UploadFile = File(...),
+    admin: dict = Depends(auth.get_admin_user)
+):
+    contents = await file.read()
+    nparr = np.frombuffer(contents, np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    
+    if img is None:
+        raise HTTPException(status_code=400, detail="Invalid image file")
+
+    faces = camera.app.get(img)
+    if len(faces) == 0:
+        raise HTTPException(status_code=400, detail="No face detected in image")
+    
+    # Get the largest face
+    face = max(faces, key=lambda x: (x.bbox[2]-x.bbox[0]) * (x.bbox[3]-x.bbox[1]))
+    embedding = face.embedding
+    
+    # Save image to disk (overwrite existing)
+    image_filename = f"{employee_id}.jpg"
+    image_path = f"images/{image_filename}"
+    
+    try:
+        with open(image_path, "wb") as buffer:
+            buffer.write(contents)
+            
+        # Web accessible URL
+        image_url = f"/images/{image_filename}"
+        
+        # Update DB
+        database.update_employee_image(employee_id, image_url, embedding)
+        
+        # Reload faces in camera stream
+        camera.reload_faces()
+        
+        return {"status": "success", "message": "Image updated and face re-indexed", "image_path": image_url}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/employees/{employee_id}/attendance")
-async def employee_attendance(employee_id: str, current_user: dict = Depends(auth.get_current_user)):
-    return database.get_employee_attendance_logs(employee_id)
+async def employee_attendance(
+    employee_id: str, 
+    start_date: Optional[str] = None, 
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(auth.get_current_user)
+):
+    if not start_date or not end_date:
+        # Default to last 30 days
+        end = datetime.now()
+        start = end - timedelta(days=30)
+        start_date = start.strftime("%Y-%m-%d")
+        end_date = end.strftime("%Y-%m-%d")
+        
+    return attendance_calculator.calculate_attendance_dynamic(employee_id, start_date, end_date)
 
 @app.get("/employees/{employee_id}/phone")
 async def employee_phone_logs(employee_id: str, current_user: dict = Depends(auth.get_current_user)):
@@ -285,6 +358,73 @@ async def get_presence_logs(
     """Get employee presence logs with optional filters"""
     logs = database.get_employee_presence_logs(employee_id, start_date, end_date)
     return logs
+
+# Attendance Calculation Endpoints
+@app.post("/calculate-attendance")
+async def calculate_attendance(
+    employee_id: str,
+    date: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(auth.get_current_user)
+):
+    """Tính toán chấm công cho nhân viên trong khoảng thời gian (Dynamic - Không lưu DB)"""
+    if current_user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Only admin can calculate attendance")
+    
+    if start_date and end_date:
+        s_date, e_date = start_date, end_date
+    elif date:
+        s_date, e_date = date, date
+    else:
+        # Default today
+        today = datetime.now().strftime("%Y-%m-%d")
+        s_date, e_date = today, today
+        
+    result = attendance_calculator.calculate_attendance_dynamic(employee_id, s_date, e_date)
+    return {
+        "employee_id": employee_id,
+        "date": f"{s_date} to {e_date}",
+        "shifts": result
+    }
+
+@app.post("/calculate-attendance-all")
+async def calculate_attendance_all(
+    date: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(auth.get_current_user)
+):
+    """Tính toán chấm công cho TẤT CẢ nhân viên trong khoảng thời gian (Dynamic)"""
+    if current_user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Only admin can calculate attendance")
+    
+    if start_date and end_date:
+        s_date, e_date = start_date, end_date
+    elif date:
+        s_date, e_date = date, date
+    else:
+        today = datetime.now().strftime("%Y-%m-%d")
+        s_date, e_date = today, today
+        
+    # Get all employees
+    employees = database.get_all_employees()
+    
+    results = []
+    for emp in employees:
+        emp_id = emp['employee_id']
+        shifts = attendance_calculator.calculate_attendance_dynamic(emp_id, s_date, e_date)
+        results.append({
+            "employee_id": emp_id,
+            "name": emp['full_name'],
+            "shifts": shifts
+        })
+    
+    return {
+        "date": f"{s_date} to {e_date}",
+        "processed": len(employees),
+        "results": results
+    }
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

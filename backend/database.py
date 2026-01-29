@@ -152,6 +152,9 @@ def init_db():
         try:
             cur.execute("ALTER TABLE shifts ADD COLUMN config_id INTEGER")
         except: pass
+        try:
+            cur.execute("ALTER TABLE employees ADD COLUMN image_path TEXT")
+        except: pass
         
         # Ensure at least one default config exists
         cur.execute("SELECT COUNT(*) FROM shift_configs WHERE is_default = 1")
@@ -177,7 +180,7 @@ def init_db():
         print(f"✗ Database initialization FAILED: {e}")
         raise
 
-def add_employee(employee_id: str, full_name: str, embedding: np.ndarray, position: str = None, department: str = None, assigned_config_id: int = None):
+def add_employee(employee_id: str, full_name: str, embedding: np.ndarray, position: str = None, department: str = None, assigned_config_id: int = None, image_path: str = None):
     """Save employee details and embedding to database."""
     conn = get_db_connection()
     cur = conn.cursor()
@@ -185,8 +188,8 @@ def add_employee(employee_id: str, full_name: str, embedding: np.ndarray, positi
     embedding_bytes = embedding.tobytes()
     
     cur.execute(
-        "INSERT INTO employees (employee_id, full_name, embedding, position, department, assigned_config_id) VALUES (?, ?, ?, ?, ?, ?)",
-        (employee_id, full_name, embedding_bytes, position, department, assigned_config_id)
+        "INSERT INTO employees (employee_id, full_name, embedding, position, department, assigned_config_id, image_path) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (employee_id, full_name, embedding_bytes, position, department, assigned_config_id, image_path)
     )
     conn.commit()
     conn.close()
@@ -200,6 +203,21 @@ def update_employee(employee_id: str, full_name: str, position: str = None, depa
         SET full_name = ?, position = ?, department = ?, assigned_config_id = ? 
         WHERE employee_id = ?
     """, (full_name, position, department, assigned_config_id, employee_id))
+    conn.commit()
+    conn.close()
+
+def update_employee_image(employee_id: str, image_path: str, embedding: np.ndarray):
+    """Update employee image and embedding."""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    # Convert numpy array to bytes
+    embedding_bytes = embedding.tobytes()
+    
+    cur.execute("""
+        UPDATE employees 
+        SET image_path = ?, embedding = ?
+        WHERE employee_id = ?
+    """, (image_path, embedding_bytes, employee_id))
     conn.commit()
     conn.close()
 
@@ -229,25 +247,57 @@ def get_all_employees():
     """Retrieve basic list of all employees."""
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("SELECT id, employee_id, full_name, position, department, created_at, assigned_config_id FROM employees")
-    rows = cur.fetchall()
-    conn.close()
-    return [{
-        "id": r[0],
-        "employee_id": r[1],
-        "full_name": r[2],
-        "position": r[3],
-        "department": r[4],
-        "created_at": r[5],
-        "assigned_config_id": r[6]
-    } for r in rows]
+    # Include image_path in selection
+    # Need to check if column exists first? 
+    # Since we added migration, it should exist. But select * or explicit fields is better.
+    # To avoid errors if running on old code structure without restart, let's just stick to explicit.
+    # We need to update this query to fetch image_path if we want it in list view too.
+    # But user asked for "Employees Detail".
+    try:
+        cur.execute("SELECT id, employee_id, full_name, position, department, created_at, assigned_config_id, image_path FROM employees")
+        rows = cur.fetchall()
+        conn.close()
+        return [{
+            "id": r[0],
+            "employee_id": r[1],
+            "full_name": r[2],
+            "position": r[3],
+            "department": r[4],
+            "created_at": r[5],
+            "assigned_config_id": r[6],
+            "image_path": r[7]
+        } for r in rows]
+    except Exception as e:
+        # Fallback for old schema if migration didn't run properly yet (rare)
+        conn.close()
+        return []
 
 def get_employee_detail(employee_id: str):
     """Retrieve full details of a specific employee including assigned shift config and its shifts."""
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("SELECT id, employee_id, full_name, position, department, created_at, assigned_config_id FROM employees WHERE employee_id = ?", (employee_id,))
-    row = cur.fetchone()
+    try:
+        cur.execute("SELECT id, employee_id, full_name, position, department, created_at, assigned_config_id, image_path FROM employees WHERE employee_id = ?", (employee_id,))
+        row = cur.fetchone()
+        
+        if not row:
+            conn.close()
+            return None
+        
+        employee = {
+            "id": row[0],
+            "employee_id": row[1],
+            "full_name": row[2],
+            "position": row[3],
+            "department": row[4],
+            "created_at": row[5],
+            "assigned_config_id": row[6],
+            "image_path": row[7]
+        }
+    except:
+        # Fallback
+        conn.close()
+        return None
     
     if not row:
         conn.close()
@@ -260,7 +310,8 @@ def get_employee_detail(employee_id: str):
         "position": row[3],
         "department": row[4],
         "created_at": row[5],
-        "assigned_config_id": row[6]
+        "assigned_config_id": row[6],
+        "image_path": row[7]
     }
     
     # Get config details
@@ -560,16 +611,25 @@ def delete_shift(shift_id: int):
     conn.commit()
     conn.close()
 
-def get_employee_attendance_logs(employee_id: str):
+def get_employee_attendance_logs(employee_id: str, start_date: str = None, end_date: str = None):
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("""
+    
+    query = """
         SELECT a.date, a.check_in, a.check_out, a.status, a.overtime_minutes, s.name as shift_name, s.start_time
         FROM attendance_logs a
         LEFT JOIN shifts s ON a.shift_id = s.id
-        WHERE a.employee_id = ? 
-        ORDER BY a.date DESC, s.start_time ASC
-    """, (employee_id,))
+        WHERE a.employee_id = ?
+    """
+    params = [employee_id]
+    
+    if start_date and end_date:
+        query += " AND a.date BETWEEN ? AND ?"
+        params.extend([start_date, end_date])
+        
+    query += " ORDER BY a.date DESC, s.start_time ASC"
+    
+    cur.execute(query, params)
     rows = cur.fetchall()
     conn.close()
     return [{

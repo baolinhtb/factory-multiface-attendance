@@ -3,7 +3,8 @@
 > vite
 
 
-  VITE v5.4.21  ready in 193 ms
+  VITE v5.4.21  ready in 152 ms
 
   ➜  Local:   http://localhost:3000/
   ➜  Network: http://172.20.10.2:3000/
+1:13:47 AM [vite] hmr update /src/pages/AttendanceCalculator.tsx

@@ -8,6 +8,7 @@ import EmployeeDetail from './pages/EmployeeDetail';
 import Settings from './pages/Settings';
 import ShiftManagement from './pages/ShiftManagement';
 import PresenceLogs from './pages/PresenceLogs';
+import AttendanceCalculator from './pages/AttendanceCalculator';
 import Layout from './components/Layout';
 import api from './services/api';
 
@@ -75,6 +76,7 @@ function App() {
                         <>
                             <Route path="/employees" element={<EmployeeManagement />} />
                             <Route path="/shift-configs" element={<ShiftManagement />} />
+                            <Route path="/attendance-calculator" element={<AttendanceCalculator />} />
                             <Route path="/users" element={<UserManagement />} />
                             <Route path="/settings" element={<Settings />} />
                         </>

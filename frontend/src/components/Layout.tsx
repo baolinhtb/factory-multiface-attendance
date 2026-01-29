@@ -1,6 +1,6 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Settings, Shield, Clock, History } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, Shield, Clock, History, ChevronDown, ChevronRight, ListChecks, Calculator } from 'lucide-react';
 
 interface User {
     username: string;
@@ -12,9 +12,18 @@ interface LayoutProps {
     currentUser: User | null;
 }
 
+interface NavItem {
+    path?: string;
+    label: string;
+    icon: any;
+    adminOnly: boolean;
+    children?: NavItem[];
+}
+
 function Layout({ children, currentUser }: LayoutProps) {
     const navigate = useNavigate();
     const location = useLocation();
+    const [expandedMenus, setExpandedMenus] = useState<string[]>(['employees']);
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -22,18 +31,144 @@ function Layout({ children, currentUser }: LayoutProps) {
         window.location.reload();
     };
 
-    const navItems = [
+    const toggleMenu = (label: string) => {
+        setExpandedMenus(prev =>
+            prev.includes(label)
+                ? prev.filter(item => item !== label)
+                : [...prev, label]
+        );
+    };
+
+    const navItems: NavItem[] = [
         { path: '/', label: 'Tổng quan', icon: LayoutDashboard, adminOnly: false },
-        { path: '/presence-logs', label: 'Lịch sử ra vào', icon: History, adminOnly: false },
-        { path: '/employees', label: 'Quản lý nhân viên', icon: Users, adminOnly: true },
+        {
+            label: 'Quản lý nhân viên',
+            icon: Users,
+            adminOnly: true,
+            children: [
+                { path: '/employees', label: 'Danh sách nhân viên', icon: ListChecks, adminOnly: true },
+                { path: '/presence-logs', label: 'Lịch sử ra vào', icon: History, adminOnly: false },
+                { path: '/attendance-calculator', label: 'Tính toán chấm công', icon: Calculator, adminOnly: true },
+            ]
+        },
         { path: '/shift-configs', label: 'Quản lý ca làm việc', icon: Clock, adminOnly: true },
         { path: '/users', label: 'Tài khoản hệ thống', icon: Shield, adminOnly: true },
         { path: '/settings', label: 'Cài đặt hệ thống', icon: Settings, adminOnly: true },
     ];
 
-    const filteredNavItems = navItems.filter(
-        (item) => !item.adminOnly || currentUser?.role === 'admin'
-    );
+    const filterNavItems = (items: NavItem[]): NavItem[] => {
+        return items.filter(item => {
+            if (item.adminOnly && currentUser?.role !== 'admin') return false;
+            if (item.children) {
+                item.children = filterNavItems(item.children);
+            }
+            return true;
+        });
+    };
+
+    const filteredNavItems = filterNavItems(navItems);
+
+    const renderNavItem = (item: NavItem, isChild: boolean = false) => {
+        const Icon = item.icon;
+        const hasChildren = item.children && item.children.length > 0;
+        const isExpanded = expandedMenus.includes(item.label);
+        const isActive = item.path ? location.pathname === item.path : false;
+        const isParentActive = item.children?.some(child => child.path === location.pathname);
+
+        if (hasChildren) {
+            return (
+                <div key={item.label}>
+                    <div
+                        onClick={() => toggleMenu(item.label)}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '12px',
+                            padding: '12px 16px',
+                            margin: '4px 0',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            color: isParentActive ? '#3b82f6' : '#94a3b8',
+                            background: isParentActive ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+                            fontWeight: isParentActive ? 600 : 400,
+                            transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={(e) => {
+                            if (!isParentActive) {
+                                e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)';
+                                e.currentTarget.style.color = 'white';
+                            }
+                        }}
+                        onMouseLeave={(e) => {
+                            if (!isParentActive) {
+                                e.currentTarget.style.background = 'transparent';
+                                e.currentTarget.style.color = '#94a3b8';
+                            }
+                        }}
+                    >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <Icon size={20} />
+                            {item.label}
+                        </div>
+                        {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                    </div>
+                    {isExpanded && item.children && (
+                        <div style={{ marginLeft: '12px', borderLeft: '2px solid #334155', paddingLeft: '8px' }}>
+                            {item.children.map(child => renderNavItem(child, true))}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        return (
+            <div
+                key={item.path}
+                onClick={() => item.path && navigate(item.path)}
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: isChild ? '10px 16px' : '12px 16px',
+                    margin: '4px 0',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    color: isActive ? '#3b82f6' : '#94a3b8',
+                    background: isActive ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
+                    fontWeight: isActive ? 600 : 400,
+                    fontSize: isChild ? '0.9rem' : '1rem',
+                    transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                    if (!isActive) {
+                        e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)';
+                        e.currentTarget.style.color = 'white';
+                    }
+                }}
+                onMouseLeave={(e) => {
+                    if (!isActive) {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.color = '#94a3b8';
+                    }
+                }}
+            >
+                <Icon size={isChild ? 18 : 20} />
+                {item.label}
+            </div>
+        );
+    };
+
+    const getPageTitle = () => {
+        for (const item of filteredNavItems) {
+            if (item.path === location.pathname) return item.label;
+            if (item.children) {
+                const child = item.children.find(c => c.path === location.pathname);
+                if (child) return child.label;
+            }
+        }
+        return 'SmartCore';
+    };
 
     return (
         <div style={{ display: 'flex', height: '100vh' }}>
@@ -58,46 +193,8 @@ function Layout({ children, currentUser }: LayoutProps) {
                     SmartCore
                 </div>
 
-                <nav style={{ flex: 1, padding: '10px' }}>
-                    {filteredNavItems.map((item) => {
-                        const Icon = item.icon;
-                        const isActive = location.pathname === item.path;
-
-                        return (
-                            <div
-                                key={item.path}
-                                onClick={() => navigate(item.path)}
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '12px',
-                                    padding: '12px 16px',
-                                    margin: '4px 0',
-                                    borderRadius: '8px',
-                                    cursor: 'pointer',
-                                    color: isActive ? '#3b82f6' : '#94a3b8',
-                                    background: isActive ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
-                                    fontWeight: isActive ? 600 : 400,
-                                    transition: 'all 0.2s'
-                                }}
-                                onMouseEnter={(e) => {
-                                    if (!isActive) {
-                                        e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)';
-                                        e.currentTarget.style.color = 'white';
-                                    }
-                                }}
-                                onMouseLeave={(e) => {
-                                    if (!isActive) {
-                                        e.currentTarget.style.background = 'transparent';
-                                        e.currentTarget.style.color = '#94a3b8';
-                                    }
-                                }}
-                            >
-                                <Icon size={20} />
-                                {item.label}
-                            </div>
-                        );
-                    })}
+                <nav style={{ flex: 1, padding: '10px', overflowY: 'auto' }}>
+                    {filteredNavItems.map(item => renderNavItem(item))}
                 </nav>
 
                 <div style={{ padding: '20px', borderTop: '1px solid #334155' }}>
@@ -159,7 +256,7 @@ function Layout({ children, currentUser }: LayoutProps) {
                     padding: '0 30px'
                 }}>
                     <h2 style={{ fontSize: '1.1rem', fontWeight: 500 }}>
-                        {filteredNavItems.find(item => item.path === location.pathname)?.label || 'SmartCore'}
+                        {getPageTitle()}
                     </h2>
                 </header>
                 <div style={{ flex: 1, overflowY: 'auto', padding: '30px' }}>
