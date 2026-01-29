@@ -1,6 +1,7 @@
 import { ReactNode, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Settings, Shield, Clock, History, ChevronDown, ChevronRight, ListChecks, Calculator, Menu } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, Shield, Clock, History, ChevronDown, ChevronRight, ListChecks, Calculator, Menu, Globe } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface User {
     username: string;
@@ -23,7 +24,12 @@ interface NavItem {
 function Layout({ children, currentUser }: LayoutProps) {
     const navigate = useNavigate();
     const location = useLocation();
-    const [expandedMenus, setExpandedMenus] = useState<string[]>(['Quản lý nhân viên', 'Cài đặt hệ thống']);
+    const { t, language, setLanguage, availableLanguages } = useLanguage();
+    // Default expanded based on translations or fixed? 
+    // Usually expanded state logic is independent, but keys change.
+    // Let's keep it simple for now, using translated strings as keys could be tricky if they change.
+    // Better to use static keys for expansion or just rely on 'label' which is now translated.
+    const [expandedMenus, setExpandedMenus] = useState<string[]>(['menu.employee_management', 'menu.system_settings']);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const handleLogout = () => {
@@ -41,25 +47,25 @@ function Layout({ children, currentUser }: LayoutProps) {
     };
 
     const navItems: NavItem[] = [
-        { path: '/', label: 'Tổng quan', icon: LayoutDashboard, adminOnly: false },
+        { path: '/', label: t('dashboard'), icon: LayoutDashboard, adminOnly: false },
         {
-            label: 'Quản lý nhân viên',
+            label: t('employee_management'),
             icon: Users,
             adminOnly: true,
             children: [
-                { path: '/employees', label: 'Danh sách nhân viên', icon: ListChecks, adminOnly: true },
-                { path: '/presence-logs', label: 'Lịch sử ra vào', icon: History, adminOnly: false },
-                { path: '/attendance-calculator', label: 'Tính toán chấm công', icon: Calculator, adminOnly: true },
+                { path: '/employees', label: t('employee_list'), icon: ListChecks, adminOnly: true },
+                { path: '/presence-logs', label: t('attendance_history'), icon: History, adminOnly: false },
+                { path: '/attendance-calculator', label: t('attendance_calculator'), icon: Calculator, adminOnly: true },
             ]
         },
         {
-            label: 'Cài đặt hệ thống',
+            label: t('system_settings'),
             icon: Settings,
             adminOnly: true,
             children: [
-                { path: '/settings', label: 'Cấu hình chung', icon: Settings, adminOnly: true },
-                { path: '/shift-configs', label: 'Quản lý ca làm việc', icon: Clock, adminOnly: true },
-                { path: '/users', label: 'Quản lý tài khoản', icon: Shield, adminOnly: true },
+                { path: '/settings', label: t('general_settings'), icon: Settings, adminOnly: true },
+                { path: '/shift-configs', label: t('shift_management'), icon: Clock, adminOnly: true },
+                { path: '/users', label: t('user_management'), icon: Shield, adminOnly: true },
             ]
         },
     ];
@@ -235,9 +241,34 @@ function Layout({ children, currentUser }: LayoutProps) {
                         <div>
                             <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{currentUser?.username}</div>
                             <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
-                                {currentUser?.role === 'admin' ? 'Quản trị viên' : 'Nhân viên'}
+                                {currentUser?.role === 'admin' ? t('admin_role') : t('user_role')}
                             </div>
                         </div>
+                    </div>
+
+                    {/* Language Selector */}
+                    <div style={{ marginBottom: '12px' }}>
+                        <select
+                            value={language}
+                            onChange={(e) => setLanguage(e.target.value)}
+                            style={{
+                                width: '100%',
+                                padding: '8px 12px',
+                                background: '#1e293b',
+                                color: '#cbd5e1',
+                                border: '1px solid #334155',
+                                borderRadius: '8px',
+                                outline: 'none',
+                                cursor: 'pointer',
+                                fontSize: '0.85rem'
+                            }}
+                        >
+                            {availableLanguages.map(lang => (
+                                <option key={lang.code} value={lang.code}>
+                                    {t(`language_${lang.code}`) || lang.name}
+                                </option>
+                            ))}
+                        </select>
                     </div>
                     <button
                         onClick={handleLogout}
@@ -260,7 +291,7 @@ function Layout({ children, currentUser }: LayoutProps) {
                             e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
                         }}
                     >
-                        Đăng xuất
+                        {t('logout')}
                     </button>
                 </div>
             </aside>

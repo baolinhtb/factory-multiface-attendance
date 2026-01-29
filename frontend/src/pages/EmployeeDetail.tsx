@@ -3,8 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { ArrowLeft, User, Phone, Clock, Calendar, CheckCircle, AlertCircle, Camera, Edit2, X, Save } from 'lucide-react';
 import DateFilter from '../components/DateFilter';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const EmployeeDetail = () => {
+    const { t, language } = useLanguage();
     const { id } = useParams();
     const navigate = useNavigate();
     const [employee, setEmployee] = useState<any>(null);
@@ -85,11 +87,11 @@ const EmployeeDetail = () => {
                 department: employee.department,
                 assigned_config_id: employee.assigned_config_id ? parseInt(employee.assigned_config_id) : null
             });
-            alert("Cập nhật thành công!");
+            alert(t('update_success'));
             await fetchData();
             setIsEditing(false);
         } catch (e) {
-            alert("Lỗi khi cập nhật nhân viên");
+            alert(t('update_error'));
         } finally {
             setUpdating(false);
         }
@@ -108,40 +110,40 @@ const EmployeeDetail = () => {
             await api.post(`/employees/${employee.employee_id}/upload-image`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            alert("Cập nhật ảnh và dữ liệu khuôn mặt thành công!");
+            alert(t('image_update_success'));
             fetchData(); // Reload data to show new image
         } catch (error: any) {
             console.error(error);
-            alert(error.response?.data?.detail || "Lỗi khi cập nhật ảnh");
+            alert(error.response?.data?.detail || t('image_update_error'));
         } finally {
             setUpdating(false);
         }
     };
 
     const formatOvertime = (minutes: number) => {
-        if (!minutes || minutes <= 0) return "0 p";
-        if (minutes < 60) return `${minutes} phút`;
+        if (!minutes || minutes <= 0) return `0 ${t('minutes_label')}`;
+        if (minutes < 60) return `${minutes} ${t('minutes_label')}`;
         const h = Math.floor(minutes / 60);
         const m = minutes % 60;
-        return m > 0 ? `${h} giờ ${m} phút` : `${h} giờ`;
+        return m > 0 ? `${h} ${t('hour_label')} ${m} ${t('minutes_label')}` : `${h} ${t('hour_label')}`;
     };
 
 
     const getStatusInfo = (status: string, shiftName?: string, isAllDayAbsent?: boolean) => {
         if (status === 'absent') {
-            if (isAllDayAbsent) return { label: 'Nghỉ cả ngày', color: '#ef4444', bg: '#ef444420' };
+            if (isAllDayAbsent) return { label: t('absent_all_day'), color: '#ef4444', bg: '#ef444420' };
             const name = shiftName?.toLowerCase() || '';
-            let label = 'Vắng mặt';
-            if (name.includes('sáng')) label = 'Nghỉ buổi sáng';
-            else if (name.includes('chiều')) label = 'Nghỉ chiều';
-            else if (name.includes('tối')) label = 'Nghỉ tối';
+            let label = t('absent_general');
+            if (name.includes('sáng')) label = t('absent_morning');
+            else if (name.includes('chiều')) label = t('absent_afternoon');
+            else if (name.includes('tối')) label = t('absent_evening');
             return { label, color: '#f87171', bg: '#ef444410' };
         }
         switch (status) {
-            case 'on_time': return { label: 'Đủ giờ', color: '#10b981', bg: '#10b98120' };
-            case 'late': return { label: 'Đi muộn', color: '#ef4444', bg: '#ef444420' };
-            case 'early_leave': return { label: 'Về sớm', color: '#f59e0b', bg: '#f59e0b20' };
-            case 'late_and_early': return { label: 'Muộn & Về sớm', color: '#f59e0b', bg: '#f59e0b20' };
+            case 'on_time': return { label: t('status_sufficient'), color: '#10b981', bg: '#10b98120' };
+            case 'late': return { label: t('status_go_late'), color: '#ef4444', bg: '#ef444420' };
+            case 'early_leave': return { label: t('status_early'), color: '#f59e0b', bg: '#f59e0b20' };
+            case 'late_and_early': return { label: t('status_late_early'), color: '#f59e0b', bg: '#f59e0b20' };
             default: return { label: status, color: '#94a3b8', bg: '#33415520' };
         }
     };
@@ -212,8 +214,8 @@ const EmployeeDetail = () => {
         });
     }, [attendance, employee, startDate, endDate]);
 
-    if (loading) return <div style={{ textAlign: 'center', padding: '50px', background: '#0f172a', color: 'white', minHeight: '100vh' }}>Đang tải dữ liệu...</div>;
-    if (!employee) return <div style={{ textAlign: 'center', padding: '50px', background: '#0f172a', color: 'white', minHeight: '100vh' }}>Không tìm thấy nhân viên</div>;
+    if (loading) return <div style={{ textAlign: 'center', padding: '50px', background: '#0f172a', color: 'white', minHeight: '100vh' }}>{t('loading_data')}</div>;
+    if (!employee) return <div style={{ textAlign: 'center', padding: '50px', background: '#0f172a', color: 'white', minHeight: '100vh' }}>{t('employee_not_found')}</div>;
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -222,7 +224,7 @@ const EmployeeDetail = () => {
                 <button onClick={() => navigate('/employees')} style={{ padding: '10px', background: '#1e293b', border: '1px solid #334155', color: 'white', borderRadius: '8px' }}>
                     <ArrowLeft size={20} />
                 </button>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Chi tiết nhân viên: {employee.full_name}</h2>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 700 }}>{t('employee_detail_title')} {employee.full_name}</h2>
             </div>
 
             <div className="grid-employee-detail">
@@ -276,7 +278,7 @@ const EmployeeDetail = () => {
                                 justifyContent: 'center',
                                 boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
                             }}
-                            title="Cập nhật ảnh đại diện"
+                            title={t('update_image_label')}
                         >
                             <Camera size={16} color="white" />
                         </label>
@@ -312,17 +314,17 @@ const EmployeeDetail = () => {
                                     display: 'flex',
                                     alignItems: 'center'
                                 }}
-                                title="Chỉnh sửa thông tin"
+                                title={t('edit_info')}
                             >
                                 <Edit2 size={16} />
                             </button>
                         </div>
                     )}
-                    <p style={{ color: '#3b82f6', fontWeight: 600, fontSize: '0.9rem', marginBottom: '20px', wordBreak: 'break-all' }}>ID Nhân viên: {employee.employee_id}</p>
+                    <p style={{ color: '#3b82f6', fontWeight: 600, fontSize: '0.9rem', marginBottom: '20px', wordBreak: 'break-all' }}>{t('employee_id')}: {employee.employee_id}</p>
 
                     <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '16px', borderTop: '1px solid #334155', paddingTop: '20px', paddingLeft: '16px', paddingRight: '16px', width: '100%', boxSizing: 'border-box' }}>
                         <div>
-                            <label style={{ color: '#94a3b8', fontSize: '0.75rem', display: 'block', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Chức vụ:</label>
+                            <label style={{ color: '#94a3b8', fontSize: '0.75rem', display: 'block', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('position')}:</label>
                             {isEditing ? (
                                 <input
                                     type="text"
@@ -338,7 +340,7 @@ const EmployeeDetail = () => {
                             )}
                         </div>
                         <div>
-                            <label style={{ color: '#94a3b8', fontSize: '0.75rem', display: 'block', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Phòng ban:</label>
+                            <label style={{ color: '#94a3b8', fontSize: '0.75rem', display: 'block', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('department')}:</label>
                             {isEditing ? (
                                 <input
                                     type="text"
@@ -354,14 +356,14 @@ const EmployeeDetail = () => {
                             )}
                         </div>
                         <div>
-                            <label style={{ color: '#94a3b8', fontSize: '0.75rem', display: 'block', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Chế độ làm việc:</label>
+                            <label style={{ color: '#94a3b8', fontSize: '0.75rem', display: 'block', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('work_config')}:</label>
                             {isEditing ? (
                                 <select
                                     value={employee.assigned_config_id || ''}
                                     onChange={(e) => setEmployee({ ...employee, assigned_config_id: e.target.value })}
                                     style={{ width: '100%', padding: '10px', background: '#0f172a', border: '1px solid #3b82f6', borderRadius: '6px', color: 'white', cursor: 'pointer' }}
                                 >
-                                    <option value="">Hệ thống tự động</option>
+                                    <option value="">{t('system_default')}</option>
                                     {configs.map(c => (
                                         <option key={c.id} value={c.id}>{c.name}</option>
                                     ))}
@@ -370,15 +372,14 @@ const EmployeeDetail = () => {
                                 <p style={{ padding: '10px', color: '#cbd5e1', fontSize: '0.95rem' }}>
                                     {employee.assigned_config_id
                                         ? configs.find(c => c.id === parseInt(employee.assigned_config_id))?.name
-                                        : 'Hệ thống tự động'}
+                                        : t('system_default')}
                                 </p>
                             )}
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '5px', fontSize: '0.8rem', marginTop: '12px', padding: '10px 16px 0 16px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                            <span style={{ color: '#94a3b8' }}>Ngày gia nhập:</span>
-                            <span style={{ color: '#cbd5e1', fontWeight: 500 }}>{new Date(employee.created_at).toLocaleDateString('vi-VN')}</span>
+                            <span style={{ color: '#94a3b8' }}>{t('joined_date')}</span>
+                            <span style={{ color: '#cbd5e1', fontWeight: 500 }}>{new Date(employee.created_at).toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US')}</span>
                         </div>
-
                         {isEditing ? (
                             <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                                 <button
@@ -403,7 +404,7 @@ const EmployeeDetail = () => {
                                     }}
                                 >
                                     <Save size={16} />
-                                    {updating ? 'Đang lưu...' : 'Lưu'}
+                                    {updating ? t('saving') : t('save')}
                                 </button>
                                 <button
                                     onClick={handleCancel}
@@ -427,7 +428,7 @@ const EmployeeDetail = () => {
                                     }}
                                 >
                                     <X size={16} />
-                                    Hủy
+                                    {t('cancel')}
                                 </button>
                             </div>
                         ) : null}
@@ -443,30 +444,31 @@ const EmployeeDetail = () => {
                     <div className="grid-stats">
                         {[
                             {
-                                label: 'Tổng ca làm',
+                                label: t('total_shifts'),
                                 value: processedAttendance.filter(l => l.status !== 'absent').length,
-                                sub: `/${processedAttendance.length} ca theo lịch`,
+                                sub: `/${processedAttendance.length} ${t('scheduled_shifts')}`,
                                 color: '#3b82f6',
                                 icon: Calendar
                             },
                             {
-                                label: 'Vi phạm',
+                                label: t('violations'),
                                 value: processedAttendance.filter(l => ['late', 'early', 'early_leave', 'late_and_early'].includes(l.status)).length,
-                                sub: `${processedAttendance.filter(l => ['late', 'late_and_early'].includes(l.status)).length} muộn, ${processedAttendance.filter(l => ['early', 'early_leave', 'late_and_early'].includes(l.status)).length} sớm`,
+                                sub: `${processedAttendance.filter(l => ['late', 'late_and_early'].includes(l.status)).length} ${t('late').toLowerCase()}, ${processedAttendance.filter(l => ['early', 'early_leave', 'late_and_early'].includes(l.status)).length} ${t('early_leave').toLowerCase()}`,
                                 color: '#f59e0b',
                                 icon: AlertCircle
                             },
                             {
-                                label: 'Vắng mặt',
+                                label: t('absences'),
                                 value: processedAttendance.filter(l => l.status === 'absent').length,
-                                sub: 'Không điểm danh',
+                                sub: t('not_checked_in'),
                                 color: '#ef4444',
                                 icon: User
                             },
                             {
-                                label: 'Tăng ca',
+                                label: t('overtime_hours'),
                                 value: formatOvertime(processedAttendance.reduce((acc, curr) => acc + (curr.overtime || curr.overtime_minutes || 0), 0)),
-                                sub: 'Tổng thời gian',
+                                sub: t('total_time'),
+
                                 color: '#10b981',
                                 icon: Clock
                             },
@@ -494,7 +496,7 @@ const EmployeeDetail = () => {
                             <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                     <Clock size={22} color="#3b82f6" />
-                                    <h3 style={{ fontWeight: 700, fontSize: '1.1rem' }}>Lịch sử điểm danh</h3>
+                                    <h3 style={{ fontWeight: 700, fontSize: '1.1rem' }}>{t('attendance_history_title')}</h3>
                                 </div>
 
                                 {/* Date Filter */}
@@ -504,13 +506,13 @@ const EmployeeDetail = () => {
                                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                     <thead>
                                         <tr style={{ textAlign: 'left', borderBottom: '2px solid #334155', color: '#94a3b8', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                            <th style={{ padding: '12px 10px' }}>Ngày</th>
-                                            <th style={{ padding: '12px 10px' }}>Ca làm việc</th>
-                                            <th style={{ padding: '12px 10px' }}>Giờ vào</th>
-                                            <th style={{ padding: '12px 10px' }}>Giờ ra</th>
-                                            <th style={{ padding: '12px 10px' }}>Tổng thời gian</th>
-                                            <th style={{ padding: '12px 10px' }}>Đánh giá</th>
-                                            <th style={{ padding: '12px 10px' }}>Tăng ca</th>
+                                            <th style={{ padding: '12px 10px' }}>{t('date')}</th>
+                                            <th style={{ padding: '12px 10px' }}>{t('shift')}</th>
+                                            <th style={{ padding: '12px 10px' }}>{t('check_in')}</th>
+                                            <th style={{ padding: '12px 10px' }}>{t('check_out')}</th>
+                                            <th style={{ padding: '12px 10px' }}>{t('total_time')}</th>
+                                            <th style={{ padding: '12px 10px' }}>{t('evaluation')}</th>
+                                            <th style={{ padding: '12px 10px' }}>{t('overtime_hours')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -523,14 +525,14 @@ const EmployeeDetail = () => {
                                                     transition: 'background 0.2s'
                                                 }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseLeave={(e) => e.currentTarget.style.background = log.status === 'absent' ? 'rgba(239, 68, 68, 0.02)' : 'transparent'}>
                                                     <td style={{ padding: '14px 10px', fontSize: '0.9rem' }}>
-                                                        {new Date(log.date).toLocaleDateString('vi-VN', { weekday: 'short', day: '2-digit', month: '2-digit' })}
+                                                        {new Date(log.date).toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', { weekday: 'short', day: '2-digit', month: '2-digit' })}
                                                     </td>
                                                     <td style={{ padding: '14px 10px', color: '#3b82f6', fontWeight: 600 }}>{log.shift_name || '---'}</td>
                                                     <td style={{ padding: '14px 10px', fontWeight: log.check_in ? 600 : 400 }}>
-                                                        {log.check_in ? new Date(log.check_in).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '---'}
+                                                        {log.check_in ? new Date(log.check_in).toLocaleTimeString(language === 'vi' ? 'vi-VN' : 'en-US', { hour: '2-digit', minute: '2-digit' }) : '---'}
                                                     </td>
                                                     <td style={{ padding: '14px 10px', fontWeight: log.check_out ? 600 : 400 }}>
-                                                        {log.check_out ? new Date(log.check_out).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '---'}
+                                                        {log.check_out ? new Date(log.check_out).toLocaleTimeString(language === 'vi' ? 'vi-VN' : 'en-US', { hour: '2-digit', minute: '2-digit' }) : '---'}
                                                     </td>
                                                     <td style={{ padding: '14px 10px', fontWeight: 600, color: 'white' }}>
                                                         {(() => {
@@ -567,7 +569,7 @@ const EmployeeDetail = () => {
                                         {processedAttendance.length === 0 && (
                                             <tr><td colSpan={7} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
                                                 <Calendar size={40} style={{ opacity: 0.1, marginBottom: '10px' }} /><br />
-                                                Chưa có dữ liệu điểm danh trong 14 ngày qua
+                                                {t('no_attendance')}
                                             </td></tr>
                                         )}
                                     </tbody>
@@ -584,15 +586,15 @@ const EmployeeDetail = () => {
                         }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
                                 <Phone size={22} color="#f59e0b" />
-                                <h3 style={{ fontWeight: 700, fontSize: '1.1rem' }}>Vi phạm sử dụng điện thoại</h3>
+                                <h3 style={{ fontWeight: 700, fontSize: '1.1rem' }}>{t('phone_violations_title')}</h3>
                             </div>
                             <div style={{ overflowX: 'auto' }}>
                                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                     <thead>
                                         <tr style={{ textAlign: 'left', borderBottom: '2px solid #334155', color: '#94a3b8', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                            <th style={{ padding: '12px 10px' }}>Ngày</th>
-                                            <th style={{ padding: '12px 10px' }}>Thời gian vi phạm</th>
-                                            <th style={{ padding: '12px 10px' }}>Xử lý</th>
+                                            <th style={{ padding: '12px 10px' }}>{t('date')}</th>
+                                            <th style={{ padding: '12px 10px' }}>{t('col_violation_duration')}</th>
+                                            <th style={{ padding: '12px 10px' }}>{t('col_action')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -605,11 +607,11 @@ const EmployeeDetail = () => {
                                                 <td style={{ padding: '14px 10px' }}>
                                                     {log.phone_seconds > 60 ? (
                                                         <span style={{ color: '#ef4444', background: '#ef444410', padding: '4px 10px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: 600 }}>
-                                                            <AlertCircle size={14} /> Vi phạm nặng
+                                                            <AlertCircle size={14} /> {t('severe_violation')}
                                                         </span>
                                                     ) : (
                                                         <span style={{ color: '#10b981', background: '#10b98110', padding: '4px 10px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: 600 }}>
-                                                            <CheckCircle size={14} /> Cảnh báo nhẹ
+                                                            <CheckCircle size={14} /> {t('mild_warning')}
                                                         </span>
                                                     )}
                                                 </td>
@@ -617,7 +619,7 @@ const EmployeeDetail = () => {
                                         ))}
                                         {phoneLogs.length === 0 && (
                                             <tr><td colSpan={3} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
-                                                Không có ghi nhận vi phạm nào
+                                                {t('no_violations')}
                                             </td></tr>
                                         )}
                                     </tbody>

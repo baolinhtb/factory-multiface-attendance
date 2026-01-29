@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import api from '../services/api';
-import { Settings as SettingsIcon, Save, Monitor, Bell, Eye, PhoneOff } from 'lucide-react';
+import { Settings as SettingsIcon, Save, Monitor, Bell, Eye, PhoneOff, Globe, Upload } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const Settings = () => {
+    const { refreshLanguages, t } = useLanguage();
     const [settings, setSettings] = useState<any>({
         camera_src: '0',
         show_age_gender: 'true',
@@ -30,9 +32,34 @@ const Settings = () => {
             setSaveSuccess(true);
             setTimeout(() => setSaveSuccess(false), 3000);
         } catch (e) {
-            alert('Lỗi khi lưu cài đặt');
+            alert(t('error_save_settings'));
         } finally {
             setLoading(false);
+        }
+    };
+
+    const [uploadingLang, setUploadingLang] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        setUploadingLang(true);
+        try {
+            await api.post('/languages/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            alert(t('upload_lang_success'));
+            await refreshLanguages();
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        } catch (error) {
+            alert(t('upload_lang_error'));
+        } finally {
+            setUploadingLang(false);
         }
     };
 
@@ -42,8 +69,8 @@ const Settings = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '30px', borderBottom: '1px solid #334155', paddingBottom: '20px' }}>
                     <SettingsIcon size={32} color="#3b82f6" />
                     <div>
-                        <h3 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Cấu hình hệ thống</h3>
-                        <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Quản lý các thiết lập chung của AI và phần cứng</p>
+                        <h3 style={{ fontSize: '1.5rem', fontWeight: 700 }}>{t('settings_title')}</h3>
+                        <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>{t('settings_subtitle')}</p>
                     </div>
                 </div>
 
@@ -51,14 +78,14 @@ const Settings = () => {
                     {/* Camera Source */}
                     <div style={{ background: '#0f172a', padding: '20px', borderRadius: '10px', border: '1px solid #334155' }}>
                         <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1rem', fontWeight: 600, marginBottom: '12px', color: 'white' }}>
-                            <Monitor size={20} color="#3b82f6" /> Nguồn video (Camera ID hoặc URL)
+                            <Monitor size={20} color="#3b82f6" /> {t('camera_source')}
                         </label>
                         <input
                             type="text"
                             value={settings.camera_src}
                             onChange={(e) => setSettings({ ...settings, camera_src: e.target.value })}
                             style={{ width: '100%', padding: '12px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: 'white' }}
-                            placeholder="Ví dụ: 0, 1 hoặc rtsp://..."
+                            placeholder={t('camera_placeholder')}
                         />
                     </div>
 
@@ -68,8 +95,8 @@ const Settings = () => {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                 <Eye size={24} color="#3b82f6" />
                                 <div>
-                                    <div style={{ fontWeight: 600 }}>Tuổi & Giới tính</div>
-                                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Hiển thị trên camera</div>
+                                    <div style={{ fontWeight: 600 }}>{t('show_age_gender')}</div>
+                                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{t('show_on_camera')}</div>
                                 </div>
                             </div>
                             <input
@@ -84,8 +111,8 @@ const Settings = () => {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                 <PhoneOff size={24} color="#f59e0b" />
                                 <div>
-                                    <div style={{ fontWeight: 600 }}>Sử dụng điện thoại</div>
-                                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Phát hiện vi phạm</div>
+                                    <div style={{ fontWeight: 600 }}>{t('phone_detection')}</div>
+                                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{t('detect_violation')}</div>
                                 </div>
                             </div>
                             <input
@@ -100,8 +127,8 @@ const Settings = () => {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                 <Bell size={24} color="#ef4444" />
                                 <div>
-                                    <div style={{ fontWeight: 600 }}>Chuông báo động</div>
-                                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Khi có sự cố</div>
+                                    <div style={{ fontWeight: 600 }}>{t('alarm')}</div>
+                                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{t('on_incident')}</div>
                                 </div>
                             </div>
                             <input
@@ -110,6 +137,45 @@ const Settings = () => {
                                 onChange={(e) => setSettings({ ...settings, enable_alarm: e.target.checked ? 'true' : 'false' })}
                                 style={{ width: '22px', height: '22px', cursor: 'pointer' }}
                             />
+                        </div>
+                    </div>
+
+                    {/* Language Management */}
+                    <div style={{ background: '#0f172a', padding: '20px', borderRadius: '10px', border: '1px solid #334155' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1rem', fontWeight: 600, marginBottom: '12px', color: 'white' }}>
+                            <Globe size={20} color="#3b82f6" /> {t('upload_language')} (XML)
+                        </label>
+                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                            <input
+                                type="file"
+                                accept=".xml"
+                                ref={fileInputRef}
+                                onChange={handleFileUpload}
+                                style={{ display: 'none' }}
+                            />
+                            <button
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={uploadingLang}
+                                style={{
+                                    padding: '10px 20px',
+                                    background: '#3b82f6',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '8px',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    fontWeight: 600
+                                }}
+                            >
+
+                                <Upload size={18} />
+                                {uploadingLang ? t('uploading') : t('upload_language')}
+                            </button>
+                            <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
+                                {t('upload_language_format')}
+                            </span>
                         </div>
                     </div>
 
@@ -132,8 +198,9 @@ const Settings = () => {
                             transition: 'all 0.3s'
                         }}
                     >
+
                         <Save size={20} />
-                        {saveSuccess ? 'Đã lưu thiết lập!' : 'Lưu tất cả thay đổi'}
+                        {saveSuccess ? t('save_settings_success') : t('save_all_changes')}
                     </button>
                 </div>
             </div>

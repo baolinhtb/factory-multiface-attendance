@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { UserPlus, Search, Building2, Briefcase, Eye, Trash2, Calendar } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const EmployeeManagement = () => {
+    const { t } = useLanguage();
     const [employees, setEmployees] = useState<any[]>([]);
     const [employeeId, setEmployeeId] = useState('');
     const [fullName, setFullName] = useState('');
@@ -83,12 +85,12 @@ const EmployeeManagement = () => {
                     border: '1px solid #334155'
                 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                        <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Của danh sách nhân viên</h3>
+                        <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>{t('employee_list')}</h3>
                         <div style={{ position: 'relative' }}>
                             <Search size={18} style={{ position: 'absolute', left: '10px', top: '10px', color: '#94a3b8' }} />
                             <input
                                 type="text"
-                                placeholder="Tìm kiếm nhân viên..."
+                                placeholder={t('employee_search_placeholder')}
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 style={{ paddingLeft: '35px', borderRadius: '20px', width: '250px' }}
@@ -100,11 +102,11 @@ const EmployeeManagement = () => {
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr style={{ textAlign: 'left', borderBottom: '1px solid #334155', color: '#94a3b8', fontSize: '0.875rem' }}>
-                                    <th style={{ padding: '12px' }}>ID Nhân viên</th>
-                                    <th style={{ padding: '12px' }}>Họ và Tên</th>
-                                    <th style={{ padding: '12px' }}>Chức vụ / Phòng ban</th>
-                                    <th style={{ padding: '12px' }}>Ngày tạo</th>
-                                    <th style={{ padding: '12px', textAlign: 'right' }}>Thao tác</th>
+                                    <th style={{ padding: '12px' }}>{t('employee_id')}</th>
+                                    <th style={{ padding: '12px' }}>{t('full_name')}</th>
+                                    <th style={{ padding: '12px' }}>{t('position_department')}</th>
+                                    <th style={{ padding: '12px' }}>{t('created_at')}</th>
+                                    <th style={{ padding: '12px', textAlign: 'right' }}>{t('actions')}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -123,7 +125,7 @@ const EmployeeManagement = () => {
                                             <button
                                                 onClick={() => navigate(`/employees/${emp.employee_id}`)}
                                                 style={{ padding: '6px', color: '#3b82f6', background: 'transparent', marginRight: '10px' }}
-                                                title="Xem chi tiết"
+                                                title={t('view_detail')}
                                             >
                                                 <Eye size={20} />
                                             </button>
@@ -132,7 +134,7 @@ const EmployeeManagement = () => {
                                 ))}
                                 {filteredEmployees.length === 0 && (
                                     <tr>
-                                        <td colSpan={5} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>Không tìm thấy nhân viên nào</td>
+                                        <td colSpan={5} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>{t('no_employees_found')}</td>
                                     </tr>
                                 )}
                             </tbody>
@@ -150,12 +152,12 @@ const EmployeeManagement = () => {
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
                         <UserPlus size={24} color="#10b981" />
-                        <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Đăng ký nhân viên mới</h3>
+                        <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>{t('register_new_employee')}</h3>
                     </div>
 
                     <form onSubmit={handleAddEmployee} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                         <div>
-                            <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '6px', color: '#94a3b8' }}>ID Nhân viên (Duy nhất)</label>
+                            <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '6px', color: '#94a3b8' }}>{t('employee_id')} (Unique)</label>
                             <input
                                 type="text"
                                 value={employeeId}
@@ -166,7 +168,7 @@ const EmployeeManagement = () => {
                             />
                         </div>
                         <div>
-                            <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '6px', color: '#94a3b8' }}>Họ và Tên</label>
+                            <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '6px', color: '#94a3b8' }}>{t('full_name')}</label>
                             <input
                                 type="text"
                                 value={fullName}
@@ -177,7 +179,7 @@ const EmployeeManagement = () => {
                         </div>
                         <div className="grid-form-2col">
                             <div>
-                                <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '6px', color: '#94a3b8' }}>Chức vụ</label>
+                                <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '6px', color: '#94a3b8' }}>{t('position')}</label>
                                 <input
                                     type="text"
                                     value={position}
@@ -186,7 +188,7 @@ const EmployeeManagement = () => {
                                 />
                             </div>
                             <div>
-                                <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '6px', color: '#94a3b8' }}>Phòng ban</label>
+                                <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '6px', color: '#94a3b8' }}>{t('department')}</label>
                                 <input
                                     type="text"
                                     value={department}
@@ -196,20 +198,20 @@ const EmployeeManagement = () => {
                             </div>
                         </div>
                         <div>
-                            <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '6px', color: '#94a3b8' }}>Chế độ làm việc</label>
+                            <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '6px', color: '#94a3b8' }}>{t('work_config')}</label>
                             <select
                                 value={assignedConfigId}
                                 onChange={(e) => setAssignedConfigId(e.target.value)}
                                 style={{ width: '100%', padding: '8px', background: '#0f172a', border: '1px solid #334155', color: 'white', borderRadius: '4px' }}
                             >
-                                <option value="">Mặc định hệ thống</option>
+                                <option value="">{t('system_default')}</option>
                                 {configs.map(c => (
                                     <option key={c.id} value={c.id}>{c.name}</option>
                                 ))}
                             </select>
                         </div>
                         <div>
-                            <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '6px', color: '#94a3b8' }}>Ảnh chân dung (Để AI nhận diện)</label>
+                            <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '6px', color: '#94a3b8' }}>{t('portrait_photo')}</label>
                             <input
                                 type="file"
                                 onChange={(e) => setPhoto(e.target.files?.[0] || null)}
@@ -230,7 +232,8 @@ const EmployeeManagement = () => {
                                 fontWeight: 600
                             }}
                         >
-                            {loading ? 'Đang xử lý AI...' : 'Đăng Ký Nhân Viên'}
+
+                            {loading ? t('processing_ai') : t('register_employee')}
                         </button>
                     </form>
                 </div>

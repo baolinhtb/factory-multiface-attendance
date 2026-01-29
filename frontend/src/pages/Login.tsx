@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import api from '../services/api';
 import { Lock, User, ShieldCheck } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface LoginProps {
     onLoginSuccess: () => void;
 }
 
 const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
+    const { t } = useLanguage();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -30,7 +32,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             }));
             onLoginSuccess();
         } catch (err: any) {
-            setError(err.response?.data?.detail || 'Lỗi đăng nhập');
+            setError(err.response?.data?.detail || t('login_error'));
         } finally {
             setLoading(false);
         }
@@ -66,13 +68,13 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     }}>
                         <ShieldCheck size={32} color="#3b82f6" />
                     </div>
-                    <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Hệ Thống SmartCore</h2>
-                    <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginTop: '5px' }}>Đăng nhập để quản lý giám sát</p>
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>{t('system_title')}</h2>
+                    <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginTop: '5px' }}>{t('login_subtitle')}</p>
                 </div>
 
                 <form onSubmit={handleLogin}>
                     <div style={{ marginBottom: '20px' }}>
-                        <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '8px', color: '#cbd5e1' }}>Tên đăng nhập</label>
+                        <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '8px', color: '#cbd5e1' }}>{t('username')}</label>
                         <div style={{ position: 'relative' }}>
                             <User size={18} style={{ position: 'absolute', left: '12px', top: '11px', color: '#475569' }} />
                             <input
@@ -87,7 +89,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     </div>
 
                     <div style={{ marginBottom: '25px' }}>
-                        <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '8px', color: '#cbd5e1' }}>Mật khẩu</label>
+                        <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '8px', color: '#cbd5e1' }}>{t('password')}</label>
                         <div style={{ position: 'relative' }}>
                             <Lock size={18} style={{ position: 'absolute', left: '12px', top: '11px', color: '#475569' }} />
                             <input
@@ -115,12 +117,13 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                             opacity: loading ? 0.7 : 1
                         }}
                     >
-                        {loading ? 'Đang xác thực...' : 'Đăng Nhập'}
+
+                        {loading ? t('authenticating') : t('login_btn')}
                     </button>
                 </form>
 
                 <div style={{ marginTop: '20px', textAlign: 'center', fontSize: '0.8rem', color: '#475569' }}>
-                    Tài khoản mặc định: admin / admin123
+                    {t('default_account_note')}
                 </div>
             </div>
         </div>

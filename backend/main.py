@@ -12,6 +12,8 @@ import os
 import shutil
 import io
 import pandas as pd
+import xml.etree.ElementTree as ET
+import glob
 from typing import List, Optional
 from datetime import datetime, timedelta
 from pydantic import BaseModel
@@ -462,6 +464,82 @@ async def export_attendance(
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
+
+
+# --- Language Management ---
+
+@app.get("/languages")
+async def get_languages():
+    """List available languages"""
+    lang_dir = "languages"
+    if not os.path.exists(lang_dir):
+        return []
+    
+    files = glob.glob(os.path.join(lang_dir, "*.xml"))
+    languages = []
+    for f in files:
+        code = os.path.splitext(os.path.basename(f))[0]
+        # Try to parse to get a name if possible, or just use code
+        try:
+            tree = ET.parse(f)
+            root = tree.getroot()
+            # Simple assumption: Maybe we add a specific tag for language name later?
+            # For now just return the code.
+            # actually we can look for 'language_vi' or 'language_en' inside the file itself if we wanted to be fancy
+            # but for now, filename is the code.
+            languages.append({"code": code, "name": code.upper()}) 
+        except:
+            pass
+            
+    return languages
+
+@app.get("/languages/{code}")
+async def get_language_content(code: str):
+    """Get content of a language file as JSON key-value pairs"""
+    file_path = os.path.join("languages", f"{code}.xml")
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Language file not found")
+        
+    try:
+        tree = ET.parse(file_path)
+        root = tree.getroot()
+        resources = {}
+        for child in root:
+            if child.tag == 'string':
+                name = child.attrib.get('name')
+                if name:
+                    resources[name] = child.text
+        return resources
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error parsing language file: {str(e)}")
+
+@app.post("/languages/upload")
+async def upload_language(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(auth.get_admin_user)
+):
+    """Upload a new language XML file"""
+    if not file.filename.endswith('.xml'):
+        raise HTTPException(status_code=400, detail="Only XML files are allowed")
+        
+    lang_dir = "languages"
+    if not os.path.exists(lang_dir):
+        os.makedirs(lang_dir)
+        
+    file_path = os.path.join(lang_dir, file.filename)
+    
+    # Save file
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+        
+    # Verify it's valid XML
+    try:
+        ET.parse(file_path)
+    except Exception as e:
+        os.remove(file_path)
+        raise HTTPException(status_code=400, detail=f"Invalid XML file: {str(e)}")
+        
+    return {"message": "Language uploaded successfully", "filename": file.filename}
 
 @app.post("/calculate-attendance-all")
 async def calculate_attendance_all(

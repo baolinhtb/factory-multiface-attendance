@@ -11,6 +11,7 @@ import PresenceLogs from './pages/PresenceLogs';
 import AttendanceCalculator from './pages/AttendanceCalculator';
 import Layout from './components/Layout';
 import api from './services/api';
+import { LanguageProvider } from './contexts/LanguageContext';
 
 interface User {
     username: string;
@@ -53,38 +54,36 @@ function App() {
         }
     };
 
-    if (loading) {
-        return (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0f172a', color: 'white' }}>
-                <p>Đang tải...</p>
-            </div>
-        );
-    }
-
-    if (!isAuthenticated) {
-        return <Login onLoginSuccess={handleLoginSuccess} />;
-    }
-
     return (
-        <BrowserRouter>
-            <Layout currentUser={currentUser}>
-                <Routes>
-                    <Route path="/" element={<Dashboard />} />
-                    <Route path="/presence-logs" element={<PresenceLogs />} />
-                    <Route path="/employees/:id" element={<EmployeeDetail />} />
-                    {currentUser?.role === 'admin' && (
-                        <>
-                            <Route path="/employees" element={<EmployeeManagement />} />
-                            <Route path="/shift-configs" element={<ShiftManagement />} />
-                            <Route path="/attendance-calculator" element={<AttendanceCalculator />} />
-                            <Route path="/users" element={<UserManagement />} />
-                            <Route path="/settings" element={<Settings />} />
-                        </>
-                    )}
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-            </Layout>
-        </BrowserRouter>
+        <LanguageProvider>
+            {loading ? (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0f172a', color: 'white' }}>
+                    <p>Loading...</p>
+                </div>
+            ) : !isAuthenticated ? (
+                <Login onLoginSuccess={handleLoginSuccess} />
+            ) : (
+                <BrowserRouter>
+                    <Layout currentUser={currentUser}>
+                        <Routes>
+                            <Route path="/" element={<Dashboard />} />
+                            <Route path="/presence-logs" element={<PresenceLogs />} />
+                            <Route path="/employees/:id" element={<EmployeeDetail />} />
+                            {currentUser?.role === 'admin' && (
+                                <>
+                                    <Route path="/employees" element={<EmployeeManagement />} />
+                                    <Route path="/shift-configs" element={<ShiftManagement />} />
+                                    <Route path="/attendance-calculator" element={<AttendanceCalculator />} />
+                                    <Route path="/users" element={<UserManagement />} />
+                                    <Route path="/settings" element={<Settings />} />
+                                </>
+                            )}
+                            <Route path="*" element={<Navigate to="/" replace />} />
+                        </Routes>
+                    </Layout>
+                </BrowserRouter>
+            )}
+        </LanguageProvider>
     );
 }
 

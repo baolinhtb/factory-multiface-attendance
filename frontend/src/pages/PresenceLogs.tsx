@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { Calendar, Clock, Users, Filter, Download } from 'lucide-react';
 import api from '../services/api';
 import DateFilter from '../components/DateFilter';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const PresenceLogs = () => {
+    const { t, language } = useLanguage();
     const [logs, setLogs] = useState<any[]>([]);
     const [employees, setEmployees] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
@@ -60,7 +62,7 @@ const PresenceLogs = () => {
 
     const formatTimestamp = (timestamp: string) => {
         const date = new Date(timestamp);
-        return date.toLocaleString('vi-VN', {
+        return date.toLocaleString(language === 'vi' ? 'vi-VN' : 'en-US', {
             year: 'numeric',
             month: '2-digit',
             day: '2-digit',
@@ -73,13 +75,13 @@ const PresenceLogs = () => {
     const getEventBadge = (eventType: string) => {
         if (eventType === 'enter') {
             return {
-                label: 'Vào',
+                label: t('enter'),
                 color: '#10b981',
                 bg: '#10b98120'
             };
         } else {
             return {
-                label: 'Ra',
+                label: t('exit'),
                 color: '#ef4444',
                 bg: '#ef444420'
             };
@@ -92,7 +94,7 @@ const PresenceLogs = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <Clock size={28} color="#3b82f6" />
-                    <h2 style={{ fontSize: '1.75rem', fontWeight: 700 }}>Lịch sử ra vào</h2>
+                    <h2 style={{ fontSize: '1.75rem', fontWeight: 700 }}>{t('presence_history')}</h2>
                 </div>
             </div>
 
@@ -105,14 +107,14 @@ const PresenceLogs = () => {
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
                     <Filter size={20} color="#3b82f6" />
-                    <h3 style={{ fontWeight: 600, fontSize: '1.1rem' }}>Bộ lọc</h3>
+                    <h3 style={{ fontWeight: 600, fontSize: '1.1rem' }}>{t('filter')}</h3>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
                     {/* Employee Filter */}
                     <div>
                         <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px' }}>
-                            Nhân viên
+                            {t('employee_label')}
                         </label>
                         <select
                             value={selectedEmployee}
@@ -126,7 +128,7 @@ const PresenceLogs = () => {
                                 color: 'white'
                             }}
                         >
-                            <option value="">Tất cả nhân viên</option>
+                            <option value="">{t('all_employees')}</option>
                             {employees.map(emp => (
                                 <option key={emp.employee_id} value={emp.employee_id}>
                                     {emp.full_name} ({emp.employee_id})
@@ -156,7 +158,7 @@ const PresenceLogs = () => {
                     }}
                 >
                     <Filter size={18} />
-                    Áp dụng bộ lọc
+                    {t('apply_filter')}
                 </button>
             </div>
 
@@ -171,14 +173,14 @@ const PresenceLogs = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <Users size={20} color="#10b981" />
                         <h3 style={{ fontWeight: 600, fontSize: '1.1rem' }}>
-                            Danh sách ({logs.length} bản ghi)
+                            {t('list_records')} ({logs.length} {t('records')})
                         </h3>
                     </div>
                 </div>
 
                 {loading ? (
                     <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
-                        Đang tải dữ liệu...
+                        {t('loading_data')}
                     </div>
                 ) : (
                     <div style={{ overflowX: 'auto' }}>
@@ -192,10 +194,11 @@ const PresenceLogs = () => {
                                     textTransform: 'uppercase',
                                     letterSpacing: '0.05em'
                                 }}>
-                                    <th style={{ padding: '12px 10px' }}>Thời gian</th>
-                                    <th style={{ padding: '12px 10px' }}>Nhân viên</th>
-                                    <th style={{ padding: '12px 10px' }}>Mã NV</th>
-                                    <th style={{ padding: '12px 10px' }}>Trạng thái</th>
+
+                                    <th style={{ padding: '12px 10px' }}>{t('time')}</th>
+                                    <th style={{ padding: '12px 10px' }}>{t('employee_label')}</th>
+                                    <th style={{ padding: '12px 10px' }}>{t('employee_id')}</th>
+                                    <th style={{ padding: '12px 10px' }}>{t('status')}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -241,7 +244,7 @@ const PresenceLogs = () => {
                                     <tr>
                                         <td colSpan={4} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
                                             <Clock size={40} style={{ opacity: 0.2, marginBottom: '10px' }} /><br />
-                                            Không có dữ liệu phù hợp với bộ lọc
+                                            {t('no_data_filter')}
                                         </td>
                                     </tr>
                                 )}

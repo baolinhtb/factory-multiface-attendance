@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import api from '../services/api';
 import { Camera, AlertTriangle, Phone, History, Clock } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const Dashboard = () => {
+    const { t } = useLanguage();
     const [stats, setStats] = useState<any[]>([]);
     const [logs, setLogs] = useState<{ msg: string, type: string, time: string }[]>([]);
     const [isAlerting, setIsAlerting] = useState(false);
@@ -64,12 +66,12 @@ const Dashboard = () => {
             let alerting = false;
             if (data.has_unknown) {
                 alerting = true;
-                addLog("Phát hiện người lạ!", "error");
+                addLog(t('unknown_detected'), "error");
                 playSound();
             }
             if (data.has_phone) {
                 alerting = true;
-                addLog("Phát hiện sử dụng điện thoại!", "error");
+                addLog(t('phone_detected'), "error");
                 playSound();
             }
             setIsAlerting(alerting);
@@ -94,7 +96,7 @@ const Dashboard = () => {
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
                         <Camera size={20} color="#3b82f6" />
-                        <h3 style={{ fontWeight: 600 }}>Giám sát trực tiếp</h3>
+                        <h3 style={{ fontWeight: 600 }}>{t('monitoring')}</h3>
                         {isAlerting && (
                             <span style={{
                                 marginLeft: 'auto',
@@ -108,7 +110,7 @@ const Dashboard = () => {
                                 gap: '5px',
                                 animation: 'pulse 1s infinite'
                             }}>
-                                <AlertTriangle size={14} /> CẢNH BÁO
+                                <AlertTriangle size={14} /> {t('warning')}
                             </span>
                         )}
                     </div>
@@ -136,7 +138,7 @@ const Dashboard = () => {
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
                         <History size={20} color="#3b82f6" />
-                        <h3 style={{ fontWeight: 600 }}>Cảnh báo hệ thống</h3>
+                        <h3 style={{ fontWeight: 600 }}>{t('system_alert')}</h3>
                     </div>
                     <div className="scroll-thin" style={{ flex: 1, overflowY: 'auto', fontSize: '0.875rem' }}>
                         {logs.map((log, idx) => (
@@ -150,7 +152,7 @@ const Dashboard = () => {
                                 <span style={{ color: '#64748b', fontSize: '0.75rem' }}>{log.time}</span>
                             </div>
                         ))}
-                        {logs.length === 0 && <div style={{ textAlign: 'center', color: '#64748b', marginTop: '20px' }}>Chưa có cảnh báo nào</div>}
+                        {logs.length === 0 && <div style={{ textAlign: 'center', color: '#64748b', marginTop: '20px' }}>{t('no_alert')}</div>}
                     </div>
                 </div>
             </div>
@@ -166,7 +168,7 @@ const Dashboard = () => {
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
                         <Phone size={20} color="#f59e0b" />
-                        <h3 style={{ fontWeight: 600 }}>Thống kê trong ngày</h3>
+                        <h3 style={{ fontWeight: 600 }}>{t('daily_stats')}</h3>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         {stats.map((s, idx) => (
@@ -186,10 +188,10 @@ const Dashboard = () => {
                                         color: s.status === 'on_time' ? '#10b981' : (s.status === 'early_leave' ? '#f59e0b' : (s.check_in ? '#ef4444' : '#94a3b8'))
                                     }}>
                                         {s.check_in ? (
-                                            s.status === 'on_time' ? 'Đúng giờ' :
-                                                s.status === 'late' ? 'Muộn' :
-                                                    s.status === 'early_leave' ? 'Về sớm' : 'Muộn/Sớm'
-                                        ) : 'Chưa đến'}
+                                            s.status === 'on_time' ? t('on_time') :
+                                                s.status === 'late' ? t('late') :
+                                                    s.status === 'early_leave' ? t('early_leave') : t('late_early')
+                                        ) : t('not_arrived')}
                                     </span>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#94a3b8' }}>
@@ -202,7 +204,7 @@ const Dashboard = () => {
                                 </div>
                             </div>
                         ))}
-                        {stats.length === 0 && <div style={{ textAlign: 'center', color: '#64748b', marginTop: '40px' }}>Chưa có dữ liệu hôm nay</div>}
+                        {stats.length === 0 && <div style={{ textAlign: 'center', color: '#64748b', marginTop: '40px' }}>{t('no_data')}</div>}
                     </div>
                 </div>
             </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Calendar } from 'lucide-react';
 import api from '../services/api';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface DateFilterPreset {
     id: number;
@@ -27,6 +28,7 @@ const getLocalDateString = (date: Date): string => {
 };
 
 const DateFilter = ({ onDateChange, initialFilterValue = 'today' }: DateFilterProps) => {
+    const { t } = useLanguage();
     const [presets, setPresets] = useState<DateFilterPreset[]>([]);
     const [selectedFilter, setSelectedFilter] = useState<string>(initialFilterValue);
     const [customStartDate, setCustomStartDate] = useState<string>('');
@@ -102,7 +104,7 @@ const DateFilter = ({ onDateChange, initialFilterValue = 'today' }: DateFilterPr
                     fontSize: '0.875rem',
                     marginBottom: '8px'
                 }}>
-                    Khoảng thời gian
+                    {t('time_range_label')}
                 </label>
                 <select
                     value={selectedFilter}
@@ -119,7 +121,7 @@ const DateFilter = ({ onDateChange, initialFilterValue = 'today' }: DateFilterPr
                 >
                     {presets.map(preset => (
                         <option key={preset.id} value={preset.value}>
-                            {preset.label}
+                            {t(preset.value) || preset.label}
                         </option>
                     ))}
                 </select>
@@ -135,7 +137,7 @@ const DateFilter = ({ onDateChange, initialFilterValue = 'today' }: DateFilterPr
                             fontSize: '0.875rem',
                             marginBottom: '8px'
                         }}>
-                            Từ ngày
+                            {t('from_date')}
                         </label>
                         <input
                             type="date"
@@ -158,7 +160,7 @@ const DateFilter = ({ onDateChange, initialFilterValue = 'today' }: DateFilterPr
                             fontSize: '0.875rem',
                             marginBottom: '8px'
                         }}>
-                            Đến ngày
+                            {t('to_date')}
                         </label>
                         <input
                             type="date"

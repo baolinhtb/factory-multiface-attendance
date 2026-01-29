@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Calculator, Users, Calendar, CheckCircle, X, Clock, FileSpreadsheet, Download } from 'lucide-react';
 import api from '../services/api';
 import DateFilter from '../components/DateFilter';
+import { useLanguage } from '../contexts/LanguageContext';
 
 // Helper functions
 const getLocalDateString = (date: Date = new Date()) => {
@@ -11,9 +12,9 @@ const getLocalDateString = (date: Date = new Date()) => {
     return `${year}-${month}-${day}`;
 };
 
-const formatDateTime = (dateTimeStr: string) => {
+const formatDateTime = (dateTimeStr: string, locale: string = 'vi-VN') => {
     const date = new Date(dateTimeStr);
-    return date.toLocaleString('vi-VN', {
+    return date.toLocaleString(locale, {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
@@ -24,42 +25,46 @@ const formatDateTime = (dateTimeStr: string) => {
     });
 };
 
-const formatOvertime = (minutes: number) => {
-    if (minutes < 60) {
-        return `${minutes} phút`;
-    }
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return mins > 0 ? `${hours}h${mins}p` : `${hours} giờ`;
-};
 
-const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { label: string; color: string; bg: string }> = {
-        'on_time': { label: 'Đúng giờ', color: '#10b981', bg: '#10b98120' },
-        'late': { label: 'Muộn', color: '#ef4444', bg: '#ef444420' },
-        'early': { label: 'Về sớm', color: '#f59e0b', bg: '#f59e0b20' },
-        'late_and_early': { label: 'Muộn & Về sớm', color: '#dc2626', bg: '#dc262620' }
-    };
-
-    const badge = statusMap[status] || { label: status, color: '#64748b', bg: '#64748b20' };
-
-    return (
-        <span style={{
-            padding: '6px 12px',
-            borderRadius: '6px',
-            fontSize: '0.75rem',
-            fontWeight: 700,
-            background: badge.bg,
-            color: badge.color,
-            display: 'inline-block',
-            border: `1px solid ${badge.color}20`
-        }}>
-            {badge.label}
-        </span>
-    );
-};
 
 const AttendanceCalculator = () => {
+    const { t, language } = useLanguage();
+
+    const formatOvertime = (minutes: number) => {
+        if (minutes < 60) {
+            return `${minutes} ${t('minutes_label')}`;
+        }
+        const hours = Math.floor(minutes / 60);
+        const mins = minutes % 60;
+        return mins > 0 ? `${hours}h ${mins}${t('minutes_label')}` : `${hours} ${t('hour_label')}`;
+    };
+
+    const getStatusBadge = (status: string) => {
+        const statusMap: Record<string, { label: string; color: string; bg: string }> = {
+            'on_time': { label: t('status_on_time'), color: '#10b981', bg: '#10b98120' },
+            'late': { label: t('status_late'), color: '#ef4444', bg: '#ef444420' },
+            'early': { label: t('status_early'), color: '#f59e0b', bg: '#f59e0b20' },
+            'late_and_early': { label: t('status_late_early'), color: '#dc2626', bg: '#dc262620' }
+        };
+
+        const badge = statusMap[status] || { label: status, color: '#64748b', bg: '#64748b20' };
+
+        return (
+            <span style={{
+                padding: '6px 12px',
+                borderRadius: '6px',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                background: badge.bg,
+                color: badge.color,
+                display: 'inline-block',
+                border: `1px solid ${badge.color}20`
+            }}>
+                {badge.label}
+            </span>
+        );
+    };
+
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<any>(null);
     const [startDate, setStartDate] = useState<string>(getLocalDateString());
@@ -90,7 +95,7 @@ const AttendanceCalculator = () => {
             setResult(res.data);
         } catch (e: any) {
             console.error('Error calculating attendance', e);
-            alert(e.response?.data?.detail || 'Lỗi khi tính toán');
+            alert(e.response?.data?.detail || t('error_calculating'));
         } finally {
             setLoading(false);
         }
@@ -112,7 +117,7 @@ const AttendanceCalculator = () => {
             link.parentNode?.removeChild(link);
         } catch (e) {
             console.error('Error exporting excel', e);
-            alert('Lỗi khi xuất file Excel');
+            alert(t('error_exporting'));
         }
     };
 
@@ -127,7 +132,7 @@ const AttendanceCalculator = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <Calculator size={28} color="#3b82f6" />
-                    <h2 style={{ fontSize: '1.75rem', fontWeight: 700 }}>Tính toán chấm công</h2>
+                    <h2 style={{ fontSize: '1.75rem', fontWeight: 700 }}>{t('attendance_calculator_title')}</h2>
                 </div>
             </div>
 
@@ -140,16 +145,16 @@ const AttendanceCalculator = () => {
                 color: '#94a3b8'
             }}>
                 <p style={{ marginBottom: '8px' }}>
-                    <strong style={{ color: '#fff' }}>Chức năng:</strong> Tính toán chấm công từ lịch sử ra vào (presence logs)
+                    <strong style={{ color: '#fff' }}>{t('function')}</strong> {t('function_desc')}
                 </p>
                 <p style={{ marginBottom: '8px' }}>
-                    <strong style={{ color: '#fff' }}>Logic:</strong>
+                    <strong style={{ color: '#fff' }}>{t('logic')}</strong>
                 </p>
                 <ul style={{ marginLeft: '20px', lineHeight: '1.8' }}>
-                    <li><strong>Check-in:</strong> Lần ENTER đầu tiên trong khung giờ checkin</li>
-                    <li><strong>Check-out:</strong> Lần LEAVE cuối cùng trong khung giờ checkout</li>
-                    <li><strong>Trạng thái:</strong> Tự động phân loại (Đúng giờ, Muộn, Về sớm) dựa trên cấu hình ca</li>
-                    <li><strong>Tăng ca:</strong> Thời gian làm việc NGOÀI tất cả các ca đã định nghĩa</li>
+                    <li><strong>Check-in:</strong> {t('logic_checkin')}</li>
+                    <li><strong>Check-out:</strong> {t('logic_checkout')}</li>
+                    <li><strong>{t('status')}:</strong> {t('logic_status')}</li>
+                    <li><strong>{t('overtime_label')}:</strong> {t('logic_overtime')}</li>
                 </ul>
             </div>
 
@@ -160,13 +165,13 @@ const AttendanceCalculator = () => {
                 padding: '24px',
                 border: '1px solid #334155'
             }}>
-                <h3 style={{ fontWeight: 600, fontSize: '1.1rem', marginBottom: '20px' }}>Tính toán</h3>
+                <h3 style={{ fontWeight: 600, fontSize: '1.1rem', marginBottom: '20px' }}>{t('calculation')}</h3>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     {/* Mode Selection */}
                     <div>
                         <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px' }}>
-                            Chế độ
+                            {t('mode')}
                         </label>
                         <div style={{ display: 'flex', gap: '10px' }}>
                             <button
@@ -183,7 +188,7 @@ const AttendanceCalculator = () => {
                                 }}
                             >
                                 <Users size={18} style={{ display: 'inline', marginRight: '8px' }} />
-                                Một nhân viên
+                                {t('single_employee')}
                             </button>
                             <button
                                 onClick={() => setMode('all')}
@@ -199,7 +204,7 @@ const AttendanceCalculator = () => {
                                 }}
                             >
                                 <Users size={18} style={{ display: 'inline', marginRight: '8px' }} />
-                                Tất cả nhân viên
+                                {t('all_employees_mode')}
                             </button>
                         </div>
                     </div>
@@ -208,7 +213,7 @@ const AttendanceCalculator = () => {
                     {mode === 'single' && (
                         <div>
                             <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px' }}>
-                                Mã nhân viên
+                                {t('employee_code')}
                             </label>
                             <input
                                 type="text"
@@ -251,7 +256,7 @@ const AttendanceCalculator = () => {
                             }}
                         >
                             <Calculator size={20} />
-                            {loading ? 'Đang tính toán...' : 'Tính toán chấm công'}
+                            {loading ? t('calculating') : t('calculate_attendance')}
                         </button>
 
                         <button
@@ -271,10 +276,10 @@ const AttendanceCalculator = () => {
                                 justifyContent: 'center',
                                 gap: '8px'
                             }}
-                            title="Xuất file Excel"
+                            title={t('export_excel_btn')}
                         >
                             <FileSpreadsheet size={20} />
-                            <span className="desktop-only">Xuất Excel</span>
+                            <span className="desktop-only">{t('export_excel_btn')}</span>
                         </button>
                     </div>
                 </div>
@@ -291,7 +296,7 @@ const AttendanceCalculator = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
                         <CheckCircle size={20} color="#10b981" />
                         <h3 style={{ fontWeight: 600, fontSize: '1.1rem' }}>
-                            Kết quả tính toán - {startDate} đến {endDate}
+                            {t('results_title')} - {startDate} → {endDate}
                         </h3>
                     </div>
 
@@ -308,9 +313,9 @@ const AttendanceCalculator = () => {
                             }}>
                                 <Users size={20} color="#3b82f6" />
                                 <div>
-                                    <div style={{ fontWeight: 600, color: '#fff' }}>Nhân viên: {result.employee_id}</div>
+                                    <div style={{ fontWeight: 600, color: '#fff' }}>{t('employee')} {result.employee_id}</div>
                                     <div style={{ fontSize: '0.875rem', color: '#94a3b8' }}>
-                                        Tổng số ca: {result.shifts.length}
+                                        {t('total_shifts_label')} {result.shifts.length}
                                     </div>
                                 </div>
                             </div>
@@ -323,7 +328,7 @@ const AttendanceCalculator = () => {
                                     background: '#0f172a',
                                     borderRadius: '8px'
                                 }}>
-                                    Không có dữ liệu chấm công trong ngày này
+                                    {t('no_attendance_data')}
                                 </div>
                             ) : (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -357,26 +362,26 @@ const AttendanceCalculator = () => {
                                             }}>
                                                 <div>
                                                     <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '4px' }}>
-                                                        Check-in
+                                                        {t('check_in_label')}
                                                     </div>
                                                     <div style={{ fontWeight: 600, color: shift.check_in ? '#10b981' : '#64748b' }}>
-                                                        {shift.check_in ? formatDateTime(shift.check_in) : 'Chưa check-in'}
+                                                        {shift.check_in ? formatDateTime(shift.check_in, language === 'vi' ? 'vi-VN' : 'en-US') : t('not_checked_in_label')}
                                                     </div>
                                                 </div>
 
                                                 <div>
                                                     <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '4px' }}>
-                                                        Check-out
+                                                        {t('check_out_label')}
                                                     </div>
                                                     <div style={{ fontWeight: 600, color: shift.check_out ? '#10b981' : '#64748b' }}>
-                                                        {shift.check_out ? formatDateTime(shift.check_out) : 'Chưa check-out'}
+                                                        {shift.check_out ? formatDateTime(shift.check_out, language === 'vi' ? 'vi-VN' : 'en-US') : t('not_checked_out')}
                                                     </div>
                                                 </div>
 
                                                 {shift.overtime > 0 && (
                                                     <div>
                                                         <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '4px' }}>
-                                                            Tăng ca
+                                                            {t('overtime_label')}
                                                         </div>
                                                         <div
                                                             onClick={() => showOvertimeDetails(shift.overtime_sessions || [])}
@@ -409,7 +414,7 @@ const AttendanceCalculator = () => {
                                 fontSize: '0.875rem',
                                 color: '#94a3b8'
                             }}>
-                                Đã xử lý: <strong style={{ color: '#fff' }}>{result.processed}</strong> nhân viên
+                                {t('processed_label')} <strong style={{ color: '#fff' }}>{result.processed}</strong>
                             </div>
 
                             <div style={{ overflowX: 'auto' }}>
@@ -423,12 +428,12 @@ const AttendanceCalculator = () => {
                                             textTransform: 'uppercase',
                                             letterSpacing: '0.05em'
                                         }}>
-                                            <th style={{ padding: '12px 10px' }}>Mã NV</th>
-                                            <th style={{ padding: '12px 10px' }}>Ca làm việc</th>
-                                            <th style={{ padding: '12px 10px' }}>Check-in</th>
-                                            <th style={{ padding: '12px 10px' }}>Check-out</th>
-                                            <th style={{ padding: '12px 10px' }}>Trạng thái</th>
-                                            <th style={{ padding: '12px 10px' }}>Tăng ca</th>
+                                            <th style={{ padding: '12px 10px' }}>{t('col_emp_id')}</th>
+                                            <th style={{ padding: '12px 10px' }}>{t('col_shift')}</th>
+                                            <th style={{ padding: '12px 10px' }}>{t('col_checkin')}</th>
+                                            <th style={{ padding: '12px 10px' }}>{t('col_checkout')}</th>
+                                            <th style={{ padding: '12px 10px' }}>{t('col_status')}</th>
+                                            <th style={{ padding: '12px 10px' }}>{t('col_overtime')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -450,10 +455,10 @@ const AttendanceCalculator = () => {
                                                         {shift.shift_name}
                                                     </td>
                                                     <td style={{ padding: '14px 10px', color: shift.check_in ? '#10b981' : '#64748b' }}>
-                                                        {shift.check_in ? formatDateTime(shift.check_in) : 'N/A'}
+                                                        {shift.check_in ? formatDateTime(shift.check_in, language === 'vi' ? 'vi-VN' : 'en-US') : 'N/A'}
                                                     </td>
                                                     <td style={{ padding: '14px 10px', color: shift.check_out ? '#10b981' : '#64748b' }}>
-                                                        {shift.check_out ? formatDateTime(shift.check_out) : 'N/A'}
+                                                        {shift.check_out ? formatDateTime(shift.check_out, language === 'vi' ? 'vi-VN' : 'en-US') : 'N/A'}
                                                     </td>
                                                     <td style={{ padding: '14px 10px' }}>
                                                         {getStatusBadge(shift.status)}
@@ -508,7 +513,7 @@ const AttendanceCalculator = () => {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                 <Clock size={24} color="#f59e0b" />
-                                <h3 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Chi tiết tăng ca</h3>
+                                <h3 style={{ fontSize: '1.25rem', fontWeight: 700 }}>{t('overtime_detail')}</h3>
                             </div>
                             <button
                                 onClick={() => setShowOvertimeModal(false)}
@@ -526,7 +531,7 @@ const AttendanceCalculator = () => {
 
                         {selectedOvertimeSessions.length === 0 ? (
                             <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
-                                Không có dữ liệu tăng ca
+                                {t('no_overtime_data')}
                             </div>
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -544,10 +549,10 @@ const AttendanceCalculator = () => {
                                         }}>
                                             <div>
                                                 <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '4px' }}>
-                                                    Khoảng thời gian #{idx + 1}
+                                                    {t('overtime_session')} #{idx + 1}
                                                 </div>
                                                 <div style={{ fontWeight: 600, color: '#cbd5e1' }}>
-                                                    {formatDateTime(session.start)} → {formatDateTime(session.end)}
+                                                    {formatDateTime(session.start, language === 'vi' ? 'vi-VN' : 'en-US')} → {formatDateTime(session.end, language === 'vi' ? 'vi-VN' : 'en-US')}
                                                 </div>
                                             </div>
                                             <div style={{
@@ -574,7 +579,7 @@ const AttendanceCalculator = () => {
                                     textAlign: 'center'
                                 }}>
                                     <div style={{ fontSize: '0.875rem', color: '#94a3b8', marginBottom: '4px' }}>
-                                        Tổng thời gian tăng ca
+                                        {t('total_overtime')}
                                     </div>
                                     <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f59e0b' }}>
                                         {formatOvertime(selectedOvertimeSessions.reduce((sum, s) => sum + s.minutes, 0))}
