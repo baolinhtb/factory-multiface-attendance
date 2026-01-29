@@ -9,9 +9,19 @@ import database
 from PIL import Image, ImageDraw, ImageFont
 
 class CameraStream:
-    def __init__(self, src=0):
+    def __init__(self):
+        # Load settings from DB
+        self.settings = database.get_settings()
+        src = self.settings.get('camera_src', '0')
+        try:
+            src = int(src)
+        except:
+            pass
+            
         # Initialize Camera
         self.capture = cv2.VideoCapture(src)
+        self.current_src = src
+        
         if not self.capture.isOpened():
             print(f"ERROR: Could not open video source {src}")
         else:
@@ -48,6 +58,30 @@ class CameraStream:
         self.known_embeddings = [u['embedding'] for u in users]
         self.known_names = [u['name'] for u in users]
         print(f"Loaded {len(self.known_embeddings)} users from database.")
+
+    def update_settings(self):
+        """Fetch updated settings from DB."""
+        new_settings = database.get_settings()
+        
+        # Check if camera source changed
+        new_src = new_settings.get('camera_src', '0')
+        try:
+            new_src = int(new_src)
+        except:
+            pass
+            
+        if new_src != self.current_src:
+            print(f"Changing camera source to {new_src}...")
+            with self.lock:
+                self.capture.release()
+                self.capture = cv2.VideoCapture(new_src)
+                self.current_src = new_src
+                if not self.capture.isOpened():
+                    print(f"ERROR: Could not open new video source {new_src}")
+                else:
+                    print(f"SUCCESS: New video source {new_src} opened")
+        
+        self.settings = new_settings
 
     def start(self):
         if self.is_running:
@@ -95,6 +129,8 @@ class CameraStream:
         faces = self.app.get(frame_to_process)
         has_unknown = False
         identified_names_in_frame = []
+        
+        show_age_gender = self.settings.get('show_age_gender', 'true') == 'true'
 
         for face in faces:
             bbox = face.bbox.astype(int)
@@ -128,7 +164,12 @@ class CameraStream:
             
             # Draw label with Age, Gender and Unicode support
             display_name = f"{name}" if name != "Chưa nhận diện" else "Không rõ"
-            label = f"{display_name} | {gender_str}, {age}t"
+            
+            if show_age_gender:
+                label = f"{display_name} | {gender_str}, {age}t"
+            else:
+                label = display_name
+                
             processed_frame = self.draw_unicode_text(processed_frame, label, (bbox[0], bbox[1] - 30), color_rgb, 20)
             
             # Sub-label for confidence score
@@ -138,34 +179,34 @@ class CameraStream:
         # Phone Detection Time Tracking
         now = time.time()
         elapsed = now - self.last_frame_time
-        # Cap elapsed to avoid jumps if the stream was paused
         if elapsed > 0.5: elapsed = 0.033 
         self.last_frame_time = now
 
-        # Phone Detection with higher sensitivity (lower confidence threshold)
+        # Phone Detection
         has_phone = False
-        yolo_results = self.yolo(frame_to_process, conf=0.15, verbose=False)
-        for result in yolo_results:
-            for box in result.boxes:
-                # cls 67 is cell phone in COCO
-                if int(box.cls[0]) == 67:
-                    has_phone = True
-                    b = box.xyxy[0].cpu().numpy().astype(int)
-                    conf = box.conf[0].item()
-                    cv2.rectangle(processed_frame, (b[0], b[1]), (b[2], b[3]), (255, 165, 0), 2)
-                    label = f"Điện thoại ({conf:.2f})"
-                    processed_frame = self.draw_unicode_text(processed_frame, label, (b[0], b[1] - 25), (255, 165, 0), 18)
+        enable_phone_det = self.settings.get('enable_phone_det', 'true') == 'true'
+        
+        if enable_phone_det:
+            yolo_results = self.yolo(frame_to_process, conf=0.15, verbose=False)
+            for result in yolo_results:
+                for box in result.boxes:
+                    if int(box.cls[0]) == 67: # cell phone
+                        has_phone = True
+                        b = box.xyxy[0].cpu().numpy().astype(int)
+                        conf = box.conf[0].item()
+                        cv2.rectangle(processed_frame, (b[0], b[1]), (b[2], b[3]), (255, 165, 0), 2)
+                        label = f"Điện thoại ({conf:.2f})"
+                        processed_frame = self.draw_unicode_text(processed_frame, label, (b[0], b[1] - 25), (255, 165, 0), 18)
 
-        # Update stats if phone detected
-        if has_phone:
-            # Attribute to the first identified person, or "Người lạ", or "Hệ thống"
-            target_name = "Người lạ"
-            if identified_names_in_frame:
-                target_name = identified_names_in_frame[0]
-            elif not faces:
-                target_name = "Chưa rõ chủ thể"
-            
-            database.update_phone_usage(target_name, elapsed)
+            # Update stats if phone detected
+            if has_phone:
+                target_name = "Người lạ"
+                if identified_names_in_frame:
+                    target_name = identified_names_in_frame[0]
+                elif not faces:
+                    target_name = "Chưa rõ chủ thể"
+                
+                database.update_phone_usage(target_name, elapsed)
 
         return processed_frame, has_unknown, has_phone
 

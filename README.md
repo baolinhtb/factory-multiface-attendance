@@ -5,22 +5,23 @@ A comprehensive AI monitoring system designed for factory environments. It track
 ## 🚀 Key Features
 
 - **Multi-Face Recognition**: Real-time identification of registered employees using **InsightFace**.
+- **Secured Web Portal**: Modern **React + TypeScript** dashboard with JWT authentication.
+- **RBAC (Role-Based Access Control)**:
+  - **Admin**: Full control over user management, system settings, and camera configuration.
+  - **General User**: Access to live monitoring and attendance statistics.
+- **Dynamic System Settings**: Change camera sources (USB/RTSP) and toggle AI features (Phone Detection, Age/Gender display, Alarm sound) via the UI.
 - **Demographic Analysis**: Automatic prediction of **Age** and **Gender** for every detected face.
-- **Workplace Violation Monitoring**: 
-  - **Phone Detection**: Detects mobile phone usage using **YOLOv8** Nano model.
-  - **Unknown Person Alerts**: Identifies non-registered individuals in restricted areas.
-- **Violation Tracking**: Records total duration of phone usage per user in a persistent statistics dashboard.
-- **Real-time Alerts**: 
-  - Adaptive audio warnings (Web Audio API) triggered by violations.
-  - Visual cues (red flashing borders and on-video labels).
-- **Localized UI**: Modern web dashboard with full **Vietnamese** support and Unicode text overlays on video stream.
-- **Lightweight Database**: Uses SQLite for employee profiles and cumulative detection statistics.
+- **Violation Monitoring**: 
+  - **Phone Detection**: Detects mobile phone usage using **YOLOv8**.
+  - **Unknown Person Alerts**: Identifies non-registered individuals.
+- **Violation Tracking**: Persistent statistics of cumulative violation time per user.
+- **Real-time Alerts**: Adaptive audio warnings and visual indicators.
 
 ## 🛠 Tech Stack
 
-- **Backend**: Python 3.10+, FastAPI, OpenCV, InsightFace, YOLOv8 (Ultralytics).
-- **Frontend**: HTML5, Vanilla CSS3, JavaScript (WebSocket, Web Audio API).
-- **Database**: SQLite.
+- **Backend**: Python 3.10+, FastAPI, PyJWT, passlib[bcrypt], OpenCV, InsightFace, YOLOv8.
+- **Frontend**: React 18, TypeScript, Vite, Lucide Icons, Axios.
+- **Database**: SQLite (Centralized storage for users, settings, and face embeddings).
 - **Image Processing**: Pillow (PIL) for high-quality Unicode text rendering on video frames.
 
 ## 📋 Prerequisites
