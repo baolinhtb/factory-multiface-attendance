@@ -260,8 +260,13 @@ async def employee_attendance(
     return attendance_calculator.calculate_attendance_dynamic(employee_id, start_date, end_date)
 
 @app.get("/employees/{employee_id}/phone")
-async def employee_phone_logs(employee_id: str, current_user: dict = Depends(auth.get_current_user)):
-    return database.get_employee_phone_logs(employee_id)
+async def employee_phone_logs(
+    employee_id: str, 
+    start_date: Optional[str] = None, 
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(auth.get_current_user)
+):
+    return database.get_employee_phone_logs(employee_id, start_date, end_date)
 
 @app.get("/daily-stats")
 async def daily_stats(date: str = None, current_user: dict = Depends(auth.get_current_user)):
@@ -425,6 +430,31 @@ async def calculate_attendance_all(
         "processed": len(employees),
         "results": results
     }
+
+# Date Filter Presets Endpoints
+@app.get("/date-filter-presets")
+async def get_date_filters(current_user: dict = Depends(auth.get_current_user)):
+    """Get all active date filter presets for dropdown"""
+    return database.get_active_date_filter_presets()
+
+@app.get("/date-filter-presets/all")
+async def get_all_date_filters(admin: dict = Depends(auth.get_admin_user)):
+    """Get ALL date filter presets for settings management (admin only)"""
+    return database.get_all_date_filter_presets()
+
+class DateFilterPresetUpdate(BaseModel):
+    label: str
+    is_active: int
+
+@app.put("/date-filter-presets/{preset_id}")
+async def update_filter_preset(
+    preset_id: int,
+    data: DateFilterPresetUpdate,
+    admin: dict = Depends(auth.get_admin_user)
+):
+    """Update a date filter preset (admin only)"""
+    database.update_date_filter_preset(preset_id, data.label, data.is_active)
+    return {"message": "Filter preset updated successfully"}
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

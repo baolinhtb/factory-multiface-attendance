@@ -1,74 +1,50 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { ArrowLeft, User, Phone, Clock, Calendar, CheckCircle, AlertCircle, Camera } from 'lucide-react';
+import { ArrowLeft, User, Phone, Clock, Calendar, CheckCircle, AlertCircle, Camera, Edit2, X, Save } from 'lucide-react';
+import DateFilter from '../components/DateFilter';
 
 const EmployeeDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [employee, setEmployee] = useState<any>(null);
+    const [originalEmployee, setOriginalEmployee] = useState<any>(null);
     const [attendance, setAttendance] = useState<any[]>([]);
     const [phoneLogs, setPhoneLogs] = useState<any[]>([]);
     const [configs, setConfigs] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
 
-    // Filter states
-    const [filterType, setFilterType] = useState('today');
+    // Date filter states (managed by DateFilter component)
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
 
-    useEffect(() => {
-        const now = new Date();
-        // Fix: Use local date parts to avoid UTC shift
-        const formatDate = (date: Date) => {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        };
-
-        if (filterType === 'today') {
-            setStartDate(formatDate(now));
-            setEndDate(formatDate(now));
-        } else if (filterType === 'yesterday') {
-            const yesterday = new Date(now);
-            yesterday.setDate(now.getDate() - 1);
-            setStartDate(formatDate(yesterday));
-            setEndDate(formatDate(yesterday));
-        } else if (filterType === 'current_month') {
-            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-            const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-            setStartDate(formatDate(firstDay));
-            setEndDate(formatDate(lastDay));
-        } else if (filterType === 'last_month') {
-            const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-            const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);
-            setStartDate(formatDate(firstDay));
-            setEndDate(formatDate(lastDay));
-        } else if (filterType === 'last_7_days') {
-            const last7 = new Date(now);
-            last7.setDate(now.getDate() - 6);
-            setStartDate(formatDate(last7));
-            setEndDate(formatDate(now));
-        }
-    }, [filterType]);
+    const handleDateChange = useCallback((start: string, end: string) => {
+        setStartDate(start);
+        setEndDate(end);
+    }, []);
 
 
     const fetchData = async () => {
         try {
             let attendanceQuery = `/employees/${id}/attendance`;
+            let phoneQuery = `/employees/${id}/phone`;
+
             if (startDate && endDate) {
-                attendanceQuery += `?start_date=${startDate}&end_date=${endDate}`;
+                const dateParams = `?start_date=${startDate}&end_date=${endDate}`;
+                attendanceQuery += dateParams;
+                phoneQuery += dateParams;
             }
 
             const [empRes, attRes, phoneRes, configRes] = await Promise.all([
                 api.get(`/employees/${id}`),
                 api.get(attendanceQuery),
-                api.get(`/employees/${id}/phone`),
+                api.get(phoneQuery),
                 api.get('/shift-configs')
             ]);
             setEmployee(empRes.data);
+            setOriginalEmployee(empRes.data);
             setAttendance(attRes.data);
             setPhoneLogs(phoneRes.data);
             setConfigs(configRes.data);
@@ -79,11 +55,26 @@ const EmployeeDetail = () => {
         }
     };
 
+    // Initial data fetch on mount
+    useEffect(() => {
+        fetchData();
+    }, [id]);
+
+    // Refetch when dates change (from DateFilter component)
     useEffect(() => {
         if (startDate && endDate) {
             fetchData();
         }
-    }, [id, startDate, endDate]);
+    }, [startDate, endDate]);
+
+    const handleEdit = () => {
+        setIsEditing(true);
+    };
+
+    const handleCancel = () => {
+        setEmployee({ ...originalEmployee });
+        setIsEditing(false);
+    };
 
     const handleUpdate = async () => {
         setUpdating(true);
@@ -95,7 +86,8 @@ const EmployeeDetail = () => {
                 assigned_config_id: employee.assigned_config_id ? parseInt(employee.assigned_config_id) : null
             });
             alert("Cập nhật thành công!");
-            fetchData();
+            await fetchData();
+            setIsEditing(false);
         } catch (e) {
             alert("Lỗi khi cập nhật nhân viên");
         } finally {
@@ -295,72 +287,155 @@ const EmployeeDetail = () => {
                             disabled={updating}
                         />
                     </div>
-                    <input
-                        type="text"
-                        value={employee.full_name}
-                        onChange={(e) => setEmployee({ ...employee, full_name: e.target.value })}
-                        style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '5px', textAlign: 'center', background: 'transparent', border: 'none', borderBottom: '1px solid #334155', color: 'white', width: '100%', padding: '5px' }}
-                    />
+                    {isEditing ? (
+                        <input
+                            type="text"
+                            value={employee.full_name}
+                            onChange={(e) => setEmployee({ ...employee, full_name: e.target.value })}
+                            style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '5px', textAlign: 'center', background: '#0f172a', border: '1px solid #3b82f6', borderRadius: '6px', color: 'white', width: '100%', padding: '8px' }}
+                        />
+                    ) : (
+                        <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '5px', textAlign: 'center', color: 'white' }}>
+                            {employee.full_name}
+                        </h3>
+                    )}
                     <p style={{ color: '#3b82f6', fontWeight: 600, fontSize: '0.9rem', marginBottom: '20px' }}>ID Nhân viên: {employee.employee_id}</p>
 
                     <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '12px', borderTop: '1px solid #334155', paddingTop: '20px' }}>
                         <div>
                             <label style={{ color: '#94a3b8', fontSize: '0.75rem', display: 'block', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Chức vụ:</label>
-                            <input
-                                type="text"
-                                value={employee.position || ''}
-                                onChange={(e) => setEmployee({ ...employee, position: e.target.value })}
-                                placeholder="N/A"
-                                style={{ width: '100%', padding: '10px', background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', color: 'white' }}
-                            />
+                            {isEditing ? (
+                                <input
+                                    type="text"
+                                    value={employee.position || ''}
+                                    onChange={(e) => setEmployee({ ...employee, position: e.target.value })}
+                                    placeholder="N/A"
+                                    style={{ width: '100%', padding: '10px', background: '#0f172a', border: '1px solid #3b82f6', borderRadius: '6px', color: 'white' }}
+                                />
+                            ) : (
+                                <p style={{ padding: '10px', color: '#cbd5e1', fontSize: '0.95rem' }}>
+                                    {employee.position || 'N/A'}
+                                </p>
+                            )}
                         </div>
                         <div>
                             <label style={{ color: '#94a3b8', fontSize: '0.75rem', display: 'block', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Phòng ban:</label>
-                            <input
-                                type="text"
-                                value={employee.department || ''}
-                                onChange={(e) => setEmployee({ ...employee, department: e.target.value })}
-                                placeholder="N/A"
-                                style={{ width: '100%', padding: '10px', background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', color: 'white' }}
-                            />
+                            {isEditing ? (
+                                <input
+                                    type="text"
+                                    value={employee.department || ''}
+                                    onChange={(e) => setEmployee({ ...employee, department: e.target.value })}
+                                    placeholder="N/A"
+                                    style={{ width: '100%', padding: '10px', background: '#0f172a', border: '1px solid #3b82f6', borderRadius: '6px', color: 'white' }}
+                                />
+                            ) : (
+                                <p style={{ padding: '10px', color: '#cbd5e1', fontSize: '0.95rem' }}>
+                                    {employee.department || 'N/A'}
+                                </p>
+                            )}
                         </div>
                         <div>
                             <label style={{ color: '#94a3b8', fontSize: '0.75rem', display: 'block', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Chế độ làm việc:</label>
-                            <select
-                                value={employee.assigned_config_id || ''}
-                                onChange={(e) => setEmployee({ ...employee, assigned_config_id: e.target.value })}
-                                style={{ width: '100%', padding: '10px', background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', color: 'white' }}
-                            >
-                                <option value="">Hệ thống tự động</option>
-                                {configs.map(c => (
-                                    <option key={c.id} value={c.id}>{c.name}</option>
-                                ))}
-                            </select>
+                            {isEditing ? (
+                                <select
+                                    value={employee.assigned_config_id || ''}
+                                    onChange={(e) => setEmployee({ ...employee, assigned_config_id: e.target.value })}
+                                    style={{ width: '100%', padding: '10px', background: '#0f172a', border: '1px solid #3b82f6', borderRadius: '6px', color: 'white', cursor: 'pointer' }}
+                                >
+                                    <option value="">Hệ thống tự động</option>
+                                    {configs.map(c => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                </select>
+                            ) : (
+                                <p style={{ padding: '10px', color: '#cbd5e1', fontSize: '0.95rem' }}>
+                                    {employee.assigned_config_id
+                                        ? configs.find(c => c.id === parseInt(employee.assigned_config_id))?.name
+                                        : 'Hệ thống tự động'}
+                                </p>
+                            )}
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginTop: '8px', padding: '0 4px' }}>
                             <span style={{ color: '#94a3b8' }}>Ngày gia nhập:</span>
                             <span style={{ color: '#cbd5e1', fontWeight: 500 }}>{new Date(employee.created_at).toLocaleDateString('vi-VN')}</span>
                         </div>
 
-                        <button
-                            onClick={handleUpdate}
-                            disabled={updating}
-                            style={{
-                                marginTop: '10px',
-                                padding: '12px',
-                                background: '#3b82f6',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '8px',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                opacity: updating ? 0.7 : 1,
-                                borderBottom: '3px solid #1d4ed8'
-                            }}
-                        >
-                            {updating ? 'Đang cập nhật...' : 'Cập nhật hồ sơ'}
-                        </button>
+                        {isEditing ? (
+                            <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                                <button
+                                    onClick={handleUpdate}
+                                    disabled={updating}
+                                    style={{
+                                        flex: 1,
+                                        padding: '12px',
+                                        background: '#10b981',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '8px',
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s',
+                                        opacity: updating ? 0.7 : 1,
+                                        borderBottom: '3px solid #059669',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '6px'
+                                    }}
+                                >
+                                    <Save size={16} />
+                                    {updating ? 'Đang lưu...' : 'Lưu'}
+                                </button>
+                                <button
+                                    onClick={handleCancel}
+                                    disabled={updating}
+                                    style={{
+                                        flex: 1,
+                                        padding: '12px',
+                                        background: '#64748b',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '8px',
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s',
+                                        opacity: updating ? 0.7 : 1,
+                                        borderBottom: '3px solid #475569',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '6px'
+                                    }}
+                                >
+                                    <X size={16} />
+                                    Hủy
+                                </button>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={handleEdit}
+                                style={{
+                                    marginTop: '10px',
+                                    padding: '12px',
+                                    background: '#3b82f6',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '8px',
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s',
+                                    borderBottom: '3px solid #1d4ed8',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '8px',
+                                    width: '100%'
+                                }}
+                            >
+                                <Edit2 size={16} />
+                                Chỉnh sửa hồ sơ
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -427,53 +502,8 @@ const EmployeeDetail = () => {
                                     <h3 style={{ fontWeight: 700, fontSize: '1.1rem' }}>Lịch sử điểm danh</h3>
                                 </div>
 
-                                {/* Filter Controls */}
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                                    <select
-                                        value={filterType}
-                                        onChange={(e) => setFilterType(e.target.value)}
-                                        style={{
-                                            background: '#334155',
-                                            color: 'white',
-                                            border: '1px solid #475569',
-                                            padding: '6px 12px',
-                                            borderRadius: '6px',
-                                            outline: 'none',
-                                            fontSize: '0.9rem'
-                                        }}
-                                    >
-                                        <option value="today">Hôm nay</option>
-                                        <option value="yesterday">Hôm qua</option>
-                                        <option value="current_month">Tháng này</option>
-                                        <option value="last_month">Tháng trước</option>
-                                        <option value="last_7_days">7 ngày qua</option>
-                                        <option value="custom">Tùy chỉnh</option>
-                                    </select>
-
-                                    {filterType === 'custom' && (
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                            <input
-                                                type="date"
-                                                value={startDate}
-                                                onChange={(e) => setStartDate(e.target.value)}
-                                                style={{ background: '#334155', color: 'white', border: '1px solid #475569', padding: '5px', borderRadius: '4px' }}
-                                            />
-                                            <span>-</span>
-                                            <input
-                                                type="date"
-                                                value={endDate}
-                                                onChange={(e) => setEndDate(e.target.value)}
-                                                style={{ background: '#334155', color: 'white', border: '1px solid #475569', padding: '5px', borderRadius: '4px' }}
-                                            />
-                                            <button
-                                                onClick={fetchData}
-                                                style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}
-                                            >
-                                                Áp dụng
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
+                                {/* Date Filter */}
+                                <DateFilter onDateChange={handleDateChange} />
                             </div>
                             <div style={{ overflowX: 'auto' }}>
                                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>

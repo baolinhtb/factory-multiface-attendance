@@ -134,6 +134,20 @@ def init_db():
             );
         """)
         
+        print("[DB] Creating 'date_filter_presets' table...")
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS date_filter_presets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                value TEXT NOT NULL UNIQUE,
+                label TEXT NOT NULL,
+                days_offset INTEGER NOT NULL,
+                is_range INTEGER DEFAULT 0,
+                is_custom INTEGER DEFAULT 0,
+                display_order INTEGER DEFAULT 0,
+                is_active INTEGER DEFAULT 1
+            );
+        """)
+        
         # Default settings
         print("[DB] Inserting default settings...")
         default_settings = [
@@ -144,6 +158,21 @@ def init_db():
             ('overtime_enabled', 'true')
         ]
         cur.executemany("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)", default_settings)
+        
+        # Default date filter presets
+        print("[DB] Initializing default date filter presets...")
+        default_filters = [
+            ('today', 'Hôm nay', 0, 0, 0, 1, 1),
+            ('yesterday', 'Hôm qua', -1, 0, 0, 2, 1),
+            ('week', 'Tuần này', -7, 1, 0, 3, 1),
+            ('month', 'Tháng này', -30, 1, 0, 4, 1),
+            ('custom', 'Tùy chọn', 0, 0, 1, 5, 1)
+        ]
+        cur.executemany("""
+            INSERT OR IGNORE INTO date_filter_presets 
+            (value, label, days_offset, is_range, is_custom, display_order, is_active)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, default_filters)
 
         # Migration and Defaults
         try:
@@ -642,15 +671,24 @@ def get_employee_attendance_logs(employee_id: str, start_date: str = None, end_d
         "shift_start_time": r[6]
     } for r in rows]
 
-def get_employee_phone_logs(employee_id: str):
+def get_employee_phone_logs(employee_id: str, start_date: str = None, end_date: str = None):
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("""
+    
+    query = """
         SELECT date, total_seconds 
         FROM daily_phone_usage 
-        WHERE employee_id = ? 
-        ORDER BY date DESC
-    """, (employee_id,))
+        WHERE employee_id = ?
+    """
+    params = [employee_id]
+    
+    if start_date and end_date:
+        query += " AND date BETWEEN ? AND ?"
+        params.extend([start_date, end_date])
+        
+    query += " ORDER BY date DESC"
+    
+    cur.execute(query, params)
     rows = cur.fetchall()
     conn.close()
     return [{"date": r[0], "phone_seconds": r[1]} for r in rows]
@@ -775,3 +813,61 @@ def get_employee_presence_logs(employee_id: str = None, start_date: str = None, 
         "timestamp": r[3],
         "event_type": r[4]
     } for r in rows]
+
+# Date Filter Presets Functions
+def get_active_date_filter_presets():
+    """Get all active date filter presets ordered by display_order"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT id, value, label, days_offset, is_range, is_custom, display_order, is_active
+        FROM date_filter_presets
+        WHERE is_active = 1
+        ORDER BY display_order ASC
+    """)
+    rows = cur.fetchall()
+    conn.close()
+    return [{
+        "id": r[0],
+        "value": r[1],
+        "label": r[2],
+        "days_offset": r[3],
+        "is_range": r[4],
+        "is_custom": r[5],
+        "display_order": r[6],
+        "is_active": r[7]
+    } for r in rows]
+
+def get_all_date_filter_presets():
+    """Get ALL date filter presets (for settings management)"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT id, value, label, days_offset, is_range, is_custom, display_order, is_active
+        FROM date_filter_presets
+        ORDER BY display_order ASC
+    """)
+    rows = cur.fetchall()
+    conn.close()
+    return [{
+        "id": r[0],
+        "value": r[1],
+        "label": r[2],
+        "days_offset": r[3],
+        "is_range": r[4],
+        "is_custom": r[5],
+        "display_order": r[6],
+        "is_active": r[7]
+    } for r in rows]
+
+def update_date_filter_preset(preset_id: int, label: str, is_active: int):
+    """Update a date filter preset's label and/or active status"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE date_filter_presets
+        SET label = ?, is_active = ?
+        WHERE id = ?
+    """, (label, is_active, preset_id))
+    conn.commit()
+    conn.close()

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Calculator, Users, Calendar, CheckCircle, X, Clock } from 'lucide-react';
 import api from '../services/api';
+import DateFilter from '../components/DateFilter';
 
 // Helper functions
 const getLocalDateString = (date: Date = new Date()) => {
@@ -61,8 +62,6 @@ const getStatusBadge = (status: string) => {
 const AttendanceCalculator = () => {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<any>(null);
-    const [selectedDate, setSelectedDate] = useState<string>(getLocalDateString());
-    const [filterType, setFilterType] = useState<string>('today');
     const [startDate, setStartDate] = useState<string>(getLocalDateString());
     const [endDate, setEndDate] = useState<string>(getLocalDateString());
 
@@ -71,40 +70,10 @@ const AttendanceCalculator = () => {
     const [showOvertimeModal, setShowOvertimeModal] = useState(false);
     const [selectedOvertimeSessions, setSelectedOvertimeSessions] = useState<any[]>([]);
 
-    // Handle Filter Change
-    const handleFilterChange = (type: string) => {
-        setFilterType(type);
-        const today = new Date();
-        let start = new Date(today);
-        let end = new Date(today);
-
-        switch (type) {
-            case 'today':
-                break; // Start/End = Today
-            case 'yesterday':
-                start.setDate(today.getDate() - 1);
-                end.setDate(today.getDate() - 1);
-                break;
-            case 'this_week':
-                const day = today.getDay() || 7; // Get current day number, converting Sun(0) to 7
-                if (day !== 1) start.setHours(-24 * (day - 1)); // Go back to Monday
-                // End is today
-                break;
-            case 'this_month':
-                start.setDate(1); // 1st of month
-                break;
-            case 'last_7_days':
-                start.setDate(today.getDate() - 6);
-                break;
-            case 'custom':
-                // Do not auto-set dates
-                return;
-        }
-
-        if (type !== 'custom') {
-            setStartDate(getLocalDateString(start));
-            setEndDate(getLocalDateString(end));
-        }
+    // Date change callback from DateFilter component
+    const handleDateChange = (newStartDate: string, newEndDate: string) => {
+        setStartDate(newStartDate);
+        setEndDate(newEndDate);
     };
 
     const handleCalculate = async () => {
@@ -239,74 +208,8 @@ const AttendanceCalculator = () => {
                         </div>
                     )}
 
-                    {/* Date Filters */}
-                    <div>
-                        <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px' }}>
-                            Khoảng thời gian
-                        </label>
-                        <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-                            <select
-                                value={filterType}
-                                onChange={(e) => handleFilterChange(e.target.value)}
-                                style={{
-                                    flex: 1,
-                                    padding: '10px',
-                                    background: '#0f172a',
-                                    border: '1px solid #334155',
-                                    borderRadius: '8px',
-                                    color: 'white'
-                                }}
-                            >
-                                <option value="today">Hôm nay</option>
-                                <option value="yesterday">Hôm qua</option>
-                                <option value="this_week">Tuần này</option>
-                                <option value="last_7_days">7 ngày qua</option>
-                                <option value="this_month">Tháng này</option>
-                                <option value="custom">Tùy chọn...</option>
-                            </select>
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                            <div>
-                                <label style={{ display: 'block', color: '#64748b', fontSize: '0.75rem', marginBottom: '4px' }}>Từ ngày</label>
-                                <input
-                                    type="date"
-                                    value={startDate}
-                                    onChange={(e) => {
-                                        setStartDate(e.target.value);
-                                        setFilterType('custom');
-                                    }}
-                                    style={{
-                                        width: '100%',
-                                        padding: '10px',
-                                        background: '#0f172a',
-                                        border: '1px solid #334155',
-                                        borderRadius: '8px',
-                                        color: 'white'
-                                    }}
-                                />
-                            </div>
-                            <div>
-                                <label style={{ display: 'block', color: '#64748b', fontSize: '0.75rem', marginBottom: '4px' }}>Đến ngày</label>
-                                <input
-                                    type="date"
-                                    value={endDate}
-                                    onChange={(e) => {
-                                        setEndDate(e.target.value);
-                                        setFilterType('custom');
-                                    }}
-                                    style={{
-                                        width: '100%',
-                                        padding: '10px',
-                                        background: '#0f172a',
-                                        border: '1px solid #334155',
-                                        borderRadius: '8px',
-                                        color: 'white'
-                                    }}
-                                />
-                            </div>
-                        </div>
-                    </div>
+                    {/* Date Filter Component */}
+                    <DateFilter onDateChange={handleDateChange} initialFilterValue="today" />
 
                     {/* Calculate Button */}
                     <button

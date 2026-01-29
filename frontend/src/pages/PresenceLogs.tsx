@@ -1,17 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Calendar, Clock, Users, Filter, Download } from 'lucide-react';
 import api from '../services/api';
+import DateFilter from '../components/DateFilter';
 
 const PresenceLogs = () => {
     const [logs, setLogs] = useState<any[]>([]);
     const [employees, setEmployees] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
 
-    // Filters
     const [selectedEmployee, setSelectedEmployee] = useState<string>('');
-    const [filterType, setFilterType] = useState<'day' | 'month' | 'range'>('day');
-    const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
-    const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().slice(0, 7));
     const [startDate, setStartDate] = useState<string>('');
     const [endDate, setEndDate] = useState<string>('');
 
@@ -38,17 +35,7 @@ const PresenceLogs = () => {
                 params.employee_id = selectedEmployee;
             }
 
-            if (filterType === 'day') {
-                params.start_date = selectedDate;
-                params.end_date = selectedDate;
-            } else if (filterType === 'month') {
-                const year = parseInt(selectedMonth.split('-')[0]);
-                const month = parseInt(selectedMonth.split('-')[1]);
-                const firstDay = `${year}-${String(month).padStart(2, '0')}-01`;
-                const lastDay = new Date(year, month, 0).toISOString().split('T')[0];
-                params.start_date = firstDay;
-                params.end_date = lastDay;
-            } else if (filterType === 'range' && startDate && endDate) {
+            if (startDate && endDate) {
                 params.start_date = startDate;
                 params.end_date = endDate;
             }
@@ -60,6 +47,11 @@ const PresenceLogs = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleDateChange = (newStartDate: string, newEndDate: string) => {
+        setStartDate(newStartDate);
+        setEndDate(newEndDate);
     };
 
     const handleApplyFilter = () => {
@@ -143,112 +135,8 @@ const PresenceLogs = () => {
                         </select>
                     </div>
 
-                    {/* Filter Type */}
-                    <div>
-                        <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px' }}>
-                            Loại lọc
-                        </label>
-                        <select
-                            value={filterType}
-                            onChange={(e) => setFilterType(e.target.value as any)}
-                            style={{
-                                width: '100%',
-                                padding: '10px',
-                                background: '#0f172a',
-                                border: '1px solid #334155',
-                                borderRadius: '8px',
-                                color: 'white'
-                            }}
-                        >
-                            <option value="day">Theo ngày</option>
-                            <option value="month">Theo tháng</option>
-                            <option value="range">Khoảng thời gian</option>
-                        </select>
-                    </div>
-
-                    {/* Date Inputs based on filter type */}
-                    {filterType === 'day' && (
-                        <div>
-                            <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px' }}>
-                                Ngày
-                            </label>
-                            <input
-                                type="date"
-                                value={selectedDate}
-                                onChange={(e) => setSelectedDate(e.target.value)}
-                                style={{
-                                    width: '100%',
-                                    padding: '10px',
-                                    background: '#0f172a',
-                                    border: '1px solid #334155',
-                                    borderRadius: '8px',
-                                    color: 'white'
-                                }}
-                            />
-                        </div>
-                    )}
-
-                    {filterType === 'month' && (
-                        <div>
-                            <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px' }}>
-                                Tháng
-                            </label>
-                            <input
-                                type="month"
-                                value={selectedMonth}
-                                onChange={(e) => setSelectedMonth(e.target.value)}
-                                style={{
-                                    width: '100%',
-                                    padding: '10px',
-                                    background: '#0f172a',
-                                    border: '1px solid #334155',
-                                    borderRadius: '8px',
-                                    color: 'white'
-                                }}
-                            />
-                        </div>
-                    )}
-
-                    {filterType === 'range' && (
-                        <>
-                            <div>
-                                <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px' }}>
-                                    Từ ngày
-                                </label>
-                                <input
-                                    type="date"
-                                    value={startDate}
-                                    onChange={(e) => setStartDate(e.target.value)}
-                                    style={{
-                                        width: '100%',
-                                        padding: '10px',
-                                        background: '#0f172a',
-                                        border: '1px solid #334155',
-                                        borderRadius: '8px',
-                                        color: 'white'
-                                    }}
-                                />
-                            </div>
-                            <div>
-                                <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.875rem', marginBottom: '8px' }}>
-                                    Đến ngày
-                                </label>
-                                <input
-                                    type="date"
-                                    value={endDate}
-                                    onChange={(e) => setEndDate(e.target.value)}
-                                    style={{
-                                        width: '100%',
-                                        padding: '10px',
-                                        background: '#0f172a',
-                                        border: '1px solid #334155',
-                                        borderRadius: '8px',
-                                        color: 'white'
-                                    }}
-                                />
-                            </div>
-                        </>
-                    )}
+                    {/* Date Filter Component */}
+                    <DateFilter onDateChange={handleDateChange} initialFilterValue="today" />
                 </div>
 
                 <button
