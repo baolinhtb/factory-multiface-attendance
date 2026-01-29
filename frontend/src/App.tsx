@@ -7,6 +7,7 @@ import EmployeeManagement from './pages/EmployeeManagement';
 import EmployeeDetail from './pages/EmployeeDetail';
 import Settings from './pages/Settings';
 import ShiftManagement from './pages/ShiftManagement';
+import PresenceLogs from './pages/PresenceLogs';
 import Layout from './components/Layout';
 import api from './services/api';
 
@@ -68,6 +69,7 @@ function App() {
             <Layout currentUser={currentUser}>
                 <Routes>
                     <Route path="/" element={<Dashboard />} />
+                    <Route path="/presence-logs" element={<PresenceLogs />} />
                     <Route path="/employees/:id" element={<EmployeeDetail />} />
                     {currentUser?.role === 'admin' && (
                         <>

@@ -274,5 +274,17 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         pass
 
+# Employee Presence Logs Endpoints
+@app.get("/presence-logs")
+async def get_presence_logs(
+    employee_id: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: dict = Depends(auth.get_current_user)
+):
+    """Get employee presence logs with optional filters"""
+    logs = database.get_employee_presence_logs(employee_id, start_date, end_date)
+    return logs
+
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

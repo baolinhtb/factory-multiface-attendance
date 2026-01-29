@@ -59,6 +59,8 @@ class CameraStream:
         self.known_employee_ids = [u['id'] for u in employees]
         self.known_names = [u['name'] for u in employees]
         self.last_attendance_log = {} # employee_id -> last_log_time
+        self.employee_presence = {} # employee_id -> last_seen_time
+        self.employee_presence_state = {} # employee_id -> 'entered' or 'left'
         print(f"Loaded {len(self.known_embeddings)} employees from database.")
 
     def update_settings(self):
@@ -154,8 +156,18 @@ class CameraStream:
                 has_unknown = True
             else:
                 identified_ids_in_frame.append(emp_id)
-                # Log attendance periodically (e.g., every 10 seconds)
+                
+                # Presence tracking - log enter/leave events
                 now_ts = time.time()
+                self.employee_presence[emp_id] = now_ts
+                
+                # Check if this is a new entry (not seen before or previously left)
+                if emp_id not in self.employee_presence_state or self.employee_presence_state[emp_id] == 'left':
+                    database.log_employee_presence(emp_id, 'enter')
+                    self.employee_presence_state[emp_id] = 'entered'
+                    print(f"[PRESENCE] {name} ({emp_id}) entered camera view")
+                
+                # Log attendance periodically (e.g., every 10 seconds)
                 if emp_id not in self.last_attendance_log or (now_ts - self.last_attendance_log[emp_id]) > 10:
                     database.log_attendance(emp_id)
                     self.last_attendance_log[emp_id] = now_ts
@@ -214,6 +226,23 @@ class CameraStream:
                         database.update_phone_usage(emp_id, elapsed)
                 # If no one identified but phone detected, we don't log to specific employee
                 # Optional: log to "Unknown" or just ignore
+        
+        # Check for employees who have left (not seen for 5 seconds)
+        current_time = time.time()
+        for emp_id, last_seen in list(self.employee_presence.items()):
+            if emp_id not in identified_ids_in_frame:
+                if current_time - last_seen > 5.0:  # Not seen for 5 seconds
+                    if emp_id in self.employee_presence_state and self.employee_presence_state[emp_id] == 'entered':
+                        # Find employee name for logging
+                        emp_name = "Unknown"
+                        try:
+                            idx = self.known_employee_ids.index(emp_id)
+                            emp_name = self.known_names[idx]
+                        except:
+                            pass
+                        database.log_employee_presence(emp_id, 'leave')
+                        self.employee_presence_state[emp_id] = 'left'
+                        print(f"[PRESENCE] {emp_name} ({emp_id}) left camera view")
 
         return processed_frame, has_unknown, has_phone
 

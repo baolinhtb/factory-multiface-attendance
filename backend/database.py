@@ -91,6 +91,17 @@ def init_db():
                 FOREIGN KEY(employee_id) REFERENCES employees(employee_id),
                 FOREIGN KEY(shift_id) REFERENCES shifts(id)
             );
+        """)        
+        
+        print("[DB] Creating 'employee_presence_logs' table...")
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS employee_presence_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                employee_id TEXT NOT NULL,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                event_type TEXT NOT NULL,  -- 'enter' or 'leave'
+                FOREIGN KEY(employee_id) REFERENCES employees(employee_id)
+            );
         """)
         
         print("[DB] Creating 'daily_phone_usage' table...")
@@ -653,3 +664,54 @@ def update_setting(key: str, value: str):
     cur.execute("UPDATE settings SET value = ? WHERE key = ?", (value, key))
     conn.commit()
     conn.close()
+
+# Employee Presence Logs Functions
+def log_employee_presence(employee_id: str, event_type: str):
+    """Log when employee enters or leaves camera view"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO employee_presence_logs (employee_id, timestamp, event_type)
+        VALUES (?, datetime('now', 'localtime'), ?)
+    """, (employee_id, event_type))
+    conn.commit()
+    conn.close()
+
+def get_employee_presence_logs(employee_id: str = None, start_date: str = None, end_date: str = None):
+    """Get presence logs with optional filters"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    query = """
+        SELECT pl.id, pl.employee_id, e.full_name, pl.timestamp, pl.event_type
+        FROM employee_presence_logs pl
+        LEFT JOIN employees e ON pl.employee_id = e.employee_id
+        WHERE 1=1
+    """
+    params = []
+    
+    if employee_id:
+        query += " AND pl.employee_id = ?"
+        params.append(employee_id)
+    
+    if start_date:
+        query += " AND DATE(pl.timestamp) >= ?"
+        params.append(start_date)
+    
+    if end_date:
+        query += " AND DATE(pl.timestamp) <= ?"
+        params.append(end_date)
+    
+    query += " ORDER BY pl.timestamp DESC"
+    
+    cur.execute(query, params)
+    rows = cur.fetchall()
+    conn.close()
+    
+    return [{
+        "id": r[0],
+        "employee_id": r[1],
+        "full_name": r[2],
+        "timestamp": r[3],
+        "event_type": r[4]
+    } for r in rows]
