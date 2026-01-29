@@ -8,11 +8,35 @@ import numpy as np
 import base64
 from typing import List
 
+from typing import List, Optional
+from pydantic import BaseModel
+
 from camera_stream import CameraStream
 import database
 import auth
 
 app = FastAPI()
+
+class EmployeeUpdate(BaseModel):
+    full_name: str
+    position: Optional[str] = None
+    department: Optional[str] = None
+    assigned_config_id: Optional[int] = None
+
+class ShiftConfigUpdate(BaseModel):
+    name: str
+    work_days: str = '1,1,1,1,1,1,0'
+    is_default: int = 0
+
+class ShiftUpdate(BaseModel):
+    config_id: int
+    name: str
+    start_time: str
+    end_time: str
+    late_grace_period: int = 0
+    early_grace_period: int = 0
+    checkin_start: str = "00:00"
+    checkout_end: str = "23:59"
 
 app.add_middleware(
     CORSMiddleware,
@@ -104,13 +128,29 @@ async def update_app_settings(settings: dict, admin: dict = Depends(auth.get_adm
     camera.update_settings()
     return {"message": "Settings updated"}
 
-# --- Face Attendance Endpoints ---
+# --- Employee & Attendance Endpoints ---
 
-@app.post("/register")
-async def register_face(name: str = Form(...), file: UploadFile = File(...), current_user: dict = Depends(auth.get_current_user)):
+@app.get("/employees")
+async def list_employees(current_user: dict = Depends(auth.get_current_user)):
+    return database.get_all_employees()
+
+@app.post("/employees")
+async def add_employee(
+    employee_id: str = Form(...),
+    full_name: str = Form(...),
+    position: str = Form(None),
+    department: str = Form(None),
+    assigned_config_id: str = Form(None),
+    file: UploadFile = File(...),
+    admin: dict = Depends(auth.get_admin_user)
+):
     contents = await file.read()
     nparr = np.frombuffer(contents, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    
+    selected_config = None
+    if assigned_config_id and assigned_config_id != 'None':
+        selected_config = int(assigned_config_id)
     
     if img is None:
         raise HTTPException(status_code=400, detail="Invalid image file")
@@ -123,15 +163,92 @@ async def register_face(name: str = Form(...), file: UploadFile = File(...), cur
     embedding = face.embedding
     
     try:
-        database.add_user(name, embedding)
+        database.add_employee(employee_id, full_name, embedding, position, department, selected_config)
         camera.reload_faces()
-        return {"status": "success", "message": f"User {name} registered successfully"}
+        return {"status": "success", "message": f"Employee {full_name} registered successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/employees/{employee_id}")
+async def employee_detail(employee_id: str, current_user: dict = Depends(auth.get_current_user)):
+    detail = database.get_employee_detail(employee_id)
+    if not detail:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    return detail
+
+@app.put("/employees/{employee_id}")
+async def update_employee(employee_id: str, data: EmployeeUpdate, admin: dict = Depends(auth.get_admin_user)):
+    database.update_employee(employee_id, data.full_name, data.position, data.department, data.assigned_config_id)
+    camera.reload_faces()
+    return {"message": "Employee updated"}
+
+@app.get("/employees/{employee_id}/attendance")
+async def employee_attendance(employee_id: str, current_user: dict = Depends(auth.get_current_user)):
+    return database.get_employee_attendance_logs(employee_id)
+
+@app.get("/employees/{employee_id}/phone")
+async def employee_phone_logs(employee_id: str, current_user: dict = Depends(auth.get_current_user)):
+    return database.get_employee_phone_logs(employee_id)
+
+@app.get("/daily-stats")
+async def daily_stats(date: str = None, current_user: dict = Depends(auth.get_current_user)):
+    return database.get_daily_stats(date)
+
+# --- Shift & Configuration Endpoints ---
+
+@app.get("/shift-configs")
+async def list_shift_configs(current_user: dict = Depends(auth.get_current_user)):
+    return database.get_shift_configs()
+
+@app.post("/shift-configs")
+async def create_shift_config(data: ShiftConfigUpdate, admin: dict = Depends(auth.get_admin_user)):
+    database.add_shift_config(data.name, data.is_default)
+    return {"message": "Shift configuration created"}
+
+@app.put("/shift-configs/{config_id}")
+async def update_shift_config(config_id: int, data: ShiftConfigUpdate, admin: dict = Depends(auth.get_admin_user)):
+    database.update_shift_config(config_id, data.name, data.work_days, data.is_default)
+    return {"message": "Shift configuration updated"}
+
+@app.delete("/shift-configs/{config_id}")
+async def delete_shift_config(config_id: int, admin: dict = Depends(auth.get_admin_user)):
+    success = database.delete_shift_config(config_id)
+    if not success:
+        raise HTTPException(status_code=400, detail="Cannot delete default configuration")
+    return {"message": "Shift configuration deleted"}
+
+@app.get("/shifts")
+async def list_shifts(config_id: int = None, current_user: dict = Depends(auth.get_current_user)):
+    return database.get_shifts(config_id)
+
+@app.post("/shifts")
+async def create_shift(shift_data: ShiftUpdate, admin: dict = Depends(auth.get_admin_user)):
+    database.add_shift(
+        shift_data.name, shift_data.start_time, shift_data.end_time,
+        shift_data.late_grace_period, shift_data.early_grace_period,
+        shift_data.checkin_start, shift_data.checkout_end,
+        shift_data.config_id
+    )
+    return {"message": "Shift created"}
+
+@app.put("/shifts/{shift_id}")
+async def update_shift(shift_id: int, shift_data: ShiftUpdate, admin: dict = Depends(auth.get_admin_user)):
+    database.update_shift(
+        shift_id, shift_data.name, shift_data.start_time, shift_data.end_time,
+        shift_data.late_grace_period, shift_data.early_grace_period,
+        shift_data.checkin_start, shift_data.checkout_end
+    )
+    return {"message": "Shift updated"}
+
+@app.delete("/shifts/{shift_id}")
+async def delete_shift(shift_id: int, admin: dict = Depends(auth.get_admin_user)):
+    database.delete_shift(shift_id)
+    return {"message": "Shift deleted"}
+
 @app.get("/stats")
-async def get_stats(current_user: dict = Depends(auth.get_current_user)):
-    return database.get_phone_stats()
+async def get_stats_deprecated(current_user: dict = Depends(auth.get_current_user)):
+    # Redirecting to new daily-stats or keeping for compatibility
+    return database.get_daily_stats()
 
 # --- Video Stream ---
 

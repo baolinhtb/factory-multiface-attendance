@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Settings, Shield } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, Shield, Clock } from 'lucide-react';
 
 interface User {
     username: string;
@@ -24,7 +24,9 @@ function Layout({ children, currentUser }: LayoutProps) {
 
     const navItems = [
         { path: '/', label: 'Tổng quan', icon: LayoutDashboard, adminOnly: false },
-        { path: '/users', label: 'Quản lý tài khoản', icon: Users, adminOnly: true },
+        { path: '/employees', label: 'Quản lý nhân viên', icon: Users, adminOnly: true },
+        { path: '/shift-configs', label: 'Quản lý ca làm việc', icon: Clock, adminOnly: true },
+        { path: '/users', label: 'Tài khoản hệ thống', icon: Shield, adminOnly: true },
         { path: '/settings', label: 'Cài đặt hệ thống', icon: Settings, adminOnly: true },
     ];
 

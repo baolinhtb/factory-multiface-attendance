@@ -43,7 +43,7 @@ const Dashboard = () => {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const res = await api.get('/stats');
+                const res = await api.get('/daily-stats');
                 setStats(res.data);
             } catch (e) { }
         };
@@ -53,6 +53,7 @@ const Dashboard = () => {
 
         const ws = new WebSocket('ws://127.0.0.1:8000/ws/video');
         ws.onmessage = (event) => {
+            // ... existing ws logic ...
             const data = JSON.parse(event.data);
             if (videoRef.current) {
                 videoRef.current.src = `data:image/jpeg;base64,${data.image}`;
@@ -165,7 +166,7 @@ const Dashboard = () => {
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
                         <Phone size={20} color="#f59e0b" />
-                        <h3 style={{ fontWeight: 600 }}>Xếp hạng vi phạm ĐT</h3>
+                        <h3 style={{ fontWeight: 600 }}>Thống kê trong ngày</h3>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         {stats.map((s, idx) => (
@@ -173,21 +174,35 @@ const Dashboard = () => {
                                 background: '#0f172a',
                                 padding: '12px 16px',
                                 borderRadius: '8px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between'
+                                border: '1px solid #334155'
                             }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                    <div style={{ width: '24px', textAlign: 'center', fontWeight: 'bold' }}>{idx + 1}</div>
-                                    <div>{s.name}</div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                    <span style={{ fontWeight: 600 }}>{s.name}</span>
+                                    <span style={{
+                                        fontSize: '0.7rem',
+                                        padding: '2px 6px',
+                                        borderRadius: '4px',
+                                        background: s.status === 'on_time' ? '#10b98120' : (s.status === 'early_leave' ? '#f59e0b20' : (s.check_in ? '#ef444420' : '#47556920')),
+                                        color: s.status === 'on_time' ? '#10b981' : (s.status === 'early_leave' ? '#f59e0b' : (s.check_in ? '#ef4444' : '#94a3b8'))
+                                    }}>
+                                        {s.check_in ? (
+                                            s.status === 'on_time' ? 'Đúng giờ' :
+                                                s.status === 'late' ? 'Muộn' :
+                                                    s.status === 'early_leave' ? 'Về sớm' : 'Muộn/Sớm'
+                                        ) : 'Chưa đến'}
+                                    </span>
                                 </div>
-                                <div style={{ color: '#f59e0b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                    <Clock size={14} />
-                                    {s.seconds < 60 ? `${Math.round(s.seconds)}s` : `${Math.floor(s.seconds / 60)}m ${Math.round(s.seconds % 60)}s`}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#94a3b8' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        <Clock size={12} /> {s.check_in ? new Date(s.check_in).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: s.phone_seconds > 0 ? '#f59e0b' : '#94a3b8' }}>
+                                        <Phone size={12} /> {s.phone_seconds < 60 ? `${Math.round(s.phone_seconds)}s` : `${Math.floor(s.phone_seconds / 60)}m`}
+                                    </div>
                                 </div>
                             </div>
                         ))}
-                        {stats.length === 0 && <div style={{ textAlign: 'center', color: '#64748b', marginTop: '40px' }}>Chưa có dữ liệu thống kê</div>}
+                        {stats.length === 0 && <div style={{ textAlign: 'center', color: '#64748b', marginTop: '40px' }}>Chưa có dữ liệu hôm nay</div>}
                     </div>
                 </div>
             </div>

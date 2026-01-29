@@ -53,11 +53,13 @@ class CameraStream:
         self.last_frame_time = time.time()
 
     def reload_faces(self):
-        """Reload faces from database."""
-        users = database.get_all_users()
-        self.known_embeddings = [u['embedding'] for u in users]
-        self.known_names = [u['name'] for u in users]
-        print(f"Loaded {len(self.known_embeddings)} users from database.")
+        """Reload employees from database."""
+        employees = database.get_all_employees_with_embeddings()
+        self.known_embeddings = [u['embedding'] for u in employees]
+        self.known_employee_ids = [u['id'] for u in employees]
+        self.known_names = [u['name'] for u in employees]
+        self.last_attendance_log = {} # employee_id -> last_log_time
+        print(f"Loaded {len(self.known_embeddings)} employees from database.")
 
     def update_settings(self):
         """Fetch updated settings from DB."""
@@ -128,13 +130,14 @@ class CameraStream:
         processed_frame = frame_to_process
         faces = self.app.get(frame_to_process)
         has_unknown = False
-        identified_names_in_frame = []
+        identified_ids_in_frame = []
         
         show_age_gender = self.settings.get('show_age_gender', 'true') == 'true'
 
         for face in faces:
             bbox = face.bbox.astype(int)
-            name = "Chưa nhận diện" # Unknown
+            name = "Chưa nhận diện"
+            emp_id = None
             max_score = 0.0
             
             # Compare with known faces
@@ -143,13 +146,19 @@ class CameraStream:
                     score = self.compute_sim(face.embedding, known_emb)
                     if score > max_score:
                         max_score = score
-                        if score > 0.4: # Threshold
+                        if score > 0.45: # Increased Threshold for better accuracy
                             name = self.known_names[idx]
+                            emp_id = self.known_employee_ids[idx]
             
             if name == "Chưa nhận diện":
                 has_unknown = True
             else:
-                identified_names_in_frame.append(name)
+                identified_ids_in_frame.append(emp_id)
+                # Log attendance periodically (e.g., every 10 seconds)
+                now_ts = time.time()
+                if emp_id not in self.last_attendance_log or (now_ts - self.last_attendance_log[emp_id]) > 10:
+                    database.log_attendance(emp_id)
+                    self.last_attendance_log[emp_id] = now_ts
 
             # Get age and gender
             age = getattr(face, 'age', 0)
@@ -200,13 +209,11 @@ class CameraStream:
 
             # Update stats if phone detected
             if has_phone:
-                target_name = "Người lạ"
-                if identified_names_in_frame:
-                    target_name = identified_names_in_frame[0]
-                elif not faces:
-                    target_name = "Chưa rõ chủ thể"
-                
-                database.update_phone_usage(target_name, elapsed)
+                if identified_ids_in_frame:
+                    for emp_id in identified_ids_in_frame:
+                        database.update_phone_usage(emp_id, elapsed)
+                # If no one identified but phone detected, we don't log to specific employee
+                # Optional: log to "Unknown" or just ignore
 
         return processed_frame, has_unknown, has_phone
 

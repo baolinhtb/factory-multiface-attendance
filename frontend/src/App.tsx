@@ -3,7 +3,10 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import UserManagement from './pages/UserManagement';
+import EmployeeManagement from './pages/EmployeeManagement';
+import EmployeeDetail from './pages/EmployeeDetail';
 import Settings from './pages/Settings';
+import ShiftManagement from './pages/ShiftManagement';
 import Layout from './components/Layout';
 import api from './services/api';
 
@@ -50,7 +53,7 @@ function App() {
 
     if (loading) {
         return (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0f172a', color: 'white' }}>
                 <p>Đang tải...</p>
             </div>
         );
@@ -65,8 +68,11 @@ function App() {
             <Layout currentUser={currentUser}>
                 <Routes>
                     <Route path="/" element={<Dashboard />} />
+                    <Route path="/employees/:id" element={<EmployeeDetail />} />
                     {currentUser?.role === 'admin' && (
                         <>
+                            <Route path="/employees" element={<EmployeeManagement />} />
+                            <Route path="/shift-configs" element={<ShiftManagement />} />
                             <Route path="/users" element={<UserManagement />} />
                             <Route path="/settings" element={<Settings />} />
                         </>
