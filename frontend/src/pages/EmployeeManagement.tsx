@@ -74,7 +74,7 @@ const EmployeeManagement = () => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '24px' }}>
+            <div className="grid-dashboard">
                 {/* Employee List Section */}
                 <div style={{
                     background: '#1e293b',
@@ -175,7 +175,7 @@ const EmployeeManagement = () => {
                                 required
                             />
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                        <div className="grid-form-2col">
                             <div>
                                 <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '6px', color: '#94a3b8' }}>Chức vụ</label>
                                 <input

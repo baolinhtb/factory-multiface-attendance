@@ -22,7 +22,15 @@ body {
   background-color: var(--bg-dark);
   color: var(--text-main);
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  max-width: 100vw;
 }
+
+#root {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
 
 button {
   cursor: pointer;
@@ -32,7 +40,9 @@ button {
   transition: all 0.2s;
 }
 
-input {
+input,
+select,
+textarea {
   background: #0f172a;
   border: 1px solid #334155;
   color: white;
@@ -41,7 +51,9 @@ input {
   outline: none;
 }
 
-input:focus {
+input:focus,
+select:focus,
+textarea:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
@@ -49,10 +61,326 @@ input:focus {
 .scroll-thin::-webkit-scrollbar {
   width: 4px;
 }
+
 .scroll-thin::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .scroll-thin::-webkit-scrollbar-thumb {
   background: #475569;
   border-radius: 10px;
+}
+
+/* Responsive Utilities */
+.grid-employee-detail {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.grid-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+}
+
+.grid-dashboard {
+  display: grid;
+  grid-template-columns: 1fr 350px;
+  gap: 24px;
+}
+
+.grid-form-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.grid-shift-management {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 30px;
+  height: calc(100vh - 160px);
+}
+
+.sidebar {
+  width: var(--sidebar-width);
+  background: var(--bg-card);
+  border-right: 1px solid #334155;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease;
+  z-index: 50;
+}
+
+.mobile-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 40;
+}
+
+.sidebar-toggle {
+  display: none;
+}
+
+/* Responsive font and spacing utilities */
+.mobile-text-sm {
+  font-size: 1rem;
+}
+
+.mobile-padding {
+  padding: 20px;
+}
+
+/* Mobile Breakpoints */
+@media (max-width: 1024px) {
+  .grid-employee-detail {
+    grid-template-columns: 1fr;
+  }
+
+  .grid-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grid-dashboard {
+    grid-template-columns: 1fr;
+  }
+
+  .grid-form-2col {
+    grid-template-columns: 1fr;
+  }
+
+  .grid-shift-management {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    height: 100vh;
+    transform: translateX(-100%);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .mobile-overlay.open {
+    display: block;
+  }
+
+  .sidebar-toggle {
+    display: block !important;
+  }
+
+  .header-content {
+    padding: 0 15px !important;
+  }
+
+  .main-content {
+    padding: 20px 16px !important;
+  }
+
+  .mobile-text-sm {
+    font-size: 0.875rem;
+  }
+
+  .mobile-padding {
+    padding: 12px;
+  }
+
+  /* Better table handling on mobile */
+  table {
+    font-size: 0.875rem;
+  }
+
+  /* Responsive cards */
+  .card-mobile {
+    padding: 15px !important;
+    margin: 10px 0 !important;
+  }
+
+  /* Hide non-essential elements on very small screens */
+  .desktop-only {
+    display: none !important;
+  }
+
+  /* Employee Detail specific */
+  .employee-profile-card {
+    position: relative !important;
+    top: auto !important;
+    margin-bottom: 20px;
+  }
+
+  .employee-detail-header h2 {
+    font-size: 1.1rem !important;
+  }
+
+  /* Increase card gap on mobile */
+  .grid-employee-detail {
+    gap: 20px !important;
+  }
+
+  .employee-profile-card {
+    padding: 24px 20px !important;
+    width: 100% !important;
+    box-sizing: border-box;
+    margin-bottom: 20px;
+  }
+
+  .mobile-padding-zero {
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  .grid-stats {
+    grid-template-columns: repeat(2, 1fr);
+    width: 100% !important;
+    gap: 15px !important;
+  }
+
+  /* Prevent any horizontal overflow */
+  html,
+  body,
+  #root {
+    overflow-x: hidden !important;
+    max-width: 100% !important;
+  }
+
+  /* Prevent content from exceeding viewport */
+  .sidebar,
+  .main-content,
+  .header-content,
+  .grid-dashboard,
+  .grid-employee-detail,
+  .grid-shift-management {
+    max-width: 100% !important;
+  }
+
+  /* Override fixed widths */
+  input[style*="width: 250px"],
+  input[style*="width: 400px"],
+  div[style*="width: 400px"] {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Ensure tables don't overflow */
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Section headers with filters should wrap */
+  .section-header {
+    flex-wrap: wrap !important;
+    gap: 16px !important;
+  }
+
+  .section-header>div:last-child {
+    width: 100%;
+  }
+
+  /* Stats cards */
+  .grid-stats>div {
+    padding: 15px !important;
+  }
+
+  /* Smaller font in stats on mobile */
+  .grid-stats>div>div:nth-child(2) {
+    font-size: 1.5rem !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .grid-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px !important;
+  }
+
+  body {
+    font-size: 14px;
+  }
+
+  .main-content {
+    padding: 20px 16px !important;
+  }
+
+  h1 {
+    font-size: 1.5rem !important;
+  }
+
+  h2 {
+    font-size: 1.25rem !important;
+  }
+
+  h3 {
+    font-size: 1.1rem !important;
+  }
+
+  button {
+    padding: 8px 12px;
+    font-size: 0.875rem;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+    /* Prevent zoom on iOS */
+  }
+
+  /* Employee detail adjustments for small screens */
+  .employee-profile-card {
+    padding: 24px 20px !important;
+  }
+
+  .grid-stats>div {
+    padding: 12px !important;
+  }
+
+  .grid-stats>div>div:nth-child(2) {
+    font-size: 1.3rem !important;
+  }
+
+  /* Table text smaller on very small screens */
+  table {
+    font-size: 0.8rem !important;
+  }
+
+  table th,
+  table td {
+    padding: 8px 6px !important;
+  }
+
+  /* Better header on small screens */
+  .employee-detail-header {
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+  }
+
+  .employee-detail-header h2 {
+    font-size: 1rem !important;
+    word-break: break-word;
+  }
+
+  /* Search inputs and form elements */
+  input[type="text"],
+  input[type="time"],
+  input[type="number"],
+  select,
+  textarea {
+    max-width: 100% !important;
+  }
+
+  /* Flex containers should not cause overflow */
+  div[style*="display: flex"] {
+    flex-wrap: wrap;
+  }
 }

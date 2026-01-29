@@ -49,7 +49,7 @@ const UserManagement = () => {
     };
 
     return (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: '24px' }}>
+        <div className="grid-dashboard">
             {/* Left: User List */}
             <div style={{
                 background: '#1e293b',

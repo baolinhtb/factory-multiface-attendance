@@ -162,7 +162,7 @@ const ShiftManagement = () => {
     const workDayNames = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
 
     return (
-        <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '30px', height: 'calc(100vh - 160px)' }}>
+        <div className="grid-shift-management">
             {/* Sidebar: Config List */}
             <div style={{ background: '#1e293b', borderRadius: '12px', display: 'flex', flexDirection: 'column', border: '1px solid #334155', overflow: 'hidden' }}>
                 <div style={{ padding: '20px', borderBottom: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#1e293b' }}>
@@ -342,7 +342,7 @@ const ShiftManagement = () => {
                                             </div>
                                         </div>
 
-                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
+                                        <div className="grid-stats">
                                             <div>
                                                 <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '6px' }}>Giờ bắt đầu làm</label>
                                                 <input
@@ -397,7 +397,7 @@ const ShiftManagement = () => {
                                             </div>
                                         </div>
 
-                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px', marginTop: '15px', borderTop: '1px solid #1e293b', paddingTop: '15px' }}>
+                                        <div className="grid-form-2col" style={{ marginTop: '15px', borderTop: '1px solid #1e293b', paddingTop: '15px' }}>
                                             <div>
                                                 <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '6px' }}>Bắt đầu cửa sổ chấm công</label>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

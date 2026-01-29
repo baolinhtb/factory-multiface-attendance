@@ -51,7 +51,7 @@ const Dashboard = () => {
         fetchStats();
         const interval = setInterval(fetchStats, 5000);
 
-        const ws = new WebSocket('ws://127.0.0.1:8000/ws/video');
+        const ws = new WebSocket(`ws://${window.location.hostname}:8000/ws/video`);
         ws.onmessage = (event) => {
             // ... existing ws logic ...
             const data = JSON.parse(event.data);
@@ -82,7 +82,7 @@ const Dashboard = () => {
     }, []);
 
     return (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '24px' }}>
+        <div className="grid-dashboard">
             {/* Left Wall: Camera & Logs */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                 <div style={{

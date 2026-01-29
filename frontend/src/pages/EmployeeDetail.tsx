@@ -218,14 +218,14 @@ const EmployeeDetail = () => {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <div className="employee-detail-header" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                 <button onClick={() => navigate('/employees')} style={{ padding: '10px', background: '#1e293b', border: '1px solid #334155', color: 'white', borderRadius: '8px' }}>
                     <ArrowLeft size={20} />
                 </button>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Chi tiết nhân viên: {employee.full_name}</h2>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '350px 1fr', gap: '24px', alignItems: 'start' }}>
+            <div className="grid-employee-detail">
                 {/* Profile Card */}
                 <div style={{
                     background: '#1e293b',
@@ -234,8 +234,10 @@ const EmployeeDetail = () => {
                     border: '1px solid #334155',
                     textAlign: 'center',
                     position: 'sticky',
-                    top: '20px'
-                }}>
+                    top: '20px',
+                    overflow: 'hidden',
+                    wordBreak: 'break-word'
+                }} className="employee-profile-card">
                     <div style={{
                         width: '120px',
                         height: '120px',
@@ -249,7 +251,7 @@ const EmployeeDetail = () => {
                         <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                             {employee.image_path ? (
                                 <img
-                                    src={`http://localhost:8000${employee.image_path}?t=${new Date().getTime()}`}
+                                    src={`http://${window.location.hostname}:8000${employee.image_path}?t=${new Date().getTime()}`}
                                     alt={employee.full_name}
                                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                 />
@@ -292,16 +294,33 @@ const EmployeeDetail = () => {
                             type="text"
                             value={employee.full_name}
                             onChange={(e) => setEmployee({ ...employee, full_name: e.target.value })}
-                            style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '5px', textAlign: 'center', background: '#0f172a', border: '1px solid #3b82f6', borderRadius: '6px', color: 'white', width: '100%', padding: '8px' }}
+                            style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '5px', textAlign: 'center', background: '#0f172a', border: '1px solid #3b82f6', borderRadius: '6px', color: 'white', width: '100%', padding: '8px', boxSizing: 'border-box' }}
                         />
                     ) : (
-                        <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '5px', textAlign: 'center', color: 'white' }}>
-                            {employee.full_name}
-                        </h3>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '5px', flexWrap: 'wrap' }}>
+                            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'white', margin: 0, wordBreak: 'break-word' }}>
+                                {employee.full_name}
+                            </h3>
+                            <button
+                                onClick={handleEdit}
+                                style={{
+                                    background: 'transparent',
+                                    border: 'none',
+                                    padding: '4px',
+                                    color: '#3b82f6',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center'
+                                }}
+                                title="Chỉnh sửa thông tin"
+                            >
+                                <Edit2 size={16} />
+                            </button>
+                        </div>
                     )}
-                    <p style={{ color: '#3b82f6', fontWeight: 600, fontSize: '0.9rem', marginBottom: '20px' }}>ID Nhân viên: {employee.employee_id}</p>
+                    <p style={{ color: '#3b82f6', fontWeight: 600, fontSize: '0.9rem', marginBottom: '20px', wordBreak: 'break-all' }}>ID Nhân viên: {employee.employee_id}</p>
 
-                    <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '12px', borderTop: '1px solid #334155', paddingTop: '20px' }}>
+                    <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '16px', borderTop: '1px solid #334155', paddingTop: '20px', paddingLeft: '16px', paddingRight: '16px', width: '100%', boxSizing: 'border-box' }}>
                         <div>
                             <label style={{ color: '#94a3b8', fontSize: '0.75rem', display: 'block', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Chức vụ:</label>
                             {isEditing ? (
@@ -355,7 +374,7 @@ const EmployeeDetail = () => {
                                 </p>
                             )}
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginTop: '8px', padding: '0 4px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '5px', fontSize: '0.8rem', marginTop: '12px', padding: '10px 16px 0 16px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                             <span style={{ color: '#94a3b8' }}>Ngày gia nhập:</span>
                             <span style={{ color: '#cbd5e1', fontWeight: 500 }}>{new Date(employee.created_at).toLocaleDateString('vi-VN')}</span>
                         </div>
@@ -411,41 +430,17 @@ const EmployeeDetail = () => {
                                     Hủy
                                 </button>
                             </div>
-                        ) : (
-                            <button
-                                onClick={handleEdit}
-                                style={{
-                                    marginTop: '10px',
-                                    padding: '12px',
-                                    background: '#3b82f6',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '8px',
-                                    fontWeight: 600,
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s',
-                                    borderBottom: '3px solid #1d4ed8',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '8px',
-                                    width: '100%'
-                                }}
-                            >
-                                <Edit2 size={16} />
-                                Chỉnh sửa hồ sơ
-                            </button>
-                        )}
+                        ) : null}
                     </div>
                 </div>
 
 
 
                 {/* Right Column Content */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                <div className="mobile-padding-zero" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
                     {/* Summary Statistics */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px' }}>
+                    <div className="grid-stats">
                         {[
                             {
                                 label: 'Tổng ca làm',
@@ -496,7 +491,7 @@ const EmployeeDetail = () => {
                             padding: '24px',
                             border: '1px solid #334155'
                         }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                            <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                     <Clock size={22} color="#3b82f6" />
                                     <h3 style={{ fontWeight: 700, fontSize: '1.1rem' }}>Lịch sử điểm danh</h3>

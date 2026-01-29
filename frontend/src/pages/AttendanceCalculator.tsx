@@ -88,7 +88,6 @@ const AttendanceCalculator = () => {
                 res = await api.post(`/calculate-attendance-all?${params}`);
             }
             setResult(res.data);
-            alert('Tính toán thành công!');
         } catch (e: any) {
             console.error('Error calculating attendance', e);
             alert(e.response?.data?.detail || 'Lỗi khi tính toán');

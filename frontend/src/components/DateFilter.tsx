@@ -127,11 +127,7 @@ const DateFilter = ({ onDateChange, initialFilterValue = 'today' }: DateFilterPr
 
             {/* Custom Date Range Inputs (only shown when "Custom" is selected) */}
             {isCustom && (
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: '16px'
-                }}>
+                <div className="grid-form-2col" style={{ gap: '16px' }}>
                     <div>
                         <label style={{
                             display: 'block',

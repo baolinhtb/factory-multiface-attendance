@@ -1,6 +1,6 @@
 import { ReactNode, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Settings, Shield, Clock, History, ChevronDown, ChevronRight, ListChecks, Calculator } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, Shield, Clock, History, ChevronDown, ChevronRight, ListChecks, Calculator, Menu } from 'lucide-react';
 
 interface User {
     username: string;
@@ -23,7 +23,8 @@ interface NavItem {
 function Layout({ children, currentUser }: LayoutProps) {
     const navigate = useNavigate();
     const location = useLocation();
-    const [expandedMenus, setExpandedMenus] = useState<string[]>(['employees']);
+    const [expandedMenus, setExpandedMenus] = useState<string[]>(['Quản lý nhân viên', 'Cài đặt hệ thống']);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -51,9 +52,16 @@ function Layout({ children, currentUser }: LayoutProps) {
                 { path: '/attendance-calculator', label: 'Tính toán chấm công', icon: Calculator, adminOnly: true },
             ]
         },
-        { path: '/shift-configs', label: 'Quản lý ca làm việc', icon: Clock, adminOnly: true },
-        { path: '/users', label: 'Tài khoản hệ thống', icon: Shield, adminOnly: true },
-        { path: '/settings', label: 'Cài đặt hệ thống', icon: Settings, adminOnly: true },
+        {
+            label: 'Cài đặt hệ thống',
+            icon: Settings,
+            adminOnly: true,
+            children: [
+                { path: '/settings', label: 'Cấu hình chung', icon: Settings, adminOnly: true },
+                { path: '/shift-configs', label: 'Quản lý ca làm việc', icon: Clock, adminOnly: true },
+                { path: '/users', label: 'Quản lý tài khoản', icon: Shield, adminOnly: true },
+            ]
+        },
     ];
 
     const filterNavItems = (items: NavItem[]): NavItem[] => {
@@ -125,7 +133,12 @@ function Layout({ children, currentUser }: LayoutProps) {
         return (
             <div
                 key={item.path}
-                onClick={() => item.path && navigate(item.path)}
+                onClick={() => {
+                    if (item.path) {
+                        navigate(item.path);
+                        setIsSidebarOpen(false); // Close sidebar on navigate
+                    }
+                }}
                 style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -171,15 +184,15 @@ function Layout({ children, currentUser }: LayoutProps) {
     };
 
     return (
-        <div style={{ display: 'flex', height: '100vh' }}>
+        <div style={{ display: 'flex', height: '100vh', position: 'relative' }}>
+            {/* Mobile Overlay */}
+            <div
+                className={`mobile-overlay ${isSidebarOpen ? 'open' : ''}`}
+                onClick={() => setIsSidebarOpen(false)}
+            />
+
             {/* Sidebar */}
-            <aside style={{
-                width: '260px',
-                background: '#1e293b',
-                borderRight: '1px solid #334155',
-                display: 'flex',
-                flexDirection: 'column'
-            }}>
+            <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
                 <div style={{
                     padding: '24px',
                     fontSize: '1.25rem',
@@ -187,10 +200,17 @@ function Layout({ children, currentUser }: LayoutProps) {
                     borderBottom: '1px solid #334155',
                     display: 'flex',
                     alignItems: 'center',
+                    justifyContent: 'space-between',
                     gap: '12px'
                 }}>
-                    <Shield size={28} color="#3b82f6" />
-                    SmartCore
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <Shield size={28} color="#3b82f6" />
+                        SmartCore
+                    </div>
+                    {/* Close button for mobile inside sidebar */}
+                    <div className="sidebar-toggle" onClick={() => setIsSidebarOpen(false)}>
+                        <Menu size={20} />
+                    </div>
                 </div>
 
                 <nav style={{ flex: 1, padding: '10px', overflowY: 'auto' }}>
@@ -254,12 +274,19 @@ function Layout({ children, currentUser }: LayoutProps) {
                     display: 'flex',
                     alignItems: 'center',
                     padding: '0 30px'
-                }}>
+                }} className="header-content">
+                    <button
+                        className="sidebar-toggle"
+                        onClick={() => setIsSidebarOpen(true)}
+                        style={{ marginRight: '15px', background: 'transparent' }}
+                    >
+                        <Menu size={24} color="white" />
+                    </button>
                     <h2 style={{ fontSize: '1.1rem', fontWeight: 500 }}>
                         {getPageTitle()}
                     </h2>
                 </header>
-                <div style={{ flex: 1, overflowY: 'auto', padding: '30px' }}>
+                <div style={{ flex: 1, overflowY: 'auto', padding: '30px' }} className="main-content">
                     {children}
                 </div>
             </div>

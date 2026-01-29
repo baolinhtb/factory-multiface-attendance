@@ -45,13 +45,14 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)'
         }}>
             <div style={{
-                width: '400px',
+                maxWidth: '400px',
+                width: '90%',
                 background: '#1e293b',
                 padding: '40px',
                 borderRadius: '16px',
                 boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)',
                 border: '1px solid #334155'
-            }}>
+            }} className="mobile-padding">
                 <div style={{ textAlign: 'center', marginBottom: '30px' }}>
                     <div style={{
                         background: '#3b82f620',
