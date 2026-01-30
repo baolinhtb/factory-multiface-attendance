@@ -190,7 +190,11 @@
     <string name="settings_title">System Settings</string>
     <string name="settings_subtitle">Manage general AI and hardware settings</string>
     <string name="camera_source">Video Source (Camera ID or URL)</string>
-    <string name="camera_placeholder">Example: 0, 1 or rtsp://...</string>
+    <string name="camera_placeholder">Example: 0, 1 (USB camera) or leave empty if using RTSP</string>
+    <string name="camera_source_hint">Enter USB camera ID (0, 1, 2...) or leave empty if using RTSP</string>
+    <string name="rtsp_camera_url">RTSP Camera Connection</string>
+    <string name="rtsp_placeholder">Example: rtsp://username:password@192.168.1.100:554/stream</string>
+    <string name="rtsp_hint">Enter full RTSP URL. If provided, system will prioritize RTSP over USB camera</string>
     <string name="show_age_gender">Age &amp; Gender</string>
     <string name="show_on_camera">Show on camera</string>
     <string name="phone_detection">Phone Detection</string>

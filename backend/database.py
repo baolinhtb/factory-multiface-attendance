@@ -152,6 +152,7 @@ def init_db():
         print("[DB] Inserting default settings...")
         default_settings = [
             ('camera_src', '0'),
+            ('rtsp_url', ''),
             ('show_age_gender', 'true'),
             ('enable_alarm', 'true'),
             ('enable_phone_det', 'true'),

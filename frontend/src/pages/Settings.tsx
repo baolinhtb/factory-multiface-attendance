@@ -87,6 +87,26 @@ const Settings = () => {
                             style={{ width: '100%', padding: '12px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: 'white' }}
                             placeholder={t('camera_placeholder')}
                         />
+                        <div style={{ marginTop: '8px', fontSize: '0.85rem', color: '#94a3b8' }}>
+                            {t('camera_source_hint')}
+                        </div>
+                    </div>
+
+                    {/* RTSP Camera URL */}
+                    <div style={{ background: '#0f172a', padding: '20px', borderRadius: '10px', border: '1px solid #334155' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1rem', fontWeight: 600, marginBottom: '12px', color: 'white' }}>
+                            <Monitor size={20} color="#10b981" /> {t('rtsp_camera_url')}
+                        </label>
+                        <input
+                            type="text"
+                            value={settings.rtsp_url || ''}
+                            onChange={(e) => setSettings({ ...settings, rtsp_url: e.target.value })}
+                            style={{ width: '100%', padding: '12px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: 'white' }}
+                            placeholder={t('rtsp_placeholder')}
+                        />
+                        <div style={{ marginTop: '8px', fontSize: '0.85rem', color: '#94a3b8' }}>
+                            {t('rtsp_hint')}
+                        </div>
                     </div>
 
                     {/* Toggles */}

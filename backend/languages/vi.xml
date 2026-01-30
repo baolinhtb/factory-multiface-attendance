@@ -188,7 +188,11 @@
     <string name="settings_title">Cấu hình hệ thống</string>
     <string name="settings_subtitle">Quản lý các thiết lập chung của AI và phần cứng</string>
     <string name="camera_source">Nguồn video (Camera ID hoặc URL)</string>
-    <string name="camera_placeholder">Ví dụ: 0, 1 hoặc rtsp://...</string>
+    <string name="camera_placeholder">Ví dụ: 0, 1 (camera USB) hoặc để trống nếu dùng RTSP</string>
+    <string name="camera_source_hint">Nhập số ID camera USB (0, 1, 2...) hoặc để trống nếu sử dụng RTSP</string>
+    <string name="rtsp_camera_url">Kết nối Camera RTSP</string>
+    <string name="rtsp_placeholder">Ví dụ: rtsp://username:password@192.168.1.100:554/stream</string>
+    <string name="rtsp_hint">Nhập URL RTSP đầy đủ. Nếu có giá trị, hệ thống sẽ ưu tiên dùng RTSP thay vì Camera USB</string>
     <string name="show_age_gender">Tuổi &amp; Giới tính</string>
     <string name="show_on_camera">Hiển thị trên camera</string>
     <string name="phone_detection">Sử dụng điện thoại</string>

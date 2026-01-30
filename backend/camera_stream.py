@@ -12,20 +12,31 @@ class CameraStream:
     def __init__(self):
         # Load settings from DB
         self.settings = database.get_settings()
+        
+        # Determine camera source: prioritize RTSP URL if available
+        rtsp_url = self.settings.get('rtsp_url', '').strip()
         src = self.settings.get('camera_src', '0')
-        try:
-            src = int(src)
-        except:
-            pass
+        
+        if rtsp_url:
+            # Use RTSP URL if provided
+            camera_source = rtsp_url
+            print(f"Using RTSP camera: {rtsp_url}")
+        else:
+            # Use camera_src (USB camera ID or other source)
+            try:
+                camera_source = int(src)
+            except:
+                camera_source = src
+            print(f"Using camera source: {camera_source}")
             
         # Initialize Camera
-        self.capture = cv2.VideoCapture(src)
-        self.current_src = src
+        self.capture = cv2.VideoCapture(camera_source)
+        self.current_src = camera_source
         
         if not self.capture.isOpened():
-            print(f"ERROR: Could not open video source {src}")
+            print(f"ERROR: Could not open video source {camera_source}")
         else:
-            print(f"SUCCESS: Video source {src} opened")
+            print(f"SUCCESS: Video source {camera_source} opened")
 
         self.is_running = False
         self.frame = None
@@ -67,23 +78,30 @@ class CameraStream:
         """Fetch updated settings from DB."""
         new_settings = database.get_settings()
         
-        # Check if camera source changed
+        # Determine new camera source: prioritize RTSP URL if available
+        new_rtsp_url = new_settings.get('rtsp_url', '').strip()
         new_src = new_settings.get('camera_src', '0')
-        try:
-            new_src = int(new_src)
-        except:
-            pass
+        
+        if new_rtsp_url:
+            # Use RTSP URL if provided
+            new_camera_source = new_rtsp_url
+        else:
+            # Use camera_src (USB camera ID or other source)
+            try:
+                new_camera_source = int(new_src)
+            except:
+                new_camera_source = new_src
             
-        if new_src != self.current_src:
-            print(f"Changing camera source to {new_src}...")
+        if new_camera_source != self.current_src:
+            print(f"Changing camera source to {new_camera_source}...")
             with self.lock:
                 self.capture.release()
-                self.capture = cv2.VideoCapture(new_src)
-                self.current_src = new_src
+                self.capture = cv2.VideoCapture(new_camera_source)
+                self.current_src = new_camera_source
                 if not self.capture.isOpened():
-                    print(f"ERROR: Could not open new video source {new_src}")
+                    print(f"ERROR: Could not open new video source {new_camera_source}")
                 else:
-                    print(f"SUCCESS: New video source {new_src} opened")
+                    print(f"SUCCESS: New video source {new_camera_source} opened")
         
         self.settings = new_settings
 
