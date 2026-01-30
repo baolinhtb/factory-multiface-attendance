@@ -11,6 +11,7 @@ from PIL import Image, ImageDraw, ImageFont
 from PIL import Image, ImageDraw, ImageFont
 from fall_detector import FallDetector
 from fire_detector import FireDetector
+from face_recognizer import FaceRecognizer
 
 class CameraStream:
     def __init__(self):
@@ -60,8 +61,8 @@ class CameraStream:
         self.app.prepare(ctx_id=0, det_size=(640, 640))
         
         # Load known faces from DB
-        self.known_embeddings = []
-        self.known_names = []
+        # Initialize Face Recognizer (FAISS)
+        self.face_recognizer = FaceRecognizer()
         self.reload_faces()
 
 
@@ -125,13 +126,19 @@ class CameraStream:
     def reload_faces(self):
         """Reload employees from database."""
         employees = database.get_all_employees_with_embeddings()
-        self.known_embeddings = [u['embedding'] for u in employees]
+        
+        # Load into FAISS
+        self.face_recognizer.load_faces(employees)
+        
+        # We still keep these dicts for presence tracking logic if needed, 
+        # but identification comes from FAISS now
         self.known_employee_ids = [u['id'] for u in employees]
         self.known_names = [u['name'] for u in employees]
+        
         self.last_attendance_log = {} # employee_id -> last_log_time
         self.employee_presence = {} # employee_id -> last_seen_time
         self.employee_presence_state = {} # employee_id -> 'entered' or 'left'
-        print(f"Loaded {len(self.known_embeddings)} employees from database.")
+        print(f"Loaded {len(employees)} employees from database into FAISS.")
 
     def update_settings(self):
         """Fetch updated settings from DB."""
@@ -213,8 +220,7 @@ class CameraStream:
                 return None
             return self.frame.copy()
             
-    def compute_sim(self, feat1, feat2):
-        return np.dot(feat1, feat2) / (np.linalg.norm(feat1) * np.linalg.norm(feat2))
+
 
     def draw_unicode_text(self, img, text, pos, color, size=20):
         """Helper to draw Unicode (Vietnamese) text on frame using Pillow."""
@@ -247,14 +253,11 @@ class CameraStream:
             max_score = 0.0
             
             # Compare with known faces
-            if self.known_embeddings:
-                for idx, known_emb in enumerate(self.known_embeddings):
-                    score = self.compute_sim(face.embedding, known_emb)
-                    if score > max_score:
-                        max_score = score
-                        if score > self.face_recognition_threshold:
-                            name = self.known_names[idx]
-                            emp_id = self.known_employee_ids[idx]
+            # Compare with known faces using FAISS
+            emp_id, name, max_score = self.face_recognizer.identify(
+                face.embedding, 
+                threshold=self.face_recognition_threshold
+            )
             
             if name == "Chưa nhận diện":
                 has_unknown = True

@@ -13,6 +13,10 @@ try:
     print("Attempting to import fire_detector...")
     import fire_detector
     print("Successfully imported fire_detector.")
+
+    print("Attempting to import face_recognizer...")
+    import face_recognizer
+    print("Successfully imported face_recognizer.")
     
     print("All imports successful.")
 except Exception as e:
