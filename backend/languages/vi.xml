@@ -210,6 +210,8 @@
     <string name="pose_cleared">✅ Tư thế đã an toàn</string>
     <string name="pose_detection">Phát hiện tư thế</string>
     <string name="detect_unsafe_pose">Cảnh báo tư thế không an toàn</string>
+    <string name="fall_detection_title">Phát hiện té ngã</string>
+    <string name="fall_detection_desc">Cảnh báo khi người bị ngã hoặc té</string>
     <string name="pose_detection_confidence">Ngưỡng phát hiện tư thế</string>
     <string name="alarm">Chuông báo động</string>
     <string name="on_incident">Khi có sự cố</string>

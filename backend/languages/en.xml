@@ -209,6 +209,8 @@
     <string name="pose_cleared">✅ Posture safe</string>
     <string name="pose_detection">Pose Detection</string>
     <string name="detect_unsafe_pose">Unsafe posture alert</string>
+    <string name="fall_detection_title">Fall Detection</string>
+    <string name="fall_detection_desc">Alert when a person falls</string>
     <string name="pose_detection_confidence">Pose Detection Confidence</string>
     <string name="alarm">Alarm</string>
     <string name="on_incident">On incident</string>

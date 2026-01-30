@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import api from '../services/api';
-import { Settings as SettingsIcon, Save, Monitor, Bell, Eye, PhoneOff, Globe, Upload, Flame, Brain, RotateCcw, User } from 'lucide-react';
+import { Settings as SettingsIcon, Save, Monitor, Bell, Eye, PhoneOff, Globe, Upload, Flame, Brain, RotateCcw, User, Activity, RefreshCw } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const Settings = () => {
@@ -14,6 +14,7 @@ const Settings = () => {
         enable_phone_det: 'true',
         enable_fire_det: 'true',
         enable_pose_det: 'true',
+        enable_fall_det: 'false',
         face_recognition_threshold: '0.45',
         phone_detection_confidence: '0.15',
         fire_detection_confidence: '0.30',
@@ -22,6 +23,24 @@ const Settings = () => {
     const [loading, setLoading] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [expandedSections, setExpandedSections] = useState<string[]>([]);
+    const [availableCameras, setAvailableCameras] = useState<any[]>([]);
+    const [scanningCameras, setScanningCameras] = useState(false);
+
+    const handleScanCameras = async () => {
+        setScanningCameras(true);
+        try {
+            const res = await api.get('/cameras');
+            setAvailableCameras(res.data);
+            if (res.data.length === 0) {
+                alert("No cameras found. Please check connections.");
+            }
+        } catch (e) {
+            console.error("Error scanning cameras", e);
+            alert("Failed to scan cameras");
+        } finally {
+            setScanningCameras(false);
+        }
+    };
 
     const toggleSection = (id: string) => {
         setExpandedSections(prev =>
@@ -136,19 +155,47 @@ const Settings = () => {
                                             gap: '15px'
                                         }}
                                     >
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                            <input
-                                                type="radio"
-                                                name="camera_type"
-                                                value="usb"
-                                                checked={settings.camera_type === 'usb'}
-                                                onChange={() => setSettings({ ...settings, camera_type: 'usb' })}
-                                                style={{ width: '20px', height: '20px', cursor: 'pointer' }}
-                                            />
-                                            <div>
-                                                <div style={{ fontWeight: 700, color: 'white', fontSize: '1rem' }}>{t('usb_camera')}</div>
-                                                <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Webcam, USB Cam</div>
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                <input
+                                                    type="radio"
+                                                    name="camera_type"
+                                                    value="usb"
+                                                    checked={settings.camera_type === 'usb'}
+                                                    onChange={() => setSettings({ ...settings, camera_type: 'usb' })}
+                                                    style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                                                />
+                                                <div>
+                                                    <div style={{ fontWeight: 700, color: 'white', fontSize: '1rem' }}>{t('usb_camera')}</div>
+                                                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Webcam, USB Cam</div>
+                                                </div>
                                             </div>
+
+                                            {/* Scan Button */}
+                                            {settings.camera_type === 'usb' && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleScanCameras();
+                                                    }}
+                                                    disabled={scanningCameras}
+                                                    style={{
+                                                        padding: '6px 12px',
+                                                        background: '#3b82f6',
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        borderRadius: '6px',
+                                                        fontSize: '0.8rem',
+                                                        cursor: 'pointer',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '6px'
+                                                    }}
+                                                >
+                                                    <RefreshCw size={14} className={scanningCameras ? "spin" : ""} />
+                                                    {scanningCameras ? "Scanning..." : "Scan"}
+                                                </button>
+                                            )}
                                         </div>
 
                                         <div style={{
@@ -156,6 +203,36 @@ const Settings = () => {
                                             transition: 'all 0.3s',
                                             pointerEvents: settings.camera_type === 'usb' ? 'auto' : 'none'
                                         }} onClick={(e) => e.stopPropagation()}>
+
+                                            {/* Camera List */}
+                                            {availableCameras.length > 0 && (
+                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
+                                                    {availableCameras.map((cam: any) => (
+                                                        <div
+                                                            key={cam.id}
+                                                            onClick={() => setSettings({ ...settings, camera_src: cam.id })}
+                                                            style={{
+                                                                padding: '6px 12px',
+                                                                background: settings.camera_src === cam.id ? '#3b82f6' : '#1e293b',
+                                                                border: '1px solid',
+                                                                borderColor: settings.camera_src === cam.id ? '#3b82f6' : '#334155',
+                                                                borderRadius: '8px',
+                                                                color: 'white',
+                                                                fontSize: '0.85rem',
+                                                                cursor: 'pointer',
+                                                                transition: 'all 0.2s',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: '6px'
+                                                            }}
+                                                        >
+                                                            <Monitor size={14} />
+                                                            {cam.name}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+
                                             <input
                                                 type="text"
                                                 value={settings.camera_src}
@@ -172,6 +249,9 @@ const Settings = () => {
                                                 }}
                                                 placeholder={t('camera_placeholder')}
                                             />
+                                            <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '5px' }}>
+                                                {availableCameras.length > 0 ? "Select a detected camera or enter Index manually" : "Enter Camera Index (0, 1, 2...) manually"}
+                                            </div>
                                         </div>
                                     </div>
 
@@ -339,6 +419,30 @@ const Settings = () => {
                                             <div style={{ textAlign: 'center', fontWeight: 700, color: '#06b6d4', fontSize: '0.9rem' }}>{settings.pose_detection_confidence}</div>
                                         </div>
                                     )}
+                                </div>
+
+                                {/* Fall Detection Card */}
+                                <div style={{ padding: '16px', borderRadius: '12px', background: '#1e293b50', border: '1px solid #334155' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                            <Activity size={20} color="#fcd34d" />
+                                            <div>
+                                                <div style={{ fontWeight: 600, color: 'white' }}>{t('fall_detection_title') || 'Phát hiện té ngã'}</div>
+                                                <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{t('fall_detection_desc') || 'Cảnh báo khi người bị ngã'}</div>
+                                            </div>
+                                        </div>
+                                        <label className="switch" style={{ position: 'relative', display: 'inline-block', width: '44px', height: '22px' }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={settings.enable_fall_det === 'true'}
+                                                onChange={(e) => setSettings({ ...settings, enable_fall_det: e.target.checked ? 'true' : 'false' })}
+                                                style={{ opacity: 0, width: 0, height: 0 }}
+                                            />
+                                            <span style={{ position: 'absolute', cursor: 'pointer', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: settings.enable_fall_det === 'true' ? '#fcd34d' : '#334155', transition: '.4s', borderRadius: '34px' }}>
+                                                <span style={{ position: 'absolute', content: '""', height: '14px', width: '14px', left: '4px', bottom: '4px', backgroundColor: 'white', transition: '.4s', borderRadius: '50%', transform: settings.enable_fall_det === 'true' ? 'translateX(22px)' : 'translateX(0)' }}></span>
+                                            </span>
+                                        </label>
+                                    </div>
                                 </div>
 
                                 {/* Face & General */}

@@ -165,7 +165,13 @@ async def update_app_settings(settings: dict, admin: dict = Depends(auth.get_adm
     for key, value in settings.items():
         database.update_setting(key, str(value))
     camera.update_settings()
+    camera.update_settings()
     return {"message": "Settings updated"}
+
+@app.get("/cameras")
+async def get_cameras(admin: dict = Depends(auth.get_admin_user)):
+    """Get list of available connected cameras"""
+    return camera.get_available_cameras()
 
 # --- Employee & Attendance Endpoints ---
 

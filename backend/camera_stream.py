@@ -8,6 +8,9 @@ from insightface.app import FaceAnalysis
 from ultralytics import YOLO
 import database
 from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont
+from fall_detector import FallDetector
+from fire_detector import FireDetector
 
 class CameraStream:
     def __init__(self):
@@ -31,6 +34,12 @@ class CameraStream:
                 camera_source = src
             print(f"Using USB camera source: {camera_source}")
             
+        # AI Detection thresholds from settings
+        self.face_recognition_threshold = float(self.settings.get('face_recognition_threshold', '0.45'))
+        self.phone_detection_confidence = float(self.settings.get('phone_detection_confidence', '0.15'))
+        self.fire_detection_confidence = float(self.settings.get('fire_detection_confidence', '0.30'))
+        self.pose_detection_confidence = float(self.settings.get('pose_detection_confidence', '0.50'))
+
         # Initialize Camera
         self.capture = cv2.VideoCapture(camera_source)
         self.current_src = camera_source
@@ -80,25 +89,20 @@ class CameraStream:
         
         # Initialize YOLO for fire detection (using custom or pretrained model)
         print("Initializing Fire Detection model...")
+        # Initialize FireDetector
+        print("Initializing Fire Detection model...")
         fire_model_path = 'models/fire_detection.pt'
-        try:
-            if os.path.exists(fire_model_path):
-                self.fire_yolo = YOLO(fire_model_path)
-                print(f"Custom fire detection model loaded from {fire_model_path}")
-            else:
-                # Fallback to standard YOLO (won't detect fire specifically)
-                self.fire_yolo = self.yolo
-                print("Using standard YOLO26 for fire detection (limited capability)")
-        except Exception as e:
-            print(f"Error loading fire model: {e}")
-            self.fire_yolo = self.yolo
-            print("Fallback to standard YOLO26 for fire detection")
+        if not os.path.exists(fire_model_path):
+             # Fallback path logic or just use naive path
+             fire_model_path = 'fire_detection.pt'
         
-        # AI Detection thresholds from settings
-        self.face_recognition_threshold = float(self.settings.get('face_recognition_threshold', '0.45'))
-        self.phone_detection_confidence = float(self.settings.get('phone_detection_confidence', '0.15'))
-        self.fire_detection_confidence = float(self.settings.get('fire_detection_confidence', '0.30'))
-        self.pose_detection_confidence = float(self.settings.get('pose_detection_confidence', '0.50'))
+        self.fire_detector = FireDetector(
+            model_path=fire_model_path,
+            target_height=640,
+            iou_threshold=0.2, # User custom defaults
+            min_confidence=self.fire_detection_confidence,
+            smoke_confidence=0.75
+        )
         
         # Fire detection state
         self.fire_detected_time = None
@@ -113,6 +117,10 @@ class CameraStream:
         
         # Time tracking for phone usage
         self.last_frame_time = time.time()
+        
+        # Fall Detector
+        self.fall_detector = FallDetector()
+        self.enable_fall_det = True # Default, will update from settings
 
     def reload_faces(self):
         """Reload employees from database."""
@@ -163,6 +171,25 @@ class CameraStream:
         print(f"AI Thresholds updated: Face={self.face_recognition_threshold}, Phone={self.phone_detection_confidence}, Fire={self.fire_detection_confidence}, Pose={self.pose_detection_confidence}")
         
         self.settings = new_settings
+        
+        # Update Fall Detection setting
+        self.enable_fall_det = self.settings.get('enable_fall_det', 'false') == 'true'
+
+    def get_available_cameras(self):
+        """Scan for available cameras (indices 0-4)."""
+        available_cameras = []
+        # Checks the first 5 indexes.
+        for index in range(5):
+            try:
+                cap = cv2.VideoCapture(index)
+                if cap.isOpened():
+                    ret, _ = cap.read()
+                    if ret:
+                        available_cameras.append({"id": str(index), "name": f"Camera {index}"})
+                    cap.release()
+            except:
+                pass
+        return available_cameras
 
     def start(self):
         if self.is_running:
@@ -297,20 +324,40 @@ class CameraStream:
                         })
 
         # Fire Detection (from custom Fire YOLO)
+            # Fire Detection (from custom Fire Detector)
         enable_fire_det = self.settings.get('enable_fire_det', 'true') == 'true'
         if enable_fire_det:
-            fire_results = self.fire_yolo(frame_to_process, conf=self.fire_detection_confidence, verbose=False)
-            for result in fire_results:
-                for box in result.boxes:
-                    class_id = int(box.cls[0])
-                    class_name = result.names[class_id].lower() if hasattr(result, 'names') else ''
-                    
-                    # Fire model: check class_name OR class_id 0 (common for custom single-class models)
-                    if 'fire' in class_name or 'flame' in class_name or 'smoke' in class_name or class_id == 0:
-                        detected_fires.append({
-                            'box': box.xyxy[0].cpu().numpy().astype(int),
-                            'conf': box.conf[0].item()
-                        })
+            # Override confidence from settings if needed, or update detector property
+            self.fire_detector.min_confidence = self.fire_detection_confidence
+            
+            # Process frame using custom detector (handling drawing internally)
+            # Use frame_to_process directly (it will be drawn upon by the detector)
+            # Note: The detector returns (processed_frame, detection_str, detected_objects_list)
+            # We want to use the drawn frame? Yes.
+            
+            # Create a localized copy for fire detection to avoid affecting other detections?
+            # Actually, we want the drawings.
+            # But the existing code pipeline draws things sequentially on `processed_frame`.
+            # If `process_frame` modifies the frame heavily (like adding overlays), it might cover other things?
+            # The user code adds an overlay at the bottom.
+            
+            # Important: FireDetector.process_frame returns a NEW frame if it copies, or modifies in place depending on impl.
+            # My impl copies: `draw_frame = frame.copy()`. So we need to assign it back or just extract boxes.
+            
+            # User request: "Use this code" -> The code does drawing.
+            # So let's capture the drawn frame result.
+            
+            fire_drawn_frame, fire_status, fire_objects = self.fire_detector.process_frame(frame_to_process)
+            
+            # Update frame_to_process with the visually enhanced frame from fire detector
+            # This will contain the bounding boxes and the bottom overlay.
+            frame_to_process = fire_drawn_frame
+            
+            for obj in fire_objects:
+                detected_fires.append({
+                    'box': obj['box'],
+                    'conf': obj['conf']
+                })
 
         # 2. Resolve Overlaps and Draw
         has_phone = False
@@ -377,12 +424,10 @@ class CameraStream:
             processed_frame = self.draw_unicode_text(processed_frame, label, (b[0], b[1] - 25), (255, 165, 0), 18)
 
         for fire in final_fires:
-            b = fire['box']
-            cv2.rectangle(processed_frame, (b[0], b[1]), (b[2], b[3]), (0, 0, 255), 3)
-            label = f"🔥 LỬA PHÁT HIỆN ({fire['conf']:.2f})"
-            processed_frame = self.draw_unicode_text(processed_frame, label, (b[0], b[1] - 30), (0, 0, 255), 22)
-            
-            # Log fire alert with cooldown
+             # Fire is now drawn by FireDetector with enhanced effects (corners, transparency).
+             # We just need to log alerts.
+             
+             # Log fire alert with cooldown
             current_time = time.time()
             if self.fire_detected_time is None or (current_time - self.fire_detected_time) > self.fire_alert_cooldown:
                 print(f"[FIRE ALERT] Fire detected with confidence {fire['conf']:.2f}")
@@ -394,37 +439,44 @@ class CameraStream:
                 for emp_id in identified_ids_in_frame:
                     database.update_phone_usage(emp_id, elapsed)
         
-        # Pose Detection (detect unsafe postures)
+        # Pose Detection & Fall Detection
         has_unsafe_pose = False
         enable_pose_det = self.settings.get('enable_pose_det', 'true') == 'true'
+        self.enable_fall_det = self.settings.get('enable_fall_det', 'false') == 'true' # Refresh setting
         
-        if enable_pose_det and self.pose_yolo is not None:
+        if (enable_pose_det or self.enable_fall_det) and self.pose_yolo is not None:
             try:
-                pose_results = self.pose_yolo(frame_to_process, conf=self.pose_detection_confidence, verbose=False)
+                # Use Tracking for Fall Detection
+                if self.enable_fall_det:
+                    pose_results = self.pose_yolo.track(frame_to_process, conf=self.pose_detection_confidence, persist=True, verbose=False)
+                else:
+                    pose_results = self.pose_yolo(frame_to_process, conf=self.pose_detection_confidence, verbose=False)
+                
                 for result in pose_results:
                     if hasattr(result, 'keypoints') and result.keypoints is not None:
+                        # Map track IDs to keypoints
+                        
+                        # Get boxes and IDs if available
+                        boxes = result.boxes
+                        track_ids = boxes.id.int().cpu().tolist() if boxes.id is not None else [None] * len(boxes)
+                        
                         for person_idx, keypoints in enumerate(result.keypoints):
+                            track_id = track_ids[person_idx]
+                            
                             # Draw skeleton
                             if hasattr(keypoints, 'xy'):
-                                kpts = keypoints.xy[0].cpu().numpy()  # Shape: (17, 2) for COCO format
+                                kpts = keypoints.xy[0].cpu().numpy()
                                 
-                                # YOLO11 Pose keypoints (COCO format):
-                                # 0: nose, 1-2: eyes, 3-4: ears, 5-6: shoulders, 
-                                # 7-8: elbows, 9-10: wrists, 11-12: hips, 
-                                # 13-14: knees, 15-16: ankles
-                                
-                                # Draw keypoints
+                                # Draw standard skeleton (Green)
                                 for i, (x, y) in enumerate(kpts):
-                                    if x > 0 and y > 0:  # Valid keypoint
+                                    if x > 0 and y > 0:
                                         cv2.circle(processed_frame, (int(x), int(y)), 3, (0, 255, 0), -1)
                                 
-                                # Draw skeleton connections
                                 skeleton = [
-                                    (5, 6), (5, 7), (7, 9), (6, 8), (8, 10),  # Arms
-                                    (5, 11), (6, 12), (11, 12),  # Torso
-                                    (11, 13), (13, 15), (12, 14), (14, 16)  # Legs
+                                    (5, 6), (5, 7), (7, 9), (6, 8), (8, 10),
+                                    (5, 11), (6, 12), (11, 12),
+                                    (11, 13), (13, 15), (12, 14), (14, 16)
                                 ]
-                                
                                 for start_idx, end_idx in skeleton:
                                     if start_idx < len(kpts) and end_idx < len(kpts):
                                         x1, y1 = kpts[start_idx]
@@ -432,31 +484,46 @@ class CameraStream:
                                         if x1 > 0 and y1 > 0 and x2 > 0 and y2 > 0:
                                             cv2.line(processed_frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
                                 
-                                # Detect unsafe postures (example: bending over - head lower than hips)
-                                nose = kpts[0]
-                                left_hip = kpts[11]
-                                right_hip = kpts[12]
-                                
-                                if nose[1] > 0 and left_hip[1] > 0 and right_hip[1] > 0:
-                                    avg_hip_y = (left_hip[1] + right_hip[1]) / 2
-                                    # If nose is significantly lower than hips, person is bending
-                                    if nose[1] > avg_hip_y + 50:  # 50 pixels threshold
-                                        has_unsafe_pose = True
-                                        # Draw warning
-                                        if result.boxes is not None and len(result.boxes) > person_idx:
-                                            box = result.boxes[person_idx]
-                                            b = box.xyxy[0].cpu().numpy().astype(int)
-                                            cv2.rectangle(processed_frame, (b[0], b[1]), (b[2], b[3]), (0, 165, 255), 2)
-                                            label = "⚠️ TƯ THẾ KHÔNG AN TOÀN"
-                                            processed_frame = self.draw_unicode_text(processed_frame, label, (b[0], b[1] - 30), (0, 165, 255), 18)
+                                # --- FALL DETECTION LOGIC ---
+                                if self.enable_fall_det and track_id is not None:
+                                    fall_status, _ = self.fall_detector.update(track_id, kpts, time.time())
+                                    
+                                    box = result.boxes[person_idx]
+                                    b = box.xyxy[0].cpu().numpy().astype(int)
+                                    
+                                    if fall_status == FallDetector.STATUS_PRE_ALARM:
+                                        # Yellow Warning
+                                        cv2.rectangle(processed_frame, (b[0], b[1]), (b[2], b[3]), (0, 255, 255), 3)
+                                        processed_frame = self.draw_unicode_text(processed_frame, "⚠️ CẢNH BÁO NGÃ...", (b[0], b[1] - 30), (0, 255, 255), 18)
                                         
-                                        # Log unsafe pose with cooldown
-                                        current_time = time.time()
-                                        if self.unsafe_pose_detected_time is None or (current_time - self.unsafe_pose_detected_time) > self.unsafe_pose_cooldown:
-                                            print(f"[POSE ALERT] Unsafe posture detected at {time.strftime('%Y-%m-%d %H:%M:%S')}")
-                                            self.unsafe_pose_detected_time = current_time
+                                    elif fall_status == FallDetector.STATUS_ALARM:
+                                        # Red Alarm
+                                        cv2.rectangle(processed_frame, (b[0], b[1]), (b[2], b[3]), (0, 0, 255), 4)
+                                        processed_frame = self.draw_unicode_text(processed_frame, "🆘 NGƯỜI BỊ NGÃ!", (b[0], b[1] - 50), (0, 0, 255), 24)
+                                        print(f"[FALL ALERT] Fall Confirmed for ID {track_id}")
+
+                                    elif fall_status == FallDetector.STATUS_RESTING:
+                                        # Optional: Show resting status (Blue/Cyan)
+                                        processed_frame = self.draw_unicode_text(processed_frame, "Đang nằm nghỉ", (b[0], b[1] - 20), (255, 255, 0), 16)
+
+                                # --- UNSAFE POSTURE LOGIC (Legacy) ---
+                                # Only run if Fall Detection didn't trigger an Alarm (to avoid clutter)
+                                elif enable_pose_det: 
+                                    nose = kpts[0]
+                                    left_hip = kpts[11]
+                                    right_hip = kpts[12]
+                                    if nose[1] > 0 and left_hip[1] > 0 and right_hip[1] > 0:
+                                        avg_hip_y = (left_hip[1] + right_hip[1]) / 2
+                                        if nose[1] > avg_hip_y + 50:
+                                            has_unsafe_pose = True
+                                            if result.boxes is not None and len(result.boxes) > person_idx:
+                                                box = result.boxes[person_idx]
+                                                b = box.xyxy[0].cpu().numpy().astype(int)
+                                                cv2.rectangle(processed_frame, (b[0], b[1]), (b[2], b[3]), (0, 165, 255), 2)
+                                                processed_frame = self.draw_unicode_text(processed_frame, "⚠️ TƯ THẾ KHÔNG AN TOÀN", (b[0], b[1] - 30), (0, 165, 255), 18)
+
             except Exception as e:
-                print(f"[POSE] Error during pose detection: {e}")
+                print(f"[POSE] Error during pose/fall detection: {e}")
         
         # Check for employees who have left (not seen for 5 seconds)
         current_time = time.time()
