@@ -13,6 +13,12 @@ const Dashboard = () => {
     const lastSoundTimeRef = useRef(0);
     const [alarmEnabled, setAlarmEnabled] = useState(true);
 
+    // Track previous states to avoid duplicate logs
+    const prevFireStateRef = useRef(false);
+    const prevUnknownStateRef = useRef(false);
+    const prevPhoneStateRef = useRef(false);
+    const prevPoseStateRef = useRef(false);
+
     const addLog = (msg: string, type: string) => {
         const time = new Date().toLocaleTimeString();
         setLogs(prev => [{ msg, type, time }, ...prev].slice(0, 50));
@@ -63,17 +69,48 @@ const Dashboard = () => {
 
             setAlarmEnabled(data.enable_alarm);
 
+
             let alerting = false;
-            if (data.has_unknown) {
-                alerting = true;
+
+            // Unknown detection - log only on state change
+            if (data.has_unknown && !prevUnknownStateRef.current) {
                 addLog(t('unknown_detected'), "error");
                 playSound();
             }
-            if (data.has_phone) {
-                alerting = true;
+            prevUnknownStateRef.current = data.has_unknown;
+
+            // Phone detection - log only on state change
+            if (data.has_phone && !prevPhoneStateRef.current) {
                 addLog(t('phone_detected'), "error");
                 playSound();
             }
+            prevPhoneStateRef.current = data.has_phone;
+
+            // Fire detection - log only on state change
+            if (data.has_fire && !prevFireStateRef.current) {
+                addLog(t('fire_detected'), "error");
+                playSound();
+            } else if (!data.has_fire && prevFireStateRef.current) {
+                // Fire disappeared
+                addLog(t('fire_cleared'), "success");
+            }
+            prevFireStateRef.current = data.has_fire;
+
+            // Pose detection - log only on state change
+            if (data.has_unsafe_pose && !prevPoseStateRef.current) {
+                addLog(t('pose_detected_warning'), "error");
+                playSound();
+            } else if (!data.has_unsafe_pose && prevPoseStateRef.current) {
+                // Pose corrected
+                addLog(t('pose_cleared'), "success");
+            }
+            prevPoseStateRef.current = data.has_unsafe_pose;
+
+            // Set alerting if any current detection
+            if (data.has_unknown || data.has_phone || data.has_fire || data.has_unsafe_pose) {
+                alerting = true;
+            }
+
             setIsAlerting(alerting);
         };
 

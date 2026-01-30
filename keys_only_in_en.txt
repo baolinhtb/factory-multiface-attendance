@@ -1,0 +1,6 @@
+actions
+add_config_modal_title
+cancel
+checkin_window_start
+checkout_window_end
+select_config_msg

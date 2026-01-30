@@ -3,7 +3,13 @@
 > vite
 
 
-  VITE v5.4.21  ready in 158 ms
+  VITE v5.4.21  ready in 126 ms
 
   ➜  Local:   http://localhost:3000/
   ➜  Network: http://192.168.1.20:3000/
+5:10:00 PM [vite] hmr update /src/pages/Dashboard.tsx
+5:10:34 PM [vite] hmr update /src/pages/EmployeeManagement.tsx
+5:10:40 PM [vite] hmr update /src/pages/AttendanceCalculator.tsx
+5:15:43 PM [vite] hmr update /src/pages/Settings.tsx
+5:18:46 PM [vite] hmr update /src/pages/Settings.tsx
+5:24:19 PM [vite] hmr update /src/pages/Settings.tsx

@@ -367,7 +367,7 @@ async def websocket_endpoint(websocket: WebSocket):
         while True:
             result = camera.get_processed_frame()
             if result:
-                frame, has_unknown, has_phone = result
+                frame, has_unknown, has_phone, has_fire, has_unsafe_pose = result
                 if frame is not None:
                     _, buffer = cv2.imencode('.jpg', frame)
                     img_base64 = base64.b64encode(buffer).decode('utf-8')
@@ -375,6 +375,8 @@ async def websocket_endpoint(websocket: WebSocket):
                         "image": img_base64,
                         "has_unknown": has_unknown,
                         "has_phone": has_phone,
+                        "has_fire": has_fire,
+                        "has_unsafe_pose": has_unsafe_pose,
                         "enable_alarm": camera.settings.get('enable_alarm', 'true') == 'true'
                     })
             await asyncio.sleep(0.033)

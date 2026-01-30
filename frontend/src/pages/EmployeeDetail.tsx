@@ -4,6 +4,7 @@ import api from '../services/api';
 import { ArrowLeft, User, Phone, Clock, Calendar, CheckCircle, AlertCircle, Camera, Edit2, X, Save } from 'lucide-react';
 import DateFilter from '../components/DateFilter';
 import { useLanguage } from '../contexts/LanguageContext';
+import CameraCapture from '../components/CameraCapture';
 
 const EmployeeDetail = () => {
     const { t, language } = useLanguage();
@@ -17,6 +18,7 @@ const EmployeeDetail = () => {
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [showCamera, setShowCamera] = useState(false);
 
     // Date filter states (managed by DateFilter component)
     const [startDate, setStartDate] = useState('');
@@ -97,10 +99,7 @@ const EmployeeDetail = () => {
         }
     };
 
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files || e.target.files.length === 0) return;
-
-        const file = e.target.files[0];
+    const handleImageFile = async (file: File) => {
         const formData = new FormData();
         formData.append('file', file);
 
@@ -112,12 +111,18 @@ const EmployeeDetail = () => {
             });
             alert(t('image_update_success'));
             fetchData(); // Reload data to show new image
+            setShowCamera(false);
         } catch (error: any) {
             console.error(error);
             alert(error.response?.data?.detail || t('image_update_error'));
         } finally {
             setUpdating(false);
         }
+    };
+
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+        handleImageFile(e.target.files[0]);
     };
 
     const formatOvertime = (minutes: number) => {
@@ -219,6 +224,13 @@ const EmployeeDetail = () => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {showCamera && (
+                <CameraCapture
+                    onCapture={handleImageFile}
+                    onClose={() => setShowCamera(false)}
+                />
+            )}
+
             {/* Header */}
             <div className="employee-detail-header" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                 <button onClick={() => navigate('/employees')} style={{ padding: '10px', background: '#1e293b', border: '1px solid #334155', color: 'white', borderRadius: '8px' }}>
@@ -263,33 +275,56 @@ const EmployeeDetail = () => {
                         </div>
 
                         {/* Camera Icon Overlay */}
-                        <label
-                            htmlFor="image-upload"
-                            style={{
-                                position: 'absolute',
-                                bottom: '0',
-                                right: '0',
-                                background: '#3b82f6',
-                                borderRadius: '50%',
-                                padding: '8px',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                            }}
-                            title={t('update_image_label')}
-                        >
-                            <Camera size={16} color="white" />
-                        </label>
-                        <input
-                            id="image-upload"
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageUpload}
-                            style={{ display: 'none' }}
-                            disabled={updating}
-                        />
+                        <div style={{
+                            position: 'absolute',
+                            bottom: '0',
+                            right: '0',
+                            display: 'flex',
+                            gap: '5px'
+                        }}>
+                            <button
+                                onClick={() => setShowCamera(true)}
+                                style={{
+                                    background: '#10b981',
+                                    borderRadius: '50%',
+                                    padding: '8px',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                                    border: 'none'
+                                }}
+                                title={t('take_photo')}
+                                disabled={updating}
+                            >
+                                <Camera size={14} color="white" />
+                            </button>
+                            <label
+                                htmlFor="image-upload"
+                                style={{
+                                    background: '#3b82f6',
+                                    borderRadius: '50%',
+                                    padding: '8px',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                                }}
+                                title={t('update_image_label')}
+                            >
+                                <Edit2 size={14} color="white" />
+                            </label>
+                            <input
+                                id="image-upload"
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageUpload}
+                                style={{ display: 'none' }}
+                                disabled={updating}
+                            />
+                        </div>
                     </div>
                     {isEditing ? (
                         <input

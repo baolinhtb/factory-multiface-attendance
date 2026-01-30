@@ -137,7 +137,6 @@
     <string name="work_days">Ngày làm việc trong tuần:</string>
     <string name="shift_settings">Cấu hình các ca làm việc</string>
     <string name="add_new_shift">Thêm ca mới</string>
-    <string name="save">Lưu</string>
     <string name="delete_shift_confirm">Xác nhận xóa?</string>
     <string name="start_work_time">Giờ bắt đầu làm</string>
     <string name="end_work_time">Giờ kết thúc làm</string>
@@ -151,6 +150,7 @@
     <string name="add_first_shift">+ Thêm ca đầu tiên</string>
     <string name="no_config_selected">Chưa chọn chế độ làm việc</string>
     <string name="select_config_instruction">Vui lòng chọn một chế độ ở cột bên trái hoặc tạo mới.</string>
+    <string name="select_config_msg">Vui lòng chọn một chế độ ở cột bên trái hoặc tạo mới.</string>
     <string name="add_config_modal_title">Thêm chế độ làm việc mới</string>
     <string name="config_name">Tên chế độ:</string>
     <string name="create_new">Tạo mới</string>
@@ -162,6 +162,11 @@
     <string name="error_delete_shift">Lỗi khi xóa ca</string>
     <string name="new_shift_default_name">Ca mới</string>
     <string name="minutes_label">phút</string>
+    <string name="photo_required">Vui lòng chọn hoặc chụp ảnh nhân viên</string>
+    <string name="employee_registered_success">Thành công: Nhân viên đã được đăng ký và metadata khuôn mặt đã được lưu.</string>
+    <string name="id_placeholder">Ví dụ: NV001</string>
+    <string name="error_add_employee">Lỗi khi thêm nhân viên</string>
+    <string name="error_fetching_employees">Lỗi khi tải danh sách nhân viên</string>
     <string name="user_management_title">Quản lý người dùng hệ thống</string>
     <string name="user_account">Tài khoản</string>
     <string name="permissions">Quyền hạn</string>
@@ -197,8 +202,20 @@
     <string name="show_on_camera">Hiển thị trên camera</string>
     <string name="phone_detection">Sử dụng điện thoại</string>
     <string name="detect_violation">Phát hiện vi phạm</string>
+    <string name="fire_detection">Phát hiện lửa</string>
+    <string name="detect_fire">Cảnh báo cháy</string>
+    <string name="fire_detected">🔥 CẢNH BÁO: Phát hiện lửa!</string>
+    <string name="fire_cleared">✅ Lửa đã tắt</string>
+    <string name="pose_detected_warning">⚠️ CẢNH BÁO: Tư thế không an toàn!</string>
+    <string name="pose_cleared">✅ Tư thế đã an toàn</string>
+    <string name="pose_detection">Phát hiện tư thế</string>
+    <string name="detect_unsafe_pose">Cảnh báo tư thế không an toàn</string>
+    <string name="pose_detection_confidence">Ngưỡng phát hiện tư thế</string>
     <string name="alarm">Chuông báo động</string>
     <string name="on_incident">Khi có sự cố</string>
+    <string name="camera_type">Chọn loại camera hoạt động</string>
+    <string name="usb_camera">Camera USB (Trực tiếp)</string>
+    <string name="rtsp_camera">Camera IP / RTSP (Luồng mạng)</string>
     <string name="upload_language_format">Định dạng file: &lt;resources&gt;&lt;string name="..."&gt;...&lt;/string&gt;&lt;/resources&gt;</string>
     <string name="save_settings_success">Đã lưu thiết lập!</string>
     <string name="save_all_changes">Lưu tất cả thay đổi</string>
@@ -206,6 +223,16 @@
     <string name="upload_lang_success">Tải lên ngôn ngữ thành công</string>
     <string name="upload_lang_error">Lỗi khi tải lên ngôn ngữ</string>
     <string name="uploading">Đang tải lên...</string>
+    <string name="ai_settings_title">Cài đặt AI</string>
+    <string name="ai_thresholds">Ngưỡng phát hiện AI</string>
+    <string name="face_recognition_threshold">Ngưỡng nhận diện khuôn mặt</string>
+    <string name="phone_detection_confidence">Ngưỡng phát hiện điện thoại</string>
+    <string name="fire_detection_confidence">Ngưỡng phát hiện lửa</string>
+    <string name="threshold_hint_face">Giá trị cao hơn = chính xác hơn nhưng khó nhận diện hơn (0.3-0.7)</string>
+    <string name="threshold_hint_detection">Giá trị cao hơn = ít cảnh báo nhầm nhưng dễ bỏ sót (0.1-0.9)</string>
+    <string name="reset_to_default">Khôi phục mặc định</string>
+    <string name="default_values">Giá trị mặc định</string>
+    <string name="current_value">Giá trị hiện tại</string>
     <string name="status_on_time">Đúng giờ</string>
     <string name="status_late">Muộn</string>
     <string name="status_early">Về sớm</string>
@@ -241,13 +268,8 @@
     <string name="checkin_window_hint">(Theo dõi vào từ giờ này)</string>
     <string name="checkout_window_hint">(Theo dõi ra đến giờ này)</string>
     <string name="no_shifts_in_config">Chưa có ca làm việc nào được thiết lập cho chế độ này.</string>
-    <string name="add_first_shift">+ Thêm ca đầu tiên</string>
-    <string name="no_config_selected">Chưa chọn chế độ làm việc</string>
-    <string name="select_config_instruction">Vui lòng chọn một chế độ ở cột bên trái hoặc tạo mới.</string>
     <string name="config_name_placeholder">Ví dụ: Ca kíp sản xuất</string>
     <string name="config_name_label">Tên chế độ:</string>
-    <string name="config_name_placeholder">Ví dụ: Ca kíp sản xuất</string>
-    <string name="loading">Đang tải...</string>
     <string name="monday">Thứ 2</string>
     <string name="tuesday">Thứ 3</string>
     <string name="wednesday">Thứ 4</string>
@@ -260,8 +282,10 @@
     <string name="to_date">Đến ngày</string>
     <string name="today">Hôm nay</string>
     <string name="yesterday">Hôm qua</string>
+    <string name="week">Tuần này</string>
     <string name="this_week">Tuần này</string>
     <string name="last_7_days">7 ngày qua</string>
+    <string name="month">Tháng này</string>
     <string name="this_month">Tháng này</string>
     <string name="last_month">Tháng trước</string>
     <string name="custom">Tùy chọn</string>
@@ -278,4 +302,9 @@
     <string name="error_change_password">Lỗi khi đổi mật khẩu</string>
     <string name="change_password_title">Đổi mật khẩu cho: </string>
     <string name="change_own_password_title">Đổi mật khẩu cá nhân</string>
+    <string name="take_photo">Chụp ảnh</string>
+    <string name="capture">Chụp</string>
+    <string name="retake_photo">Chụp lại</string>
+    <string name="use_photo">Sử dụng ảnh này</string>
+    <string name="camera_error">Không thể truy cập camera. Vui lòng kiểm tra quyền trình duyệt.</string>
 </resources>

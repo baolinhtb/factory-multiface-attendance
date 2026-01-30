@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { UserPlus, Search, Building2, Briefcase, Eye, Trash2, Calendar } from 'lucide-react';
+import { UserPlus, Search, Building2, Briefcase, Eye, Trash2, Calendar, Camera } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import CameraCapture from '../components/CameraCapture';
 
 const EmployeeManagement = () => {
     const { t } = useLanguage();
@@ -14,6 +15,8 @@ const EmployeeManagement = () => {
     const [assignedConfigId, setAssignedConfigId] = useState<string>('');
     const [configs, setConfigs] = useState<any[]>([]);
     const [photo, setPhoto] = useState<File | null>(null);
+    const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+    const [showCamera, setShowCamera] = useState(false);
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const navigate = useNavigate();
@@ -24,6 +27,7 @@ const EmployeeManagement = () => {
             setEmployees(res.data);
         } catch (e) {
             console.error("Error fetching employees", e);
+            // Optional: alert(t('error_fetching_employees'));
         }
     };
 
@@ -41,7 +45,7 @@ const EmployeeManagement = () => {
 
     const handleAddEmployee = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!photo) return alert("Vui lòng chọn ảnh nhân viên");
+        if (!photo) return alert(t('photo_required'));
 
         setLoading(true);
         const formData = new FormData();
@@ -54,19 +58,38 @@ const EmployeeManagement = () => {
 
         try {
             await api.post('/employees', formData);
-            alert("Thành công: Nhân viên đã được đăng ký và metadata khuôn mặt đã được lưu.");
+            alert(t('employee_registered_success'));
             setEmployeeId('');
             setFullName('');
             setPosition('');
             setDepartment('');
             setAssignedConfigId('');
             setPhoto(null);
+            setPhotoPreview(null);
             fetchEmployees();
         } catch (err: any) {
-            alert(err.response?.data?.detail || 'Lỗi khi thêm nhân viên');
+            alert(err.response?.data?.detail || t('error_add_employee'));
         } finally {
             setLoading(false);
         }
+    };
+
+    const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0] || null;
+        if (file) {
+            setPhoto(file);
+            const reader = new FileReader();
+            reader.onloadend = () => setPhotoPreview(reader.result as string);
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleCapture = (file: File) => {
+        setPhoto(file);
+        const reader = new FileReader();
+        reader.onloadend = () => setPhotoPreview(reader.result as string);
+        reader.readAsDataURL(file);
+        setShowCamera(false);
     };
 
     const filteredEmployees = employees.filter(emp =>
@@ -76,6 +99,13 @@ const EmployeeManagement = () => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {showCamera && (
+                <CameraCapture
+                    onCapture={handleCapture}
+                    onClose={() => setShowCamera(false)}
+                />
+            )}
+
             <div className="grid-dashboard">
                 {/* Employee List Section */}
                 <div style={{
@@ -163,7 +193,7 @@ const EmployeeManagement = () => {
                                 value={employeeId}
                                 onChange={(e) => setEmployeeId(e.target.value)}
                                 style={{ width: '100%' }}
-                                placeholder="Ví dụ: NV001"
+                                placeholder={t('id_placeholder')}
                                 required
                             />
                         </div>
@@ -212,13 +242,48 @@ const EmployeeManagement = () => {
                         </div>
                         <div>
                             <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '6px', color: '#94a3b8' }}>{t('portrait_photo')}</label>
-                            <input
-                                type="file"
-                                onChange={(e) => setPhoto(e.target.files?.[0] || null)}
-                                accept="image/*"
-                                style={{ width: '100%', fontSize: '0.8rem' }}
-                                required
-                            />
+                            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '10px' }}>
+                                <input
+                                    type="file"
+                                    onChange={handlePhotoChange}
+                                    accept="image/*"
+                                    style={{ flex: 1, fontSize: '0.8rem' }}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowCamera(true)}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        background: '#1e293b',
+                                        border: '1px solid #3b82f6',
+                                        padding: '8px 12px',
+                                        borderRadius: '4px',
+                                        color: '#3b82f6',
+                                        fontSize: '0.85rem'
+                                    }}
+                                >
+                                    <Camera size={16} />
+                                    {t('take_photo')}
+                                </button>
+                            </div>
+
+                            {photoPreview && (
+                                <div style={{
+                                    width: '100%',
+                                    height: '150px',
+                                    borderRadius: '8px',
+                                    overflow: 'hidden',
+                                    border: '1px solid #334155',
+                                    background: '#0f172a',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}>
+                                    <img src={photoPreview} style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }} alt="Preview" />
+                                </div>
+                            )}
                         </div>
                         <button
                             type="submit"
@@ -232,7 +297,6 @@ const EmployeeManagement = () => {
                                 fontWeight: 600
                             }}
                         >
-
                             {loading ? t('processing_ai') : t('register_employee')}
                         </button>
                     </form>

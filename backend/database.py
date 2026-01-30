@@ -151,12 +151,20 @@ def init_db():
         # Default settings
         print("[DB] Inserting default settings...")
         default_settings = [
+            ('camera_type', 'usb'),
             ('camera_src', '0'),
             ('rtsp_url', ''),
             ('show_age_gender', 'true'),
             ('enable_alarm', 'true'),
             ('enable_phone_det', 'true'),
-            ('overtime_enabled', 'true')
+            ('enable_fire_det', 'true'),
+            ('enable_pose_det', 'true'),
+            ('overtime_enabled', 'true'),
+            # AI Detection Thresholds
+            ('face_recognition_threshold', '0.45'),
+            ('phone_detection_confidence', '0.15'),
+            ('fire_detection_confidence', '0.30'),
+            ('pose_detection_confidence', '0.50')
         ]
         cur.executemany("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)", default_settings)
         

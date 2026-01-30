@@ -219,7 +219,7 @@ const AttendanceCalculator = () => {
                                 type="text"
                                 value={employeeId}
                                 onChange={(e) => setEmployeeId(e.target.value)}
-                                placeholder="Ví dụ: NV001"
+                                placeholder={t('id_placeholder')}
                                 style={{
                                     width: '100%',
                                     padding: '10px',

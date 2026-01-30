@@ -1,18 +1,33 @@
 import React, { useEffect, useState, useRef } from 'react';
 import api from '../services/api';
-import { Settings as SettingsIcon, Save, Monitor, Bell, Eye, PhoneOff, Globe, Upload } from 'lucide-react';
+import { Settings as SettingsIcon, Save, Monitor, Bell, Eye, PhoneOff, Globe, Upload, Flame, Brain, RotateCcw, User } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const Settings = () => {
     const { refreshLanguages, t } = useLanguage();
     const [settings, setSettings] = useState<any>({
+        camera_type: 'usb',
         camera_src: '0',
+        rtsp_url: '',
         show_age_gender: 'true',
         enable_alarm: 'true',
-        enable_phone_det: 'true'
+        enable_phone_det: 'true',
+        enable_fire_det: 'true',
+        enable_pose_det: 'true',
+        face_recognition_threshold: '0.45',
+        phone_detection_confidence: '0.15',
+        fire_detection_confidence: '0.30',
+        pose_detection_confidence: '0.50'
     });
     const [loading, setLoading] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
+    const [expandedSections, setExpandedSections] = useState<string[]>([]);
+
+    const toggleSection = (id: string) => {
+        setExpandedSections(prev =>
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+    };
 
     const fetchData = async () => {
         try {
@@ -32,7 +47,7 @@ const Settings = () => {
             setSaveSuccess(true);
             setTimeout(() => setSaveSuccess(false), 3000);
         } catch (e) {
-            alert(t('error_save_settings'));
+            alert(t('error_save_settings') || 'Error saving settings');
         } finally {
             setLoading(false);
         }
@@ -53,11 +68,11 @@ const Settings = () => {
             await api.post('/languages/upload', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            alert(t('upload_lang_success'));
+            alert(t('upload_lang_success') || 'Language uploaded successfully');
             await refreshLanguages();
             if (fileInputRef.current) fileInputRef.current.value = '';
         } catch (error) {
-            alert(t('upload_lang_error'));
+            alert(t('upload_lang_error') || 'Error uploading language');
         } finally {
             setUploadingLang(false);
         }
@@ -74,129 +89,322 @@ const Settings = () => {
                     </div>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                    {/* Camera Source */}
-                    <div style={{ background: '#0f172a', padding: '20px', borderRadius: '10px', border: '1px solid #334155' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1rem', fontWeight: 600, marginBottom: '12px', color: 'white' }}>
-                            <Monitor size={20} color="#3b82f6" /> {t('camera_source')}
-                        </label>
-                        <input
-                            type="text"
-                            value={settings.camera_src}
-                            onChange={(e) => setSettings({ ...settings, camera_src: e.target.value })}
-                            style={{ width: '100%', padding: '12px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: 'white' }}
-                            placeholder={t('camera_placeholder')}
-                        />
-                        <div style={{ marginTop: '8px', fontSize: '0.85rem', color: '#94a3b8' }}>
-                            {t('camera_source_hint')}
-                        </div>
-                    </div>
-
-                    {/* RTSP Camera URL */}
-                    <div style={{ background: '#0f172a', padding: '20px', borderRadius: '10px', border: '1px solid #334155' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1rem', fontWeight: 600, marginBottom: '12px', color: 'white' }}>
-                            <Monitor size={20} color="#10b981" /> {t('rtsp_camera_url')}
-                        </label>
-                        <input
-                            type="text"
-                            value={settings.rtsp_url || ''}
-                            onChange={(e) => setSettings({ ...settings, rtsp_url: e.target.value })}
-                            style={{ width: '100%', padding: '12px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: 'white' }}
-                            placeholder={t('rtsp_placeholder')}
-                        />
-                        <div style={{ marginTop: '8px', fontSize: '0.85rem', color: '#94a3b8' }}>
-                            {t('rtsp_hint')}
-                        </div>
-                    </div>
-
-                    {/* Toggles */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
-                        <div style={{ background: '#0f172a', padding: '20px', borderRadius: '10px', border: '1px solid #334155', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    {/* 1. Camera Config Section */}
+                    <div style={{ background: '#0f172a', borderRadius: '12px', border: '1px solid #334155', overflow: 'hidden' }}>
+                        <div
+                            onClick={() => toggleSection('camera')}
+                            style={{
+                                padding: '20px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                cursor: 'pointer',
+                                background: expandedSections.includes('camera') ? '#1e293b' : 'transparent',
+                                transition: 'all 0.3s'
+                            }}
+                        >
                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <Eye size={24} color="#3b82f6" />
-                                <div>
-                                    <div style={{ fontWeight: 600 }}>{t('show_age_gender')}</div>
-                                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{t('show_on_camera')}</div>
+                                <Monitor size={20} color="#3b82f6" />
+                                <span style={{ fontWeight: 700, fontSize: '1.1rem', color: 'white' }}>{t('camera_type')}</span>
+                            </div>
+                            <div style={{
+                                transform: expandedSections.includes('camera') ? 'rotate(180deg)' : 'rotate(0)',
+                                transition: 'transform 0.3s',
+                                color: '#94a3b8'
+                            }}>
+                                <SettingsIcon size={18} />
+                            </div>
+                        </div>
+
+                        {expandedSections.includes('camera') && (
+                            <div style={{ padding: '24px', borderTop: '1px solid #1e293b', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+                                    {/* USB Camera Card */}
+                                    <div
+                                        onClick={() => setSettings({ ...settings, camera_type: 'usb' })}
+                                        style={{
+                                            padding: '20px',
+                                            background: settings.camera_type === 'usb' ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+                                            border: '2px solid',
+                                            borderColor: settings.camera_type === 'usb' ? '#3b82f6' : '#334155',
+                                            borderRadius: '16px',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.3s',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: '15px'
+                                        }}
+                                    >
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                            <input
+                                                type="radio"
+                                                name="camera_type"
+                                                value="usb"
+                                                checked={settings.camera_type === 'usb'}
+                                                onChange={() => setSettings({ ...settings, camera_type: 'usb' })}
+                                                style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                                            />
+                                            <div>
+                                                <div style={{ fontWeight: 700, color: 'white', fontSize: '1rem' }}>{t('usb_camera')}</div>
+                                                <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Webcam, USB Cam</div>
+                                            </div>
+                                        </div>
+
+                                        <div style={{
+                                            opacity: settings.camera_type === 'usb' ? 1 : 0.4,
+                                            transition: 'all 0.3s',
+                                            pointerEvents: settings.camera_type === 'usb' ? 'auto' : 'none'
+                                        }} onClick={(e) => e.stopPropagation()}>
+                                            <input
+                                                type="text"
+                                                value={settings.camera_src}
+                                                onChange={(e) => setSettings({ ...settings, camera_src: e.target.value })}
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '10px',
+                                                    background: '#1e293b',
+                                                    border: '1px solid #334155',
+                                                    borderRadius: '8px',
+                                                    color: 'white',
+                                                    outline: 'none',
+                                                    fontSize: '0.9rem'
+                                                }}
+                                                placeholder={t('camera_placeholder')}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* RTSP Camera Card */}
+                                    <div
+                                        onClick={() => setSettings({ ...settings, camera_type: 'rtsp' })}
+                                        style={{
+                                            padding: '20px',
+                                            background: settings.camera_type === 'rtsp' ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
+                                            border: '2px solid',
+                                            borderColor: settings.camera_type === 'rtsp' ? '#10b981' : '#334155',
+                                            borderRadius: '16px',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.3s',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: '15px'
+                                        }}
+                                    >
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                            <input
+                                                type="radio"
+                                                name="camera_type"
+                                                value="rtsp"
+                                                checked={settings.camera_type === 'rtsp'}
+                                                onChange={() => setSettings({ ...settings, camera_type: 'rtsp' })}
+                                                style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                                            />
+                                            <div>
+                                                <div style={{ fontWeight: 700, color: 'white', fontSize: '1rem' }}>{t('rtsp_camera')}</div>
+                                                <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Network Stream</div>
+                                            </div>
+                                        </div>
+
+                                        <div style={{
+                                            opacity: settings.camera_type === 'rtsp' ? 1 : 0.4,
+                                            transition: 'all 0.3s',
+                                            pointerEvents: settings.camera_type === 'rtsp' ? 'auto' : 'none'
+                                        }} onClick={(e) => e.stopPropagation()}>
+                                            <input
+                                                type="text"
+                                                value={settings.rtsp_url || ''}
+                                                onChange={(e) => setSettings({ ...settings, rtsp_url: e.target.value })}
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '10px',
+                                                    background: '#1e293b',
+                                                    border: '1px solid #334155',
+                                                    borderRadius: '8px',
+                                                    color: 'white',
+                                                    outline: 'none',
+                                                    fontSize: '0.9rem'
+                                                }}
+                                                placeholder={t('rtsp_placeholder')}
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <input
-                                type="checkbox"
-                                checked={settings.show_age_gender === 'true'}
-                                onChange={(e) => setSettings({ ...settings, show_age_gender: e.target.checked ? 'true' : 'false' })}
-                                style={{ width: '22px', height: '22px', cursor: 'pointer' }}
-                            />
-                        </div>
-
-                        <div style={{ background: '#0f172a', padding: '20px', borderRadius: '10px', border: '1px solid #334155', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <PhoneOff size={24} color="#f59e0b" />
-                                <div>
-                                    <div style={{ fontWeight: 600 }}>{t('phone_detection')}</div>
-                                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{t('detect_violation')}</div>
-                                </div>
-                            </div>
-                            <input
-                                type="checkbox"
-                                checked={settings.enable_phone_det === 'true'}
-                                onChange={(e) => setSettings({ ...settings, enable_phone_det: e.target.checked ? 'true' : 'false' })}
-                                style={{ width: '22px', height: '22px', cursor: 'pointer' }}
-                            />
-                        </div>
-
-                        <div style={{ background: '#0f172a', padding: '20px', borderRadius: '10px', border: '1px solid #334155', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <Bell size={24} color="#ef4444" />
-                                <div>
-                                    <div style={{ fontWeight: 600 }}>{t('alarm')}</div>
-                                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{t('on_incident')}</div>
-                                </div>
-                            </div>
-                            <input
-                                type="checkbox"
-                                checked={settings.enable_alarm === 'true'}
-                                onChange={(e) => setSettings({ ...settings, enable_alarm: e.target.checked ? 'true' : 'false' })}
-                                style={{ width: '22px', height: '22px', cursor: 'pointer' }}
-                            />
-                        </div>
+                        )}
                     </div>
 
-                    {/* Language Management */}
-                    <div style={{ background: '#0f172a', padding: '20px', borderRadius: '10px', border: '1px solid #334155' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1rem', fontWeight: 600, marginBottom: '12px', color: 'white' }}>
-                            <Globe size={20} color="#3b82f6" /> {t('upload_language')} (XML)
-                        </label>
-                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                            <input
-                                type="file"
-                                accept=".xml"
-                                ref={fileInputRef}
-                                onChange={handleFileUpload}
-                                style={{ display: 'none' }}
-                            />
-                            <button
-                                onClick={() => fileInputRef.current?.click()}
-                                disabled={uploadingLang}
-                                style={{
-                                    padding: '10px 20px',
-                                    background: '#3b82f6',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '8px',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px',
-                                    fontWeight: 600
-                                }}
-                            >
-
-                                <Upload size={18} />
-                                {uploadingLang ? t('uploading') : t('upload_language')}
-                            </button>
-                            <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
-                                {t('upload_language_format')}
-                            </span>
+                    {/* 2. AI & Analysis Section */}
+                    <div style={{ background: '#0f172a', borderRadius: '12px', border: '1px solid #334155', overflow: 'hidden' }}>
+                        <div
+                            onClick={() => toggleSection('ai')}
+                            style={{
+                                padding: '20px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                cursor: 'pointer',
+                                background: expandedSections.includes('ai') ? '#1e293b' : 'transparent',
+                                transition: 'all 0.3s'
+                            }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <Brain size={20} color="#a78bfa" />
+                                <span style={{ fontWeight: 700, fontSize: '1.1rem', color: 'white' }}>{t('ai_settings_title')}</span>
+                            </div>
+                            <div style={{
+                                transform: expandedSections.includes('ai') ? 'rotate(180deg)' : 'rotate(0)',
+                                transition: 'transform 0.3s',
+                                color: '#94a3b8'
+                            }}>
+                                <SettingsIcon size={18} />
+                            </div>
                         </div>
+
+                        {expandedSections.includes('ai') && (
+                            <div style={{ padding: '24px', borderTop: '1px solid #1e293b', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                {/* Phone Detection */}
+                                <div style={{ padding: '16px', borderRadius: '12px', background: '#1e293b50', border: '1px solid #334155' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: settings.enable_phone_det === 'true' ? '15px' : '0' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                            <PhoneOff size={20} color="#f59e0b" />
+                                            <span style={{ fontWeight: 600 }}>{t('phone_detection')}</span>
+                                        </div>
+                                        <label className="switch" style={{ position: 'relative', display: 'inline-block', width: '44px', height: '22px' }}>
+                                            <input type="checkbox" checked={settings.enable_phone_det === 'true'} onChange={(e) => setSettings({ ...settings, enable_phone_det: e.target.checked ? 'true' : 'false' })} style={{ opacity: 0, width: 0, height: 0 }} />
+                                            <span style={{ position: 'absolute', cursor: 'pointer', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: settings.enable_phone_det === 'true' ? '#f59e0b' : '#334155', transition: '.4s', borderRadius: '34px' }}>
+                                                <span style={{ position: 'absolute', content: '""', height: '14px', width: '14px', left: '4px', bottom: '4px', backgroundColor: 'white', transition: '.4s', borderRadius: '50%', transform: settings.enable_phone_det === 'true' ? 'translateX(22px)' : 'translateX(0)' }}></span>
+                                            </span>
+                                        </label>
+                                    </div>
+                                    {settings.enable_phone_det === 'true' && (
+                                        <div style={{ padding: '15px', background: '#0f172a', borderRadius: '10px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                                <span style={{ fontSize: '0.85rem' }}>{t('phone_detection_confidence')}</span>
+                                                <button onClick={() => setSettings({ ...settings, phone_detection_confidence: '0.15' })} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '0.75rem' }}><RotateCcw size={12} /> {t('default')}</button>
+                                            </div>
+                                            <input type="range" min="0.1" max="0.9" step="0.05" value={settings.phone_detection_confidence} onChange={(e) => setSettings({ ...settings, phone_detection_confidence: e.target.value })} style={{ width: '100%', accentColor: '#f59e0b' }} />
+                                            <div style={{ textAlign: 'center', fontWeight: 700, color: '#f59e0b', fontSize: '0.9rem' }}>{settings.phone_detection_confidence}</div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Fire Detection */}
+                                <div style={{ padding: '16px', borderRadius: '12px', background: '#1e293b50', border: '1px solid #334155' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: settings.enable_fire_det === 'true' ? '15px' : '0' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                            <Flame size={20} color="#ff6b35" />
+                                            <span style={{ fontWeight: 600 }}>{t('fire_detection')}</span>
+                                        </div>
+                                        <label className="switch" style={{ position: 'relative', display: 'inline-block', width: '44px', height: '22px' }}>
+                                            <input type="checkbox" checked={settings.enable_fire_det === 'true'} onChange={(e) => setSettings({ ...settings, enable_fire_det: e.target.checked ? 'true' : 'false' })} style={{ opacity: 0, width: 0, height: 0 }} />
+                                            <span style={{ position: 'absolute', cursor: 'pointer', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: settings.enable_fire_det === 'true' ? '#ff6b35' : '#334155', transition: '.4s', borderRadius: '34px' }}>
+                                                <span style={{ position: 'absolute', content: '""', height: '14px', width: '14px', left: '4px', bottom: '4px', backgroundColor: 'white', transition: '.4s', borderRadius: '50%', transform: settings.enable_fire_det === 'true' ? 'translateX(22px)' : 'translateX(0)' }}></span>
+                                            </span>
+                                        </label>
+                                    </div>
+                                    {settings.enable_fire_det === 'true' && (
+                                        <div style={{ padding: '15px', background: '#0f172a', borderRadius: '10px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                                <span style={{ fontSize: '0.85rem' }}>{t('fire_detection_confidence')}</span>
+                                                <button onClick={() => setSettings({ ...settings, fire_detection_confidence: '0.30' })} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '0.75rem' }}><RotateCcw size={12} /> {t('default')}</button>
+                                            </div>
+                                            <input type="range" min="0.1" max="0.9" step="0.05" value={settings.fire_detection_confidence} onChange={(e) => setSettings({ ...settings, fire_detection_confidence: e.target.value })} style={{ width: '100%', accentColor: '#ff6b35' }} />
+                                            <div style={{ textAlign: 'center', fontWeight: 700, color: '#ff6b35', fontSize: '0.9rem' }}>{settings.fire_detection_confidence}</div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Pose Detection */}
+                                <div style={{ padding: '16px', borderRadius: '12px', background: '#1e293b50', border: '1px solid #334155' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: settings.enable_pose_det === 'true' ? '15px' : '0' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                            <User size={20} color="#06b6d4" />
+                                            <span style={{ fontWeight: 600 }}>{t('pose_detection')}</span>
+                                        </div>
+                                        <label className="switch" style={{ position: 'relative', display: 'inline-block', width: '44px', height: '22px' }}>
+                                            <input type="checkbox" checked={settings.enable_pose_det === 'true'} onChange={(e) => setSettings({ ...settings, enable_pose_det: e.target.checked ? 'true' : 'false' })} style={{ opacity: 0, width: 0, height: 0 }} />
+                                            <span style={{ position: 'absolute', cursor: 'pointer', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: settings.enable_pose_det === 'true' ? '#06b6d4' : '#334155', transition: '.4s', borderRadius: '34px' }}>
+                                                <span style={{ position: 'absolute', content: '""', height: '14px', width: '14px', left: '4px', bottom: '4px', backgroundColor: 'white', transition: '.4s', borderRadius: '50%', transform: settings.enable_pose_det === 'true' ? 'translateX(22px)' : 'translateX(0)' }}></span>
+                                            </span>
+                                        </label>
+                                    </div>
+                                    {settings.enable_pose_det === 'true' && (
+                                        <div style={{ padding: '15px', background: '#0f172a', borderRadius: '10px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                                <span style={{ fontSize: '0.85rem' }}>{t('pose_detection_confidence')}</span>
+                                                <button onClick={() => setSettings({ ...settings, pose_detection_confidence: '0.50' })} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '0.75rem' }}><RotateCcw size={12} /> {t('default')}</button>
+                                            </div>
+                                            <input type="range" min="0.1" max="0.9" step="0.05" value={settings.pose_detection_confidence} onChange={(e) => setSettings({ ...settings, pose_detection_confidence: e.target.value })} style={{ width: '100%', accentColor: '#06b6d4' }} />
+                                            <div style={{ textAlign: 'center', fontWeight: 700, color: '#06b6d4', fontSize: '0.9rem' }}>{settings.pose_detection_confidence}</div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Face & General */}
+                                <div style={{ padding: '16px', borderRadius: '12px', background: '#1e293b50', border: '1px solid #334155' }}>
+                                    <div style={{ fontWeight: 600, marginBottom: '15px' }}>{t('general_settings')}</div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                        <div style={{ padding: '12px', background: '#0f172a', borderRadius: '8px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                                                <span style={{ fontSize: '0.8rem' }}>{t('face_recognition_threshold')}</span>
+                                                <button onClick={() => setSettings({ ...settings, face_recognition_threshold: '0.45' })} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '0.7rem' }}><RotateCcw size={10} /> {t('default')}</button>
+                                            </div>
+                                            <input type="range" min="0.3" max="0.7" step="0.01" value={settings.face_recognition_threshold} onChange={(e) => setSettings({ ...settings, face_recognition_threshold: e.target.value })} style={{ width: '100%', accentColor: '#a78bfa' }} />
+                                            <div style={{ textAlign: 'center', fontWeight: 700, color: '#a78bfa', fontSize: '0.85rem' }}>{settings.face_recognition_threshold}</div>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                            <span style={{ fontSize: '0.9rem' }}>{t('show_age_gender')}</span>
+                                            <input type="checkbox" checked={settings.show_age_gender === 'true'} onChange={(e) => setSettings({ ...settings, show_age_gender: e.target.checked ? 'true' : 'false' })} style={{ width: '18px', height: '18px' }} />
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                            <span style={{ fontSize: '0.9rem' }}>{t('alarm')}</span>
+                                            <input type="checkbox" checked={settings.enable_alarm === 'true'} onChange={(e) => setSettings({ ...settings, enable_alarm: e.target.checked ? 'true' : 'false' })} style={{ width: '18px', height: '18px' }} />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* 3. Language Section */}
+                    <div style={{ background: '#0f172a', borderRadius: '12px', border: '1px solid #334155', overflow: 'hidden' }}>
+                        <div
+                            onClick={() => toggleSection('lang')}
+                            style={{
+                                padding: '20px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                cursor: 'pointer',
+                                background: expandedSections.includes('lang') ? '#1e293b' : 'transparent',
+                                transition: 'all 0.3s'
+                            }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <Globe size={20} color="#3b82f6" />
+                                <span style={{ fontWeight: 700, fontSize: '1.1rem', color: 'white' }}>{t('upload_language')}</span>
+                            </div>
+                            <div style={{
+                                transform: expandedSections.includes('lang') ? 'rotate(180deg)' : 'rotate(0)',
+                                transition: 'transform 0.3s',
+                                color: '#94a3b8'
+                            }}>
+                                <SettingsIcon size={18} />
+                            </div>
+                        </div>
+
+                        {expandedSections.includes('lang') && (
+                            <div style={{ padding: '24px', borderTop: '1px solid #1e293b' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                    <input type="file" accept=".xml" ref={fileInputRef} onChange={handleFileUpload} style={{ display: 'none' }} />
+                                    <button onClick={() => fileInputRef.current?.click()} disabled={uploadingLang} style={{ padding: '12px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: 600 }}>
+                                        <Upload size={18} /> {uploadingLang ? t('uploading') : t('upload_language')}
+                                    </button>
+                                    <p style={{ color: '#94a3b8', fontSize: '0.75rem', textAlign: 'center' }}>{t('upload_language_format')}</p>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <button
@@ -218,7 +426,6 @@ const Settings = () => {
                             transition: 'all 0.3s'
                         }}
                     >
-
                         <Save size={20} />
                         {saveSuccess ? t('save_settings_success') : t('save_all_changes')}
                     </button>
