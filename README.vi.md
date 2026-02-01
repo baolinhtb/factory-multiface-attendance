@@ -147,41 +147,31 @@ cd ..
 ## 📁 Cấu trúc dự án
 
 ```
-factory multiface attendance app/
 ├── backend/
-│   ├── main.py              # FastAPI entry point
-│   ├── camera_stream.py     # AI logic (Face Recognition, YOLO)
-│   ├── database.py          # SQLite operations
-│   ├── auth.py              # JWT authentication
-│   ├── attendance.db        # Database file (auto-generated)
-│   ├── requirements.txt     # Python dependencies
-│   └── venv/                # Virtual environment
+│   ├── main.py              # File chạy chính (Wrapper)
+│   ├── api/                 # Cấu hình API và xác thực
+│   │   ├── main.py          # Khởi tạo FastAPI và các Routes
+│   │   └── auth.py          # Xử lý JWT và phân quyền
+│   ├── core/                # Thuật toán và Logic cốt lõi
+│   │   ├── camera_stream.py # Xử lý luồng video và AI Pipeline
+│   │   ├── face_recognizer.py # Nhận diện khuôn mặt (FAISS)
+│   │   ├── fall_detector.py # Thuật toán phát hiện ngã
+│   │   ├── fire_detector.py # Thuật toán phát hiện cháy
+│   │   ├── attendance_calculator.py # Logic chấm công và tăng ca
+│   │   └── ollama_chat.py   # Tích hợp AI Assistant (Ollama)
+│   ├── db/                  # Tầng truy xuất dữ liệu
+│   │   └── database.py      # Quản lý SQLite và Schema
+│   ├── data/                # Nơi lưu trữ dữ liệu bền vững
+│   │   └── attendance.db    # File cơ sở dữ liệu chính
+│   ├── scripts/             # Các script bảo trì và công cụ
+│   ├── models/              # Chứa các file trọng số AI (.pt)
+│   └── requirements.txt     # Thư viện Python cần thiết
 ├── frontend/
-│   ├── src/
-│   │   ├── App.tsx          # Main React app
-│   │   ├── main.tsx         # Entry point
-│   │   ├── index.css        # Global styles
-│   │   ├── components/      # React components
-│   │   │   └── Layout.tsx
-│   │   ├── pages/           # Page components
-│   │   │   ├── Login.tsx
-│   │   │   ├── Dashboard.tsx
-│   │   │   ├── UserManagement.tsx
-│   │   │   └── Settings.tsx
-│   │   └── services/
-│   │       └── api.ts       # Axios API service
-│   ├── index.html           # HTML entry
-│   ├── package.json         # npm dependencies
-│   ├── tsconfig.json        # TypeScript config
-│   ├── vite.config.ts       # Vite config
-│   └── node_modules/
-├── logs/
-│   ├── backend.log          # Backend logs
-│   └── frontend.log         # Frontend logs
-├── start.sh                 # 🚀 Startup script
-├── stop.sh                  # 🛑 Shutdown script
-├── status.sh                # 📊 Status check script
-└── README.md
+│   └── src/                 # Source code React (TypeScript)
+├── logs/                    # Nhật ký hệ thống
+├── start.sh                 # 🚀 Script khởi động nhanh
+├── stop.sh                  # 🛑 Script dừng hệ thống
+└── status.sh                # 📊 Script kiểm tra trạng thái
 ```
 
 ## 🔧 Scripts

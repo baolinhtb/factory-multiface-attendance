@@ -9,7 +9,7 @@ MODELS = {
     "yolo26n-pose.pt": "https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo26n-pose.pt"
 }
 
-MODELS_DIR = os.path.join(os.path.dirname(__file__), "models")
+MODELS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "models")
 
 def download_file(url, target_path):
     print(f"Downloading {url} to {target_path}...")

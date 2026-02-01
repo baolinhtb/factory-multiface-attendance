@@ -79,14 +79,27 @@ A comprehensive AI monitoring system designed for factory environments. It track
 
 ```text
 ├── backend/
-│   ├── main.py            # FastAPI entry point & WebSocket server
-│   ├── camera_stream.py    # Core AI logic (Recognition, YOLO, DemoG)
-│   ├── database.py        # SQLite Database management
-│   ├── attendance.db      # Auto-generated database file
-│   └── requirements.txt   # Python dependencies
+│   ├── main.py            # Entry point wrapper for compatibility
+│   ├── api/               # API routes and authentication
+│   │   ├── main.py        # Core FastAPI application logic
+│   │   └── auth.py        # Security, JWT & RBAC logic
+│   ├── core/              # Core AI and processing logic
+│   │   ├── camera_stream.py    # Main video processing pipeline
+│   │   ├── face_recognizer.py  # Face matching engine (FAISS)
+│   │   ├── fall_detector.py    # Safety monitoring (Fall detection)
+│   │   ├── fire_detector.py    # Fire & Smoke detection
+│   │   ├── attendance_calculator.py # Payroll & Shift logic
+│   │   └── ollama_chat.py      # LLM-powered AI Assistant
+│   ├── db/                # Database abstraction layer
+│   │   └── database.py    # SQLite CRUD & Schema management
+│   ├── data/              # Persistent data and backups
+│   │   └── attendance.db  # Main SQLite database file
+│   ├── scripts/           # Utility & maintenance tools
+│   ├── models/            # AI weights (.pt) and config
+│   └── requirements.txt   # Backend dependencies
 ├── frontend/
-│   └── index.html         # Unified web interface (Video + Logs + Stats)
-└── README.md              # English Documentation
+│   └── src/               # React components and logic
+└── README.md              # Documentation
 ```
 
 ## ⚠️ Important Notes

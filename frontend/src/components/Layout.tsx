@@ -1,6 +1,6 @@
 import { ReactNode, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Settings, Shield, Clock, History, ChevronDown, ChevronRight, ListChecks, Calculator, Menu, Globe, Lock } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, Shield, Clock, History, ChevronDown, ChevronRight, ListChecks, Calculator, Menu, Globe, Lock, MessageSquare } from 'lucide-react';
 import ChangePasswordModal from './ChangePasswordModal';
 import { useLanguage } from '../contexts/LanguageContext';
 
@@ -61,6 +61,7 @@ function Layout({ children, currentUser }: LayoutProps) {
                 { path: '/attendance-calculator', label: t('attendance_calculator'), icon: Calculator, adminOnly: true },
             ]
         },
+        { path: '/ollama-chat', label: t('ai_assistant') || 'AI Assistant', icon: MessageSquare, adminOnly: false },
         {
             label: t('system_settings'),
             icon: Settings,
@@ -210,7 +211,8 @@ function Layout({ children, currentUser }: LayoutProps) {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    gap: '12px'
+                    gap: '12px',
+                    background: 'var(--bg-card)'
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <Shield size={28} color="#3b82f6" />
@@ -329,14 +331,14 @@ function Layout({ children, currentUser }: LayoutProps) {
             </aside>
 
             {/* Main Content */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--bg-dark)' }}>
                 <header style={{
                     height: '64px',
-                    background: '#1e293b',
+                    background: 'var(--bg-card)',
                     borderBottom: '1px solid #334155',
                     display: 'flex',
                     alignItems: 'center',
-                    padding: '0 30px'
+                    padding: '0 24px'
                 }} className="header-content">
                     <button
                         className="sidebar-toggle"
@@ -349,7 +351,12 @@ function Layout({ children, currentUser }: LayoutProps) {
                         {getPageTitle()}
                     </h2>
                 </header>
-                <div style={{ flex: 1, overflowY: 'auto', padding: '30px' }} className="main-content">
+                <div style={{
+                    flex: 1,
+                    overflowY: location.pathname === '/ollama-chat' ? 'hidden' : 'auto',
+                    padding: location.pathname === '/ollama-chat' ? 0 : '24px',
+                    position: 'relative'
+                }} className="main-content">
                     {children}
                 </div>
             </div>

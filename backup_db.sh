@@ -3,7 +3,7 @@
 # Run this periodically or before major updates
 
 BACKUP_DIR="backups"
-DB_FILE="backend/attendance.db"
+DB_FILE="backend/data/attendance.db"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 BACKUP_FILE="${BACKUP_DIR}/attendance_${TIMESTAMP}.db"
 

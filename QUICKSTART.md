@@ -109,7 +109,7 @@ npm run dev
 
 ```bash
 # Xóa và tạo lại
-rm backend/attendance.db
+rm backend/data/attendance.db
 ./start.sh
 ```
 

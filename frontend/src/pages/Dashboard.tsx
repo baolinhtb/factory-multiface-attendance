@@ -123,15 +123,11 @@ const Dashboard = () => {
     return (
         <div className="grid-dashboard">
             {/* Left Wall: Camera & Logs */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div style={{
-                    background: '#1e293b',
-                    borderRadius: '12px',
-                    padding: '20px',
-                    border: '1px solid #334155',
                     position: 'relative'
                 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', paddingLeft: '4px' }}>
                         <Camera size={20} color="#3b82f6" />
                         <h3 style={{ fontWeight: 600 }}>{t('monitoring')}</h3>
                         {isAlerting && (
@@ -153,8 +149,8 @@ const Dashboard = () => {
                     </div>
                     <div style={{
                         aspectRatio: '680/480',
-                        background: '#0f172a',
-                        borderRadius: '8px',
+                        background: 'black',
+                        borderRadius: '12px',
                         overflow: 'hidden',
                         border: isAlerting ? '3px solid #ef4444' : '1px solid #334155',
                         boxShadow: isAlerting ? '0 0 20px rgba(239, 68, 68, 0.4)' : 'none',
@@ -165,23 +161,19 @@ const Dashboard = () => {
                 </div>
 
                 <div style={{
-                    background: '#1e293b',
-                    borderRadius: '12px',
-                    padding: '20px',
-                    border: '1px solid #334155',
                     height: '250px',
                     display: 'flex',
                     flexDirection: 'column'
                 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', paddingLeft: '4px' }}>
                         <History size={20} color="#3b82f6" />
                         <h3 style={{ fontWeight: 600 }}>{t('system_alert')}</h3>
                     </div>
-                    <div className="scroll-thin" style={{ flex: 1, overflowY: 'auto', fontSize: '0.875rem' }}>
+                    <div className="scroll-thin" style={{ flex: 1, overflowY: 'auto', fontSize: '0.875rem', paddingRight: '4px' }}>
                         {logs.map((log, idx) => (
                             <div key={idx} style={{
-                                padding: '10px 0',
-                                borderBottom: '1px solid #334155',
+                                padding: '8px 4px',
+                                borderBottom: '1px solid #1e293b',
                                 display: 'flex',
                                 justifyContent: 'space-between'
                             }}>
@@ -195,25 +187,19 @@ const Dashboard = () => {
             </div>
 
             {/* Right Wall: Stats */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div style={{
-                    background: '#1e293b',
-                    borderRadius: '12px',
-                    padding: '20px',
-                    border: '1px solid #334155',
                     minHeight: '400px'
                 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', paddingLeft: '4px' }}>
                         <Phone size={20} color="#f59e0b" />
                         <h3 style={{ fontWeight: 600 }}>{t('daily_stats')}</h3>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
                         {stats.map((s, idx) => (
                             <div key={idx} style={{
-                                background: '#0f172a',
-                                padding: '12px 16px',
-                                borderRadius: '8px',
-                                border: '1px solid #334155'
+                                padding: '12px 4px',
+                                borderBottom: '1px solid #1e293b' // Very subtle separator
                             }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                                     <span style={{ fontWeight: 600 }}>{s.name}</span>

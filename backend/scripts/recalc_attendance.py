@@ -1,6 +1,10 @@
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from datetime import datetime, timedelta
-import attendance_calculator
-import database
+from core import attendance_calculator
+from db import database
 
 # Initialize database (just in case)
 database.init_db()

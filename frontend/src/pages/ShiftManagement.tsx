@@ -178,8 +178,8 @@ const ShiftManagement = () => {
     return (
         <div className="grid-shift-management">
             {/* Sidebar: Config List */}
-            <div style={{ background: '#1e293b', borderRadius: '12px', display: 'flex', flexDirection: 'column', border: '1px solid #334155', overflow: 'hidden' }}>
-                <div style={{ padding: '20px', borderBottom: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#1e293b' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', borderRight: '1px solid #334155', height: '100%' }}>
+                <div style={{ padding: '20px', borderBottom: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h3 style={{ fontWeight: 600, fontSize: '1rem' }}>{t('work_configs_title')}</h3>
                     <button onClick={() => setShowAddConfigModal(true)} style={{ padding: '6px', background: '#3b82f6', borderRadius: '6px', color: 'white', display: 'flex', alignItems: 'center' }}>
                         <Plus size={18} />
@@ -233,7 +233,7 @@ const ShiftManagement = () => {
                 {currentConfig ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                         {/* Header Section */}
-                        <div style={{ background: '#1e293b', padding: '24px', borderRadius: '12px', border: '1px solid #334155' }}>
+                        <div style={{ padding: '0 0 24px 0', borderBottom: '1px solid #334155' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -303,7 +303,7 @@ const ShiftManagement = () => {
                         </div>
 
                         {/* Shifts List */}
-                        <div style={{ background: '#1e293b', padding: '24px', borderRadius: '12px', border: '1px solid #334155' }}>
+                        <div style={{ padding: '0' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                     <Clock size={20} color="#10b981" />
@@ -316,7 +316,7 @@ const ShiftManagement = () => {
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                                 {shifts.map((shift, idx) => (
-                                    <div key={shift.id} style={{ background: '#0f172a', borderRadius: '12px', padding: '20px', border: '1px solid #334155' }}>
+                                    <div key={shift.id} style={{ padding: '20px 0', borderBottom: '1px solid #334155' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                                 <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981', fontWeight: 700 }}>

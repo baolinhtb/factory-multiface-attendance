@@ -88,7 +88,7 @@ textarea:focus {
 .grid-dashboard {
   display: grid;
   grid-template-columns: 1fr 350px;
-  gap: 24px;
+  gap: 16px;
 }
 
 .grid-form-2col {

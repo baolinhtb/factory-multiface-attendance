@@ -109,10 +109,8 @@ const EmployeeManagement = () => {
             <div className="grid-dashboard">
                 {/* Employee List Section */}
                 <div style={{
-                    background: '#1e293b',
-                    borderRadius: '12px',
-                    padding: '24px',
-                    border: '1px solid #334155'
+                    padding: '0 0 24px 0',
+                    borderBottom: '1px solid #334155'
                 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                         <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>{t('employee_list')}</h3>
@@ -174,10 +172,7 @@ const EmployeeManagement = () => {
 
                 {/* Registration Section */}
                 <div style={{
-                    background: '#1e293b',
-                    borderRadius: '12px',
-                    padding: '24px',
-                    border: '1px solid #334155',
+                    padding: '24px 0',
                     height: 'fit-content'
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>

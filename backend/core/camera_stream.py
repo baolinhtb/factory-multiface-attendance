@@ -6,12 +6,11 @@ import numpy as np
 import insightface
 from insightface.app import FaceAnalysis
 from ultralytics import YOLO
-import database
+from db import database
 from PIL import Image, ImageDraw, ImageFont
-from PIL import Image, ImageDraw, ImageFont
-from fall_detector import FallDetector
-from fire_detector import FireDetector
-from face_recognizer import FaceRecognizer
+from core.fall_detector import FallDetector
+from core.fire_detector import FireDetector
+from core.face_recognizer import FaceRecognizer
 
 class CameraStream:
     def __init__(self):

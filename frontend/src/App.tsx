@@ -9,6 +9,7 @@ import Settings from './pages/Settings';
 import ShiftManagement from './pages/ShiftManagement';
 import PresenceLogs from './pages/PresenceLogs';
 import AttendanceCalculator from './pages/AttendanceCalculator';
+import OllamaChat from './pages/OllamaChat';
 import Layout from './components/Layout';
 import api from './services/api';
 import { LanguageProvider } from './contexts/LanguageContext';
@@ -69,6 +70,7 @@ function App() {
                             <Route path="/" element={<Dashboard />} />
                             <Route path="/presence-logs" element={<PresenceLogs />} />
                             <Route path="/employees/:id" element={<EmployeeDetail />} />
+                            <Route path="/ollama-chat" element={<OllamaChat />} />
                             {currentUser?.role === 'admin' && (
                                 <>
                                     <Route path="/employees" element={<EmployeeManagement />} />

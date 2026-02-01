@@ -18,7 +18,12 @@ const Settings = () => {
         face_recognition_threshold: '0.45',
         phone_detection_confidence: '0.15',
         fire_detection_confidence: '0.30',
-        pose_detection_confidence: '0.50'
+        pose_detection_confidence: '0.50',
+        // Ollama settings
+        ollama_base_url: 'http://localhost:11434',
+        ollama_model_name: 'qwen2.5-vl:7b-instruct-q4_K_M',
+        ollama_timeout: '120',
+        ollama_enabled: 'true'
     });
     const [loading, setLoading] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
@@ -99,7 +104,7 @@ const Settings = () => {
 
     return (
         <div style={{ maxWidth: '800px' }}>
-            <div style={{ background: '#1e293b', borderRadius: '12px', padding: '30px', border: '1px solid #334155' }}>
+            <div style={{ padding: '30px 0' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '30px', borderBottom: '1px solid #334155', paddingBottom: '20px' }}>
                     <SettingsIcon size={32} color="#3b82f6" />
                     <div>
@@ -110,7 +115,7 @@ const Settings = () => {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     {/* 1. Camera Config Section */}
-                    <div style={{ background: '#0f172a', borderRadius: '12px', border: '1px solid #334155', overflow: 'hidden' }}>
+                    <div style={{ borderBottom: '1px solid #334155', overflow: 'hidden' }}>
                         <div
                             onClick={() => toggleSection('camera')}
                             style={{
@@ -315,7 +320,7 @@ const Settings = () => {
                     </div>
 
                     {/* 2. AI & Analysis Section */}
-                    <div style={{ background: '#0f172a', borderRadius: '12px', border: '1px solid #334155', overflow: 'hidden' }}>
+                    <div style={{ borderBottom: '1px solid #334155', overflow: 'hidden' }}>
                         <div
                             onClick={() => toggleSection('ai')}
                             style={{
@@ -471,8 +476,129 @@ const Settings = () => {
                         )}
                     </div>
 
-                    {/* 3. Language Section */}
-                    <div style={{ background: '#0f172a', borderRadius: '12px', border: '1px solid #334155', overflow: 'hidden' }}>
+                    {/* 3. Ollama AI Configuration */}
+                    <div style={{ borderBottom: '1px solid #334155', overflow: 'hidden' }}>
+                        <div
+                            onClick={() => toggleSection('ollama')}
+                            style={{
+                                padding: '20px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                cursor: 'pointer',
+                                background: expandedSections.includes('ollama') ? '#1e293b' : 'transparent',
+                                transition: 'all 0.3s'
+                            }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <Brain size={20} color="#a78bfa" />
+                                <span style={{ fontWeight: 700, fontSize: '1.1rem', color: 'white' }}>Ollama AI Configuration</span>
+                            </div>
+                            <div style={{
+                                transform: expandedSections.includes('ollama') ? 'rotate(180deg)' : 'rotate(0)',
+                                transition: 'transform 0.3s',
+                                color: '#94a3b8'
+                            }}>
+                                <SettingsIcon size={18} />
+                            </div>
+                        </div>
+
+                        {expandedSections.includes('ollama') && (
+                            <div style={{ padding: '24px', borderTop: '1px solid #1e293b' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <span style={{ fontSize: '0.9rem' }}>Enable Ollama AI</span>
+                                        <input type="checkbox" checked={settings.ollama_enabled === 'true'} onChange={(e) => setSettings({ ...settings, ollama_enabled: e.target.checked ? 'true' : 'false' })} style={{ width: '18px', height: '18px' }} />
+                                    </div>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <label style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Ollama Server URL</label>
+                                        <input
+                                            type="text"
+                                            value={settings.ollama_base_url || ''}
+                                            onChange={(e) => setSettings({ ...settings, ollama_base_url: e.target.value })}
+                                            placeholder="http://localhost:11434"
+                                            style={{
+                                                padding: '10px',
+                                                background: '#1e293b',
+                                                border: '1px solid #334155',
+                                                borderRadius: '8px',
+                                                color: 'white',
+                                                outline: 'none'
+                                            }}
+                                        />
+                                    </div>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <label style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Model Name</label>
+                                        <input
+                                            type="text"
+                                            value={settings.ollama_model_name || ''}
+                                            onChange={(e) => setSettings({ ...settings, ollama_model_name: e.target.value })}
+                                            placeholder="qwen2.5-vl:7b-instruct-q4_K_M"
+                                            style={{
+                                                padding: '10px',
+                                                background: '#1e293b',
+                                                border: '1px solid #334155',
+                                                borderRadius: '8px',
+                                                color: 'white',
+                                                outline: 'none'
+                                            }}
+                                        />
+                                    </div>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <label style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Request Timeout (seconds)</label>
+                                            <span style={{ fontSize: '0.85rem', color: '#a78bfa', fontWeight: 600 }}>{settings.ollama_timeout}s</span>
+                                        </div>
+                                        <input
+                                            type="range"
+                                            min="30"
+                                            max="300"
+                                            step="10"
+                                            value={settings.ollama_timeout || '120'}
+                                            onChange={(e) => setSettings({ ...settings, ollama_timeout: e.target.value })}
+                                            style={{ width: '100%', accentColor: '#a78bfa' }}
+                                        />
+                                    </div>
+
+                                    <button
+                                        onClick={async () => {
+                                            try {
+                                                const res = await api.post('/api/ollama/reload');
+                                                alert(`Configuration reloaded!\nStatus: ${res.data.connection_status}\nModel: ${res.data.model}`);
+                                            } catch (error: any) {
+                                                alert(`Failed to reload: ${error.response?.data?.detail || error.message}`);
+                                            }
+                                        }}
+                                        style={{
+                                            padding: '10px',
+                                            background: '#6366f1',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '8px',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '8px',
+                                            fontWeight: 600
+                                        }}
+                                    >
+                                        <RefreshCw size={16} /> Test & Reload Configuration
+                                    </button>
+
+                                    <div style={{ fontSize: '0.75rem', color: '#64748b', padding: '10px', background: '#1e293b', borderRadius: '6px', borderLeft: '3px solid #a78bfa' }}>
+                                        <strong>Note:</strong> Make sure Ollama is installed and running with the specified model before enabling this feature.
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* 4. Language Section */}
+                    <div style={{ borderBottom: '1px solid #334155', overflow: 'hidden' }}>
                         <div
                             onClick={() => toggleSection('lang')}
                             style={{

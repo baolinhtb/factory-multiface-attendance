@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-import database
+from db import database
 
 def calculate_attendance_from_presence(employee_id: str, date: str):
     """

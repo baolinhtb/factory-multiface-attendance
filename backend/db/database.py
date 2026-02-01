@@ -3,7 +3,7 @@ import os
 import numpy as np
 
 # Database config - Simple SQLite file
-DB_PATH = os.path.join(os.path.dirname(__file__), "attendance.db")
+DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "attendance.db")
 
 def get_db_connection():
     try:
@@ -104,6 +104,38 @@ def init_db():
             );
         """)
         
+        print("[DB] Creating 'chat_sessions' table...")
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS chat_sessions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+
+        print("[DB] Creating 'chat_messages' table...")
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS chat_messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_id INTEGER,
+                role TEXT NOT NULL,
+                content TEXT NOT NULL,
+                images TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
+            );
+        """)
+        
+        # Add updated_at trigger for chat_sessions
+        cur.execute("""
+            CREATE TRIGGER IF NOT EXISTS update_chat_session_timestamp 
+            AFTER INSERT ON chat_messages
+            BEGIN
+                UPDATE chat_sessions SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.session_id;
+            END;
+        """)
+
         print("[DB] Creating 'daily_phone_usage' table...")
         cur.execute("""
             CREATE TABLE IF NOT EXISTS daily_phone_usage (
@@ -164,7 +196,12 @@ def init_db():
             ('face_recognition_threshold', '0.45'),
             ('phone_detection_confidence', '0.15'),
             ('fire_detection_confidence', '0.30'),
-            ('pose_detection_confidence', '0.50')
+            ('pose_detection_confidence', '0.50'),
+            # Ollama Configuration
+            ('ollama_base_url', 'http://localhost:11434'),
+            ('ollama_model_name', 'qwen2.5-vl:7b-instruct-q4_K_M'),
+            ('ollama_timeout', '120'),
+            ('ollama_enabled', 'true')
         ]
         cur.executemany("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)", default_settings)
         

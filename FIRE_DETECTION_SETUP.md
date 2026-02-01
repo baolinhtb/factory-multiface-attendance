@@ -17,13 +17,14 @@ Hệ thống đã được tích hợp tính năng phát hiện lửa (Fire Dete
    ```bash
    cd backend
    # Tải model về (ví dụ)
-   wget https://example.com/fire_detection.pt
+   mkdir -p models
+   wget https://example.com/fire_detection.pt -O models/fire_detection.pt
    # Hoặc copy file đã tải
-   cp /path/to/fire_detection.pt ./fire_detection.pt
+   cp /path/to/fire_detection.pt models/fire_detection.pt
    ```
 
 3. **Model sẽ tự động được load khi khởi động:**
-   - Hệ thống sẽ tìm file `fire_detection.pt` trong thư mục backend
+   - Hệ thống sẽ tìm file `fire_detection.pt` trong thư mục `backend/models/`
    - Nếu tìm thấy, sẽ sử dụng model này cho fire detection
    - Nếu không tìm thấy, sẽ fallback về YOLO standard (khả năng phát hiện lửa hạn chế)
 
@@ -56,7 +57,7 @@ Hệ thống đã được tích hợp tính năng phát hiện lửa (Fire Dete
 
 3. **Copy model đã train vào backend:**
    ```bash
-   cp runs/detect/fire_detection/weights/best.pt backend/fire_detection.pt
+   cp runs/detect/fire_detection/weights/best.pt backend/models/fire_detection.pt
    ```
 
 ### Option 3: Sử dụng Pretrained Model từ Ultralytics
@@ -71,7 +72,7 @@ Một số model có sẵn:
 ## Cấu hình
 
 ### Backend Settings
-File: `backend/camera_stream.py`
+File: `backend/core/camera_stream.py`
 
 ```python
 # Điều chỉnh confidence threshold
@@ -136,7 +137,7 @@ Thay `class_id == 0` bằng ID của class "fire" trong model của bạn.
 ERROR: Could not load fire_detection.pt
 ```
 **Giải pháp:**
-- Kiểm tra file có tồn tại: `ls -la backend/fire_detection.pt`
+- Kiểm tra file có tồn tại: `ls -la backend/models/fire_detection.pt`
 - Kiểm tra quyền đọc file
 - Đảm bảo file là YOLOv8 format (.pt)
 

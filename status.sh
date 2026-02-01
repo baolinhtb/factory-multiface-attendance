@@ -106,7 +106,7 @@ echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━�
 
 # Check Database
 echo -e "${BLUE}Database:${NC}"
-DB_PATH="$SCRIPT_DIR/backend/attendance.db"
+DB_PATH="$SCRIPT_DIR/backend/data/attendance.db"
 if [ -f "$DB_PATH" ]; then
     DB_SIZE=$(du -h "$DB_PATH" | cut -f1)
     echo -e "  Status: ${GREEN}✓ Found${NC}"

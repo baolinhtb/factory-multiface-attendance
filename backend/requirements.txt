@@ -12,3 +12,5 @@ ultralytics
 pandas
 openpyxl
 faiss-cpu
+ollama
+
