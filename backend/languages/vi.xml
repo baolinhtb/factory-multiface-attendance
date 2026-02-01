@@ -309,4 +309,21 @@
     <string name="retake_photo">Chụp lại</string>
     <string name="use_photo">Sử dụng ảnh này</string>
     <string name="camera_error">Không thể truy cập camera. Vui lòng kiểm tra quyền trình duyệt.</string>
+    <string name="camera_management">Quản lý Camera</string>
+    <string name="camera_management_desc">Thiết lập và quản lý hệ thống nhiều camera</string>
+    <string name="add_camera">Thêm Camera</string>
+    <string name="camera_settings">Cài đặt Camera</string>
+    <string name="multi_camera_management">Quản lý Đa Camera</string>
+    <string name="camera_settings_moved_desc">Các thiết lập nguồn camera (USB, RTSP) đã được chuyển sang trang quản lý riêng để hỗ trợ nhiều camera cùng lúc.</string>
+    <string name="go_to_camera_management">Đi tới Quản lý Camera</string>
+    <string name="edit_camera">Cập nhật Camera</string>
+    <string name="camera_name">Tên Camera</string>
+    <string name="no_cameras_setup">Chưa có camera nào được thiết lập. Hãy thêm camera mới để bắt đầu giám sát.</string>
+    <string name="no_description">Không có mô tả</string>
+    <string name="status_active">ĐANG HOẠT ĐỘNG</string>
+    <string name="status_inactive">ĐÃ TẮT</string>
+    <string name="scan_again">Quét lại</string>
+    <string name="index">Chỉ số</string>
+    <string name="optional">tùy chọn</string>
+    <string name="activate_camera">Kích hoạt camera này</string>
 </resources>

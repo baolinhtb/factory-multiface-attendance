@@ -1,6 +1,6 @@
 import { ReactNode, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Settings, Shield, Clock, History, ChevronDown, ChevronRight, ListChecks, Calculator, Menu, Globe, Lock, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, Shield, Clock, History, ChevronDown, ChevronRight, ListChecks, Calculator, Menu, Globe, Lock, MessageSquare, Camera } from 'lucide-react';
 import ChangePasswordModal from './ChangePasswordModal';
 import { useLanguage } from '../contexts/LanguageContext';
 
@@ -16,6 +16,7 @@ interface LayoutProps {
 }
 
 interface NavItem {
+    id: string;
     path?: string;
     label: string;
     icon: any;
@@ -31,7 +32,7 @@ function Layout({ children, currentUser }: LayoutProps) {
     // Usually expanded state logic is independent, but keys change.
     // Let's keep it simple for now, using translated strings as keys could be tricky if they change.
     // Better to use static keys for expansion or just rely on 'label' which is now translated.
-    const [expandedMenus, setExpandedMenus] = useState<string[]>(['menu.employee_management', 'menu.system_settings']);
+    const [expandedMenus, setExpandedMenus] = useState<string[]>(['employees', 'settings_menu']);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isChangePassOpen, setIsChangePassOpen] = useState(false);
 
@@ -41,47 +42,51 @@ function Layout({ children, currentUser }: LayoutProps) {
         window.location.reload();
     };
 
-    const toggleMenu = (label: string) => {
+    const toggleMenu = (id: string) => {
         setExpandedMenus(prev =>
-            prev.includes(label)
-                ? prev.filter(item => item !== label)
-                : [...prev, label]
+            prev.includes(id)
+                ? prev.filter(item => item !== id)
+                : [...prev, id]
         );
     };
 
-    const navItems: NavItem[] = [
-        { path: '/', label: t('dashboard'), icon: LayoutDashboard, adminOnly: false },
+    const navItems = [
+        { id: 'dashboard', path: '/', label: t('dashboard'), icon: LayoutDashboard, adminOnly: false },
         {
+            id: 'employees',
             label: t('employee_management'),
             icon: Users,
             adminOnly: true,
             children: [
-                { path: '/employees', label: t('employee_list'), icon: ListChecks, adminOnly: true },
-                { path: '/presence-logs', label: t('attendance_history'), icon: History, adminOnly: false },
-                { path: '/attendance-calculator', label: t('attendance_calculator'), icon: Calculator, adminOnly: true },
+                { id: 'emp_list', path: '/employees', label: t('employee_list'), icon: ListChecks, adminOnly: true },
+                { id: 'attendance_hist', path: '/presence-logs', label: t('attendance_history'), icon: History, adminOnly: false },
+                { id: 'calc', path: '/attendance-calculator', label: t('attendance_calculator'), icon: Calculator, adminOnly: true },
             ]
         },
-        { path: '/ollama-chat', label: t('ai_assistant') || 'AI Assistant', icon: MessageSquare, adminOnly: false },
+        { id: 'chat', path: '/ollama-chat', label: t('ai_assistant') || 'AI Assistant', icon: MessageSquare, adminOnly: false },
         {
+            id: 'settings_menu',
             label: t('system_settings'),
             icon: Settings,
             adminOnly: true,
             children: [
-                { path: '/settings', label: t('general_settings'), icon: Settings, adminOnly: true },
-                { path: '/shift-configs', label: t('shift_management'), icon: Clock, adminOnly: true },
-                { path: '/users', label: t('user_management'), icon: Shield, adminOnly: true },
+                { id: 'settings_gen', path: '/settings', label: t('general_settings'), icon: Settings, adminOnly: true },
+                { id: 'cameras', path: '/cameras', label: t('camera_management') || 'Quản lý Camera', icon: Camera, adminOnly: true },
+                { id: 'shifts', path: '/shift-configs', label: t('shift_management'), icon: Clock, adminOnly: true },
+                { id: 'users', path: '/users', label: t('user_management'), icon: Shield, adminOnly: true },
             ]
         },
     ];
 
-    const filterNavItems = (items: NavItem[]): NavItem[] => {
-        return items.filter(item => {
-            if (item.adminOnly && currentUser?.role !== 'admin') return false;
-            if (item.children) {
-                item.children = filterNavItems(item.children);
-            }
-            return true;
-        });
+    const filterNavItems = (items: any[]): any[] => {
+        return items
+            .filter(item => !item.adminOnly || currentUser?.role === 'admin')
+            .map(item => {
+                if (item.children) {
+                    return { ...item, children: filterNavItems(item.children) };
+                }
+                return item;
+            });
     };
 
     const filteredNavItems = filterNavItems(navItems);
@@ -89,15 +94,15 @@ function Layout({ children, currentUser }: LayoutProps) {
     const renderNavItem = (item: NavItem, isChild: boolean = false) => {
         const Icon = item.icon;
         const hasChildren = item.children && item.children.length > 0;
-        const isExpanded = expandedMenus.includes(item.label);
+        const isExpanded = expandedMenus.includes(item.id);
         const isActive = item.path ? location.pathname === item.path : false;
         const isParentActive = item.children?.some(child => child.path === location.pathname);
 
         if (hasChildren) {
             return (
-                <div key={item.label}>
+                <div key={item.id}>
                     <div
-                        onClick={() => toggleMenu(item.label)}
+                        onClick={() => toggleMenu(item.id)}
                         style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -186,7 +191,7 @@ function Layout({ children, currentUser }: LayoutProps) {
         for (const item of filteredNavItems) {
             if (item.path === location.pathname) return item.label;
             if (item.children) {
-                const child = item.children.find(c => c.path === location.pathname);
+                const child = item.children.find((c: any) => c.path === location.pathname);
                 if (child) return child.label;
             }
         }

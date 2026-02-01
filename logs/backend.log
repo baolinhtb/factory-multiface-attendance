@@ -11,13 +11,27 @@
 [DB] Creating 'system_users' table...
 [DB] Creating 'settings' table...
 [DB] Creating 'date_filter_presets' table...
+[DB] Creating 'cameras_config' table...
 [DB] Inserting default settings...
 [DB] Initializing default date filter presets...
+[DB] Migrating single camera settings to 'cameras_config'...
 ✓ Database initialized successfully at /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-Using USB camera source: 0
-SUCCESS: Video source 0 opened
-Initializing InsightFace analysis...
+INFO:     Started server process [47041]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+[DB] Looking up system user: 'admin'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+✓ User found: admin (role: admin)
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+Default admin password synchronized.
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+[CameraManager] Starting new camera: Camera Mặc Định (ID: 1)
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+Initializing Camera Mặc Định (usb) at 0
+SUCCESS: Video source 0 opened for Camera Mặc Định
+Initializing Shared InsightFace analysis...
 Applied providers: ['CPUExecutionProvider'], with options: {'CPUExecutionProvider': {}}
 find model: /Users/macos/.insightface/models/buffalo_l/1k3d68.onnx landmark_3d_68 ['None', 3, 192, 192] 0.0 1.0
 Applied providers: ['CPUExecutionProvider'], with options: {'CPUExecutionProvider': {}}
@@ -29,54 +43,77 @@ find model: /Users/macos/.insightface/models/buffalo_l/genderage.onnx genderage 
 Applied providers: ['CPUExecutionProvider'], with options: {'CPUExecutionProvider': {}}
 find model: /Users/macos/.insightface/models/buffalo_l/w600k_r50.onnx recognition ['None', 3, 112, 112] 127.5 127.5
 set det-size: (640, 640)
+Initializing Shared YOLO26 for object detection...
+YOLO26 object detection model loaded: models/yolo26n.pt
+Initializing Shared YOLO26 Pose Detection...
+YOLO26 Pose model loaded: models/yolo26n-pose.pt
 FAISS index initialized successfully (Inner Product).
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
 Loaded 3 faces into FAISS index.
-Loaded 3 employees from database into FAISS.
-Initializing YOLO26 for object detection...
-YOLO26 object detection model loaded: models/yolo26n.pt
-Initializing YOLO26 Pose Detection...
-YOLO26 Pose model loaded: models/yolo26n-pose.pt
-Initializing Fire Detection model...
-Initializing Fire Detection model...
+[Camera Mặc Định] Loaded 3 employees into FAISS.
 Fire detector initialized successfully
+INFO:     127.0.0.1:58356 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58374 - "GET /languages HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58375 - "GET /languages/vi HTTP/1.1" 200 OK
+[DB] Looking up system user: 'admin'
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     Started server process [43577]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+✓ User found: admin (role: admin)
+INFO:     127.0.0.1:58377 - "GET /me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58374 - "GET /languages HTTP/1.1" 200 OK
+[DB] Looking up system user: 'admin'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+✓ User found: admin (role: admin)
+INFO:     127.0.0.1:58375 - "GET /me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58379 - "GET /languages/vi HTTP/1.1" 200 OK
 [DB] Looking up system user: 'admin'
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
 ✓ User found: admin (role: admin)
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-Default admin password updated/synchronized.
-INFO:     127.0.0.1:56832 - "GET /docs HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56860 - "GET /languages HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56862 - "GET /languages/vi HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56860 - "GET /languages HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56864 - "GET /languages/vi HTTP/1.1" 200 OK
-Login attempt: admin
+INFO:     127.0.0.1:58379 - "GET /cameras HTTP/1.1" 200 OK
 [DB] Looking up system user: 'admin'
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
 ✓ User found: admin (role: admin)
-Password mismatch for user: admin
-INFO:     127.0.0.1:56864 - "POST /login HTTP/1.1" 400 Bad Request
-Login attempt: admin
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+INFO:     127.0.0.1:58375 - "GET /cameras HTTP/1.1" 200 OK
 [DB] Looking up system user: 'admin'
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
 ✓ User found: admin (role: admin)
-Login successful: admin
-INFO:     127.0.0.1:56864 - "POST /login HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56864 - "OPTIONS /me HTTP/1.1" 200 OK
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+INFO:     127.0.0.1:58375 - "GET /daily-stats HTTP/1.1" 200 OK
 [DB] Looking up system user: 'admin'
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
 ✓ User found: admin (role: admin)
-INFO:     127.0.0.1:56864 - "GET /me HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56864 - "OPTIONS /daily-stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56879 - "OPTIONS /daily-stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56881 - "WebSocket /ws/video" [accepted]
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+INFO:     127.0.0.1:58379 - "GET /cameras HTTP/1.1" 200 OK
+[DB] Looking up system user: 'admin'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+✓ User found: admin (role: admin)
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+INFO:     127.0.0.1:58374 - "GET /settings HTTP/1.1" 200 OK
+[DB] Looking up system user: 'admin'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+✓ User found: admin (role: admin)
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+INFO:     127.0.0.1:58377 - "GET /daily-stats HTTP/1.1" 200 OK
+[DB] Looking up system user: 'admin'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+✓ User found: admin (role: admin)
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+INFO:     127.0.0.1:58375 - "GET /cameras HTTP/1.1" 200 OK
+[DB] Looking up system user: 'admin'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+✓ User found: admin (role: admin)
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+INFO:     127.0.0.1:58379 - "GET /settings HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58381 - "WebSocket /ws/video?camera_id=1" [accepted]
 /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/insightface/utils/face_align.py:23: FutureWarning: `estimate` is deprecated since version 0.26 and will be removed in version 2.2. Please use `SimilarityTransform.from_estimate` class constructor instead.
   tform.estimate(lmk, dst)
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:58384 - "WebSocket /ws/video?camera_id=1" [accepted]
+INFO:     127.0.0.1:58385 - "WebSocket /ws/video?camera_id=1" [accepted]
+INFO:     connection closed
+INFO:     connection open
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
 [PRESENCE] Đào Bảo Linh (NV001) entered camera view
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
@@ -85,552 +122,147 @@ INFO:     127.0.0.1:56881 - "WebSocket /ws/video" [accepted]
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
 ✓ User found: admin (role: admin)
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:56864 - "GET /daily-stats HTTP/1.1" 200 OK
-INFO:     connection open
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:56879 - "GET /daily-stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56879 - "OPTIONS /api/ollama/status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56864 - "OPTIONS /api/ollama/sessions HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56893 - "OPTIONS /api/ollama/status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56894 - "OPTIONS /api/ollama/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58391 - "GET /cameras HTTP/1.1" 200 OK
 INFO:     connection closed
-Ollama connection error: [Errno 60] Operation timed out
-Traceback (most recent call last):
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/httpx/_transports/default.py", line 101, in map_httpcore_exceptions
-    yield
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/httpx/_transports/default.py", line 250, in handle_request
-    resp = self._pool.handle_request(req)
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/httpcore/_sync/connection_pool.py", line 256, in handle_request
-    raise exc from None
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/httpcore/_sync/connection_pool.py", line 236, in handle_request
-    response = connection.handle_request(
-        pool_request.request
-    )
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/httpcore/_sync/connection.py", line 101, in handle_request
-    raise exc
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/httpcore/_sync/connection.py", line 78, in handle_request
-    stream = self._connect(request)
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/httpcore/_sync/connection.py", line 124, in _connect
-    stream = self._network_backend.connect_tcp(**kwargs)
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/httpcore/_backends/sync.py", line 207, in connect_tcp
-    with map_exceptions(exc_map):
-         ~~~~~~~~~~~~~~^^^^^^^^^
-  File "/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py", line 162, in __exit__
-    self.gen.throw(value)
-    ~~~~~~~~~~~~~~^^^^^^^
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/httpcore/_exceptions.py", line 14, in map_exceptions
-    raise to_exc(exc) from exc
-httpcore.ConnectTimeout: [Errno 60] Operation timed out
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/core/ollama_chat.py", line 36, in check_connection
-    models = self.client.list()
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/ollama/_client.py", line 604, in list
-    return self._request(
-           ~~~~~~~~~~~~~^
-      ListResponse,
-      ^^^^^^^^^^^^^
-      'GET',
-      ^^^^^^
-      '/api/tags',
-      ^^^^^^^^^^^^
-    )
-    ^
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/ollama/_client.py", line 189, in _request
-    return cls(**self._request_raw(*args, **kwargs).json())
-                 ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/ollama/_client.py", line 129, in _request_raw
-    r = self._client.request(*args, **kwargs)
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/httpx/_client.py", line 825, in request
-    return self.send(request, auth=auth, follow_redirects=follow_redirects)
-           ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/httpx/_client.py", line 914, in send
-    response = self._send_handling_auth(
-        request,
-    ...<2 lines>...
-        history=[],
-    )
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/httpx/_client.py", line 942, in _send_handling_auth
-    response = self._send_handling_redirects(
-        request,
-        follow_redirects=follow_redirects,
-        history=history,
-    )
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/httpx/_client.py", line 979, in _send_handling_redirects
-    response = self._send_single_request(request)
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/httpx/_client.py", line 1014, in _send_single_request
-    response = transport.handle_request(request)
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/httpx/_transports/default.py", line 249, in handle_request
-    with map_httpcore_exceptions():
-         ~~~~~~~~~~~~~~~~~~~~~~~^^
-  File "/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py", line 162, in __exit__
-    self.gen.throw(value)
-    ~~~~~~~~~~~~~~^^^^^^^
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/httpx/_transports/default.py", line 118, in map_httpcore_exceptions
-    raise mapped_exc(message) from exc
-httpx.ConnectTimeout: [Errno 60] Operation timed out
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-INFO:     127.0.0.1:56894 - "GET /api/ollama/status HTTP/1.1" 200 OK
 [DB] Looking up system user: 'admin'
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
 ✓ User found: admin (role: admin)
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:56893 - "GET /api/ollama/sessions HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56864 - "OPTIONS /date-filter-presets HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56879 - "OPTIONS /employees HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56894 - "OPTIONS /employees HTTP/1.1" 200 OK
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-[ATTENDANCE] NV001: Today is NOT a work day in config 'Chế độ mặc định của công ty'
-INFO:     127.0.0.1:56893 - "OPTIONS /presence-logs HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56864 - "OPTIONS /employees HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56879 - "OPTIONS /shift-configs HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56894 - "OPTIONS /employees HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56898 - "OPTIONS /presence-logs HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56900 - "OPTIONS /date-filter-presets HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56893 - "OPTIONS /shift-configs HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56864 - "OPTIONS /date-filter-presets HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56879 - "OPTIONS /employees HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56894 - "OPTIONS /presence-logs HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56898 - "OPTIONS /date-filter-presets HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56900 - "OPTIONS /employees HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56893 - "OPTIONS /presence-logs HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56864 - "OPTIONS /date-filter-presets HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56879 - "OPTIONS /date-filter-presets HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56894 - "OPTIONS /employees HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56898 - "OPTIONS /shift-configs HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56900 - "OPTIONS /employees HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56893 - "OPTIONS /shift-configs HTTP/1.1" 200 OK
-Ollama connection error: [Errno 60] Operation timed out
-Traceback (most recent call last):
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/httpx/_transports/default.py", line 101, in map_httpcore_exceptions
-    yield
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/httpx/_transports/default.py", line 250, in handle_request
-    resp = self._pool.handle_request(req)
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/httpcore/_sync/connection_pool.py", line 256, in handle_request
-    raise exc from None
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/httpcore/_sync/connection_pool.py", line 236, in handle_request
-    response = connection.handle_request(
-        pool_request.request
-    )
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/httpcore/_sync/connection.py", line 101, in handle_request
-    raise exc
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/httpcore/_sync/connection.py", line 78, in handle_request
-    stream = self._connect(request)
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/httpcore/_sync/connection.py", line 124, in _connect
-    stream = self._network_backend.connect_tcp(**kwargs)
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/httpcore/_backends/sync.py", line 207, in connect_tcp
-    with map_exceptions(exc_map):
-         ~~~~~~~~~~~~~~^^^^^^^^^
-  File "/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py", line 162, in __exit__
-    self.gen.throw(value)
-    ~~~~~~~~~~~~~~^^^^^^^
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/httpcore/_exceptions.py", line 14, in map_exceptions
-    raise to_exc(exc) from exc
-httpcore.ConnectTimeout: [Errno 60] Operation timed out
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/core/ollama_chat.py", line 36, in check_connection
-    models = self.client.list()
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/ollama/_client.py", line 604, in list
-    return self._request(
-           ~~~~~~~~~~~~~^
-      ListResponse,
-      ^^^^^^^^^^^^^
-      'GET',
-      ^^^^^^
-      '/api/tags',
-      ^^^^^^^^^^^^
-    )
-    ^
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/ollama/_client.py", line 189, in _request
-    return cls(**self._request_raw(*args, **kwargs).json())
-                 ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/ollama/_client.py", line 129, in _request_raw
-    r = self._client.request(*args, **kwargs)
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/httpx/_client.py", line 825, in request
-    return self.send(request, auth=auth, follow_redirects=follow_redirects)
-           ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/httpx/_client.py", line 914, in send
-    response = self._send_handling_auth(
-        request,
-    ...<2 lines>...
-        history=[],
-    )
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/httpx/_client.py", line 942, in _send_handling_auth
-    response = self._send_handling_redirects(
-        request,
-        follow_redirects=follow_redirects,
-        history=history,
-    )
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/httpx/_client.py", line 979, in _send_handling_redirects
-    response = self._send_single_request(request)
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/httpx/_client.py", line 1014, in _send_single_request
-    response = transport.handle_request(request)
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/httpx/_transports/default.py", line 249, in handle_request
-    with map_httpcore_exceptions():
-         ~~~~~~~~~~~~~~~~~~~~~~~^^
-  File "/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py", line 162, in __exit__
-    self.gen.throw(value)
-    ~~~~~~~~~~~~~~^^^^^^^
-  File "/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/venv/lib/python3.13/site-packages/httpx/_transports/default.py", line 118, in map_httpcore_exceptions
-    raise mapped_exc(message) from exc
-httpx.ConnectTimeout: [Errno 60] Operation timed out
+INFO:     127.0.0.1:58391 - "GET /cameras HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58396 - "OPTIONS /cameras/available HTTP/1.1" 200 OK
+OpenCV: out device of bound (0-1): 2
+OpenCV: camera failed to properly initialize!
+[ WARN:0@19.465] global cap_ffmpeg_impl.hpp:1217 open VIDEOIO/FFMPEG: Failed list devices for backend avfoundation
+OpenCV: out device of bound (0-1): 3
+OpenCV: camera failed to properly initialize!
+OpenCV: out device of bound (0-1): 4
+OpenCV: camera failed to properly initialize!
 [DB] Looking up system user: 'admin'
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
 ✓ User found: admin (role: admin)
-INFO:     127.0.0.1:56864 - "GET /api/ollama/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58396 - "GET /cameras/available HTTP/1.1" 200 OK
 [DB] Looking up system user: 'admin'
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
 ✓ User found: admin (role: admin)
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:56879 - "GET /api/ollama/sessions HTTP/1.1" 200 OK
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+[Camera Mặc Định] AI Thresholds updated.
+[CameraManager] Starting new camera: Cổng số 1 (ID: 2)
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+Initializing Cổng số 1 (usb) at 1
+SUCCESS: Video source 1 opened for Cổng số 1
+FAISS index initialized successfully (Inner Product).
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+Loaded 3 faces into FAISS index.
+[Cổng số 1] Loaded 3 employees into FAISS.
+Fire detector initialized successfully
+INFO:     127.0.0.1:58406 - "POST /cameras HTTP/1.1" 200 OK
 [DB] Looking up system user: 'admin'
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
 ✓ User found: admin (role: admin)
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:56894 - "GET /date-filter-presets HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58406 - "GET /cameras HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58412 - "OPTIONS /daily-stats HTTP/1.1" 200 OK
 [DB] Looking up system user: 'admin'
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
 ✓ User found: admin (role: admin)
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:56898 - "GET /employees HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58414 - "GET /cameras HTTP/1.1" 200 OK
 [DB] Looking up system user: 'admin'
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
 ✓ User found: admin (role: admin)
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:56900 - "GET /presence-logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58412 - "GET /settings HTTP/1.1" 200 OK
 [DB] Looking up system user: 'admin'
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
 ✓ User found: admin (role: admin)
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:56893 - "GET /shift-configs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58414 - "GET /settings HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58416 - "OPTIONS /daily-stats HTTP/1.1" 200 OK
 [DB] Looking up system user: 'admin'
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
 ✓ User found: admin (role: admin)
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:56927 - "GET /employees HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58418 - "GET /daily-stats HTTP/1.1" 200 OK
 [DB] Looking up system user: 'admin'
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
 ✓ User found: admin (role: admin)
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:56929 - "GET /employees HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58420 - "GET /cameras HTTP/1.1" 200 OK
 [DB] Looking up system user: 'admin'
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
 ✓ User found: admin (role: admin)
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:56931 - "GET /employees HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:56933 - "GET /shift-configs HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:56935 - "GET /date-filter-presets HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:56937 - "GET /presence-logs HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:56939 - "GET /date-filter-presets HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:56941 - "GET /date-filter-presets HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56949 - "OPTIONS /languages HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56951 - "OPTIONS /languages/vi HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-INFO:     127.0.0.1:56953 - "GET /me HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56956 - "OPTIONS /languages HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56957 - "OPTIONS /languages/vi HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-INFO:     127.0.0.1:56978 - "GET /me HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56994 - "OPTIONS /languages HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56996 - "OPTIONS /languages/vi HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-INFO:     127.0.0.1:56949 - "GET /me HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56951 - "OPTIONS /languages HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56956 - "OPTIONS /languages/vi HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-INFO:     127.0.0.1:56957 - "GET /me HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56956 - "GET /languages HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56951 - "GET /languages/vi HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56957 - "GET /languages HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56956 - "GET /languages/vi HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:56956 - "GET /employees HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:56957 - "GET /shift-configs HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:56951 - "GET /employees HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:56956 - "GET /shift-configs HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57023 - "GET /languages HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57025 - "GET /languages/vi HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-INFO:     127.0.0.1:57027 - "GET /me HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57029 - "GET /languages HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57023 - "GET /languages/vi HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-INFO:     127.0.0.1:57025 - "GET /me HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57029 - "GET /employees HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57027 - "GET /shift-configs HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57025 - "GET /employees HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57029 - "GET /shift-configs HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57034 - "OPTIONS /employees/NV002 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57037 - "OPTIONS /employees/NV002/attendance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57039 - "OPTIONS /employees/NV002/phone HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57041 - "GET /shift-configs HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57043 - "OPTIONS /employees/NV002 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57044 - "OPTIONS /employees/NV002/attendance HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57034 - "OPTIONS /employees/NV002/phone HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57037 - "GET /employees/NV002 HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57039 - "GET /employees/NV002/attendance HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57041 - "GET /employees/NV002/phone HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57034 - "GET /employees/NV002 HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57037 - "GET /employees/NV002/attendance HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57047 - "GET /shift-configs HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57039 - "GET /employees/NV002/phone HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57050 - "GET /images/NV002.jpg?t=1769910110283 HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57039 - "GET /date-filter-presets HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57050 - "GET /images/NV002.jpg?t=1769910110311 HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57047 - "GET /date-filter-presets HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57047 - "GET /employees/NV002 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57039 - "OPTIONS /employees/NV002/attendance?start_date=2026-02-01&end_date=2026-02-01 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57037 - "OPTIONS /employees/NV002/phone?start_date=2026-02-01&end_date=2026-02-01 HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57034 - "GET /shift-configs HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57037 - "GET /employees/NV002/attendance?start_date=2026-02-01&end_date=2026-02-01 HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57039 - "GET /employees/NV002/phone?start_date=2026-02-01&end_date=2026-02-01 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57050 - "GET /images/NV002.jpg?t=1769910110323 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57050 - "GET /images/NV002.jpg?t=1769910110346 HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57039 - "GET /daily-stats HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57037 - "GET /daily-stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57052 - "WebSocket /ws/video" [accepted]
+INFO:     127.0.0.1:58416 - "GET /daily-stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58423 - "WebSocket /ws/video?camera_id=1" [accepted]
 INFO:     connection open
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-[ATTENDANCE] NV001: Today is NOT a work day in config 'Chế độ mặc định của công ty'
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57057 - "GET /daily-stats HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57061 - "GET /daily-stats HTTP/1.1" 200 OK
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-[ATTENDANCE] NV001: Today is NOT a work day in config 'Chế độ mặc định của công ty'
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57063 - "GET /daily-stats HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57066 - "GET /employees HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57068 - "GET /shift-configs HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57063 - "GET /employees HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57066 - "GET /shift-configs HTTP/1.1" 200 OK
 INFO:     connection closed
-INFO:     127.0.0.1:57073 - "OPTIONS /settings HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57075 - "OPTIONS /settings HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58427 - "WebSocket /ws/video?camera_id=1" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:58430 - "WebSocket /ws/video?camera_id=2" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:58432 - "WebSocket /ws/video?camera_id=1" [accepted]
+INFO:     connection open
+INFO:     connection closed
+INFO:     connection closed
+INFO:     127.0.0.1:58434 - "WebSocket /ws/video?camera_id=2" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:58436 - "WebSocket /ws/video?camera_id=1" [accepted]
+INFO:     connection open
+INFO:     connection closed
+INFO:     connection closed
+INFO:     127.0.0.1:58438 - "WebSocket /ws/video?camera_id=2" [accepted]
+INFO:     connection open
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+[ATTENDANCE] NV001: Today is NOT a work day in config 'Chế độ mặc định của công ty'
+[FIRE ALERT] Fire detected with confidence 0.76
 [DB] Looking up system user: 'admin'
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
 ✓ User found: admin (role: admin)
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57073 - "GET /settings HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58441 - "GET /daily-stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58443 - "WebSocket /ws/video?camera_id=1" [accepted]
+INFO:     connection closed
+INFO:     127.0.0.1:58446 - "WebSocket /ws/video?camera_id=1" [accepted]
+INFO:     connection open
+INFO:     connection closed
+INFO:     connection closed
+INFO:     127.0.0.1:58449 - "WebSocket /ws/video?camera_id=2" [accepted]
+INFO:     connection open
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+[PRESENCE] Đào Bảo Linh (NV001) entered camera view
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+[ATTENDANCE] NV001: Today is NOT a work day in config 'Chế độ mặc định của công ty'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+[ATTENDANCE] NV001: Today is NOT a work day in config 'Chế độ mặc định của công ty'
 [DB] Looking up system user: 'admin'
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
 ✓ User found: admin (role: admin)
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57075 - "GET /settings HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58452 - "GET /daily-stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58454 - "WebSocket /ws/video?camera_id=1" [accepted]
+INFO:     connection open
+INFO:     connection closed
+INFO:     connection closed
+INFO:     127.0.0.1:58456 - "WebSocket /ws/video?camera_id=2" [accepted]
+INFO:     connection open
 [DB] Looking up system user: 'admin'
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
 ✓ User found: admin (role: admin)
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57082 - "GET /shift-configs HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57082 - "GET /shift-configs HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57082 - "OPTIONS /shifts?config_id=1 HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57082 - "GET /shifts?config_id=1 HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57092 - "GET /date-filter-presets HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57092 - "GET /date-filter-presets HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57094 - "GET /employees HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57096 - "GET /presence-logs HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57092 - "GET /employees HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57094 - "GET /presence-logs HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57122 - "GET /daily-stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57124 - "WebSocket /ws/video" [accepted]
+INFO:     127.0.0.1:58461 - "GET /daily-stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58463 - "WebSocket /ws/video?camera_id=1" [accepted]
+INFO:     connection open
+INFO:     connection closed
+INFO:     connection closed
+INFO:     127.0.0.1:58465 - "WebSocket /ws/video?camera_id=2" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:58467 - "WebSocket /ws/video?camera_id=1" [accepted]
+INFO:     connection open
+INFO:     connection closed
+INFO:     connection closed
+INFO:     127.0.0.1:58469 - "WebSocket /ws/video?camera_id=2" [accepted]
 INFO:     connection open
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
 [ATTENDANCE] NV001: Today is NOT a work day in config 'Chế độ mặc định của công ty'
@@ -638,33 +270,255 @@ INFO:     connection open
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
 ✓ User found: admin (role: admin)
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57122 - "GET /daily-stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58471 - "GET /daily-stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58473 - "WebSocket /ws/video?camera_id=1" [accepted]
+INFO:     connection open
+INFO:     connection closed
+INFO:     connection closed
+INFO:     127.0.0.1:58476 - "WebSocket /ws/video?camera_id=2" [accepted]
+INFO:     connection open
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+[ATTENDANCE] NV001: Today is NOT a work day in config 'Chế độ mặc định của công ty'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+[PRESENCE] Đào Bảo Linh (NV001) left camera view
 [DB] Looking up system user: 'admin'
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
 ✓ User found: admin (role: admin)
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57131 - "GET /daily-stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58478 - "GET /daily-stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58480 - "WebSocket /ws/video?camera_id=1" [accepted]
+INFO:     connection open
+INFO:     connection closed
+INFO:     connection closed
+INFO:     127.0.0.1:58482 - "WebSocket /ws/video?camera_id=2" [accepted]
+INFO:     connection open
 [DB] Looking up system user: 'admin'
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
 ✓ User found: admin (role: admin)
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57134 - "GET /daily-stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58484 - "GET /daily-stats HTTP/1.1" 200 OK
+[DB] Looking up system user: 'admin'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+✓ User found: admin (role: admin)
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+INFO:     127.0.0.1:58486 - "GET /settings HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58488 - "WebSocket /ws/video?camera_id=1" [accepted]
+INFO:     connection open
+INFO:     connection closed
+INFO:     connection closed
+INFO:     127.0.0.1:58490 - "WebSocket /ws/video?camera_id=2" [accepted]
+INFO:     connection open
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+[ATTENDANCE] NV001: Today is NOT a work day in config 'Chế độ mặc định của công ty'
+INFO:     127.0.0.1:58493 - "OPTIONS /cameras HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58495 - "OPTIONS /cameras HTTP/1.1" 200 OK
+INFO:     connection closed
+INFO:     connection closed
+[DB] Looking up system user: 'admin'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+✓ User found: admin (role: admin)
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+INFO:     127.0.0.1:58495 - "GET /cameras HTTP/1.1" 200 OK
+[DB] Looking up system user: 'admin'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+✓ User found: admin (role: admin)
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+INFO:     127.0.0.1:58493 - "GET /cameras HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58503 - "OPTIONS /date-filter-presets HTTP/1.1" 200 OK
+[DB] Looking up system user: 'admin'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+✓ User found: admin (role: admin)
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+INFO:     127.0.0.1:58503 - "GET /date-filter-presets HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58506 - "OPTIONS /employees HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58508 - "OPTIONS /presence-logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58511 - "OPTIONS /date-filter-presets HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58512 - "OPTIONS /employees HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58513 - "OPTIONS /presence-logs HTTP/1.1" 200 OK
+[DB] Looking up system user: 'admin'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+✓ User found: admin (role: admin)
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+INFO:     127.0.0.1:58506 - "GET /employees HTTP/1.1" 200 OK
+[DB] Looking up system user: 'admin'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+✓ User found: admin (role: admin)
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+INFO:     127.0.0.1:58508 - "GET /presence-logs HTTP/1.1" 200 OK
+[DB] Looking up system user: 'admin'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+✓ User found: admin (role: admin)
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+INFO:     127.0.0.1:58511 - "GET /date-filter-presets HTTP/1.1" 200 OK
+[DB] Looking up system user: 'admin'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+✓ User found: admin (role: admin)
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+INFO:     127.0.0.1:58513 - "GET /employees HTTP/1.1" 200 OK
+[DB] Looking up system user: 'admin'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+✓ User found: admin (role: admin)
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+INFO:     127.0.0.1:58506 - "GET /presence-logs HTTP/1.1" 200 OK
+[DB] Looking up system user: 'admin'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+✓ User found: admin (role: admin)
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+INFO:     127.0.0.1:58522 - "GET /employees HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58522 - "OPTIONS /shift-configs HTTP/1.1" 200 OK
+[DB] Looking up system user: 'admin'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+✓ User found: admin (role: admin)
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+INFO:     127.0.0.1:58524 - "GET /employees HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58526 - "OPTIONS /shift-configs HTTP/1.1" 200 OK
+[DB] Looking up system user: 'admin'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+✓ User found: admin (role: admin)
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+INFO:     127.0.0.1:58522 - "GET /shift-configs HTTP/1.1" 200 OK
+[DB] Looking up system user: 'admin'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+✓ User found: admin (role: admin)
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+INFO:     127.0.0.1:58526 - "GET /shift-configs HTTP/1.1" 200 OK
+[DB] Looking up system user: 'admin'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+✓ User found: admin (role: admin)
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+INFO:     127.0.0.1:58532 - "GET /daily-stats HTTP/1.1" 200 OK
+[DB] Looking up system user: 'admin'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+✓ User found: admin (role: admin)
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+INFO:     127.0.0.1:58532 - "GET /daily-stats HTTP/1.1" 200 OK
+[DB] Looking up system user: 'admin'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+✓ User found: admin (role: admin)
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+INFO:     127.0.0.1:58535 - "GET /cameras HTTP/1.1" 200 OK
+[DB] Looking up system user: 'admin'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+✓ User found: admin (role: admin)
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+INFO:     127.0.0.1:58536 - "GET /settings HTTP/1.1" 200 OK
+[DB] Looking up system user: 'admin'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+✓ User found: admin (role: admin)
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+INFO:     127.0.0.1:58532 - "GET /cameras HTTP/1.1" 200 OK
+[DB] Looking up system user: 'admin'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+✓ User found: admin (role: admin)
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+INFO:     127.0.0.1:58535 - "GET /settings HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58542 - "WebSocket /ws/video?camera_id=1" [accepted]
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:58544 - "WebSocket /ws/video?camera_id=1" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:58547 - "WebSocket /ws/video?camera_id=2" [accepted]
+INFO:     connection open
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
 [ATTENDANCE] NV001: Today is NOT a work day in config 'Chế độ mặc định của công ty'
 [DB] Looking up system user: 'admin'
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
 ✓ User found: admin (role: admin)
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57137 - "GET /daily-stats HTTP/1.1" 200 OK
-[DB] Looking up system user: 'admin'
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-✓ User found: admin (role: admin)
-✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57140 - "GET /daily-stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58550 - "GET /daily-stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58552 - "WebSocket /ws/video?camera_id=1" [accepted]
+INFO:     connection open
+INFO:     connection closed
+INFO:     connection closed
+INFO:     127.0.0.1:58554 - "WebSocket /ws/video?camera_id=2" [accepted]
+INFO:     connection open
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
 [ATTENDANCE] NV001: Today is NOT a work day in config 'Chế độ mặc định của công ty'
 [DB] Looking up system user: 'admin'
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
 ✓ User found: admin (role: admin)
 ✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
-INFO:     127.0.0.1:57143 - "GET /daily-stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58556 - "GET /daily-stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58558 - "WebSocket /ws/video?camera_id=1" [accepted]
+INFO:     connection open
+INFO:     connection closed
+INFO:     connection closed
+INFO:     127.0.0.1:58560 - "WebSocket /ws/video?camera_id=2" [accepted]
+INFO:     connection open
+[DB] Looking up system user: 'admin'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+✓ User found: admin (role: admin)
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+INFO:     127.0.0.1:58562 - "GET /daily-stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58564 - "WebSocket /ws/video?camera_id=1" [accepted]
+INFO:     connection open
+INFO:     connection closed
+INFO:     connection closed
+INFO:     127.0.0.1:58567 - "WebSocket /ws/video?camera_id=2" [accepted]
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:58570 - "WebSocket /ws/video?camera_id=1" [accepted]
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:58571 - "WebSocket /ws/video?camera_id=2" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:58573 - "WebSocket /ws/video?camera_id=1" [accepted]
+INFO:     connection open
+INFO:     connection closed
+INFO:     connection closed
+INFO:     127.0.0.1:58575 - "WebSocket /ws/video?camera_id=2" [accepted]
+INFO:     connection open
+[FIRE ALERT] Fire detected with confidence 0.69
+[DB] Looking up system user: 'admin'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+✓ User found: admin (role: admin)
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+INFO:     127.0.0.1:58577 - "GET /daily-stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58579 - "WebSocket /ws/video?camera_id=1" [accepted]
+INFO:     connection open
+INFO:     connection closed
+INFO:     connection closed
+INFO:     127.0.0.1:58581 - "WebSocket /ws/video?camera_id=2" [accepted]
+INFO:     connection open
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+[ATTENDANCE] NV001: Today is NOT a work day in config 'Chế độ mặc định của công ty'
+[DB] Looking up system user: 'admin'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+✓ User found: admin (role: admin)
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+INFO:     127.0.0.1:58583 - "GET /daily-stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58585 - "WebSocket /ws/video?camera_id=1" [accepted]
+INFO:     connection open
+INFO:     connection closed
+INFO:     connection closed
+INFO:     127.0.0.1:58587 - "WebSocket /ws/video?camera_id=2" [accepted]
+INFO:     connection open
+[DB] Looking up system user: 'admin'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+✓ User found: admin (role: admin)
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+INFO:     127.0.0.1:58591 - "GET /daily-stats HTTP/1.1" 200 OK
+[DB] Looking up system user: 'admin'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+✓ User found: admin (role: admin)
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+INFO:     127.0.0.1:58592 - "GET /settings HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58595 - "WebSocket /ws/video?camera_id=1" [accepted]
+INFO:     connection open
+INFO:     connection closed
+INFO:     connection closed
+INFO:     127.0.0.1:58597 - "WebSocket /ws/video?camera_id=2" [accepted]
+INFO:     connection open
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+[ATTENDANCE] NV001: Today is NOT a work day in config 'Chế độ mặc định của công ty'
+[DB] Looking up system user: 'admin'
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+✓ User found: admin (role: admin)
+✓ Database connection successful: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/backend/data/attendance.db
+INFO:     127.0.0.1:58601 - "GET /daily-stats HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     127.0.0.1:58604 - "WebSocket /ws/video?camera_id=1" [accepted]
+INFO:     Waiting for connections to close. (CTRL+C to force quit)
+INFO:     connection closed
+INFO:     connection closed
+INFO:     connection open

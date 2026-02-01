@@ -10,6 +10,7 @@ import ShiftManagement from './pages/ShiftManagement';
 import PresenceLogs from './pages/PresenceLogs';
 import AttendanceCalculator from './pages/AttendanceCalculator';
 import OllamaChat from './pages/OllamaChat';
+import CameraManagement from './pages/CameraManagement';
 import Layout from './components/Layout';
 import api from './services/api';
 import { LanguageProvider } from './contexts/LanguageContext';
@@ -78,6 +79,7 @@ function App() {
                                     <Route path="/attendance-calculator" element={<AttendanceCalculator />} />
                                     <Route path="/users" element={<UserManagement />} />
                                     <Route path="/settings" element={<Settings />} />
+                                    <Route path="/cameras" element={<CameraManagement />} />
                                 </>
                             )}
                             <Route path="*" element={<Navigate to="/" replace />} />

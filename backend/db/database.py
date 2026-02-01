@@ -179,6 +179,18 @@ def init_db():
                 is_active INTEGER DEFAULT 1
             );
         """)
+
+        print("[DB] Creating 'cameras_config' table...")
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS cameras_config (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                type TEXT NOT NULL, -- 'usb' or 'rtsp'
+                source TEXT NOT NULL, -- index or URL
+                is_active INTEGER DEFAULT 1,
+                description TEXT
+            );
+        """)
         
         # Default settings
         print("[DB] Inserting default settings...")
@@ -243,10 +255,27 @@ def init_db():
             # Also insert default shifts if table empty
             cur.execute("SELECT COUNT(*) FROM shifts")
             if cur.fetchone()[0] == 0:
-                default_shifts_data = [
-                    (default_config_id, 'Ca Hành Chính', '08:00', '17:00', 15, 15, '06:00', '19:00')
-                ]
                 cur.executemany("INSERT INTO shifts (config_id, name, start_time, end_time, late_grace_period, early_grace_period, checkin_start, checkout_end) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", default_shifts_data)
+
+        # Migration: Check if we need to migrate old single camera settings to cameras_config
+        cur.execute("SELECT COUNT(*) FROM cameras_config")
+        if cur.fetchone()[0] == 0:
+            print("[DB] Migrating single camera settings to 'cameras_config'...")
+            cur.execute("SELECT value FROM settings WHERE key = 'camera_type'")
+            cam_type = cur.fetchone()
+            cur.execute("SELECT value FROM settings WHERE key = 'camera_src'")
+            cam_src = cur.fetchone()
+            cur.execute("SELECT value FROM settings WHERE key = 'rtsp_url'")
+            rtsp_url = cur.fetchone()
+            
+            # Default values if not found or empty
+            final_type = cam_type[0] if cam_type else 'usb'
+            final_src = cam_src[0] if cam_src else '0'
+            if final_type == 'rtsp' and rtsp_url and rtsp_url[0]:
+                final_src = rtsp_url[0]
+            
+            cur.execute("INSERT INTO cameras_config (name, type, source, is_active) VALUES (?, ?, ?, ?)", 
+                        ("Camera Mặc Định", final_type, final_src, 1))
 
         conn.commit()
         conn.close()
@@ -791,6 +820,68 @@ def update_system_user_password(user_id: int, hashed_pass: str):
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("UPDATE system_users SET hashed_password = ? WHERE id = ?", (hashed_pass, user_id))
+    conn.commit()
+    conn.close()
+
+def get_all_cameras():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name, type, source, is_active, description FROM cameras_config")
+    rows = cur.fetchall()
+    conn.close()
+    return [{
+        "id": r[0],
+        "name": r[1],
+        "type": r[2],
+        "source": r[3],
+        "is_active": r[4],
+        "description": r[5]
+    } for r in rows]
+
+def get_camera_by_id(camera_id: int):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name, type, source, is_active, description FROM cameras_config WHERE id = ?", (camera_id,))
+    r = cur.fetchone()
+    conn.close()
+    if r:
+        return {
+            "id": r[0],
+            "name": r[1],
+            "type": r[2],
+            "source": r[3],
+            "is_active": r[4],
+            "description": r[5]
+        }
+    return None
+
+def add_camera(name: str, cam_type: str, source: str, is_active: int = 1, description: str = None):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO cameras_config (name, type, source, is_active, description) VALUES (?, ?, ?, ?, ?)",
+        (name, cam_type, source, is_active, description)
+    )
+    new_id = cur.lastrowid
+    conn.commit()
+    conn.close()
+    return new_id
+
+def update_camera(camera_id: int, name: str, cam_type: str, source: str, is_active: int, description: str = None):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE cameras_config 
+        SET name = ?, type = ?, source = ?, is_active = ?, description = ? 
+        WHERE id = ?
+    """, (name, cam_type, source, is_active, description, camera_id))
+    conn.commit()
+    conn.close()
+
+def delete_camera(camera_id: int):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM cameras_config WHERE id = ?", (camera_id,))
     conn.commit()
     conn.close()
 

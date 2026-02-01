@@ -19,6 +19,7 @@ from datetime import datetime, timedelta
 from pydantic import BaseModel
 
 from core.camera_stream import CameraStream
+from core.camera_manager import CameraManager
 from db import database
 from api import auth
 from core import attendance_calculator
@@ -64,11 +65,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize DB before anything else
+# Static and Global instances
 database.init_db()
-
-# Global camera instance
-camera = CameraStream()
+camera_manager = CameraManager()
 
 @app.on_event("startup")
 def startup_event():
@@ -80,17 +79,17 @@ def startup_event():
             database.create_system_user("admin", hashed_pass, "admin")
             print("Default admin created: admin / admin123")
         else:
-            # Re-hash to ensure consistency with current algorithm
             database.update_system_user_password(admin_user["id"], hashed_pass)
-            print("Default admin password updated/synchronized.")
+            print("Default admin password synchronized.")
             
-        camera.start()
+        # Start the camera manager
+        camera_manager.load_cameras()
     except Exception as e:
         print(f"Startup error: {e}")
 
 @app.on_event("shutdown")
 def shutdown_event():
-    camera.stop()
+    camera_manager.stop_all()
 
 # --- Auth Endpoints ---
 
@@ -165,14 +164,60 @@ async def get_app_settings(admin: dict = Depends(auth.get_admin_user)):
 async def update_app_settings(settings: dict, admin: dict = Depends(auth.get_admin_user)):
     for key, value in settings.items():
         database.update_setting(key, str(value))
-    camera.update_settings()
-    camera.update_settings()
+    # Update settings for all active camera streams
+    camera_manager.load_cameras() 
     return {"message": "Settings updated"}
 
+@app.get("/cameras/available")
+async def get_available_phys_cameras(admin: dict = Depends(auth.get_admin_user)):
+    """Scan for physical cameras connected to the server"""
+    # Use any active stream to scan (assuming they all share the scanning logic)
+    streams = camera_manager.get_all_streams()
+    if streams:
+        return streams[0].get_available_cameras()
+    else:
+        # Create a temporary stream just for scanning
+        temp_cam = CameraStream()
+        return temp_cam.get_available_cameras()
+
+# --- Camera Configuration (New) ---
+
 @app.get("/cameras")
-async def get_cameras(admin: dict = Depends(auth.get_admin_user)):
-    """Get list of available connected cameras"""
-    return camera.get_available_cameras()
+async def list_cameras(current_user: dict = Depends(auth.get_current_user)):
+    return database.get_all_cameras()
+
+@app.post("/cameras")
+async def add_camera(
+    name: str = Form(...),
+    type: str = Form("usb"),
+    source: str = Form(...),
+    is_active: int = Form(1),
+    description: str = Form(None),
+    admin: dict = Depends(auth.get_admin_user)
+):
+    cam_id = database.add_camera(name, type, source, is_active, description)
+    camera_manager.load_cameras()
+    return {"id": cam_id, "message": "Camera added"}
+
+@app.put("/cameras/{camera_id}")
+async def update_camera(
+    camera_id: int,
+    name: str = Form(...),
+    type: str = Form(...),
+    source: str = Form(...),
+    is_active: int = Form(1),
+    description: str = Form(None),
+    admin: dict = Depends(auth.get_admin_user)
+):
+    database.update_camera(camera_id, name, type, source, is_active, description)
+    camera_manager.load_cameras()
+    return {"message": "Camera updated"}
+
+@app.delete("/cameras/{camera_id}")
+async def delete_camera(camera_id: int, admin: dict = Depends(auth.get_admin_user)):
+    database.delete_camera(camera_id)
+    camera_manager.load_cameras()
+    return {"message": "Camera deleted"}
 
 # --- Employee & Attendance Endpoints ---
 
@@ -201,7 +246,7 @@ async def add_employee(
     if img is None:
         raise HTTPException(status_code=400, detail="Invalid image file")
 
-    faces = camera.app.get(img)
+    faces = CameraStream.get_face_analysis().get(img)
     if len(faces) == 0:
         raise HTTPException(status_code=400, detail="No face detected in image")
     
@@ -219,7 +264,7 @@ async def add_employee(
     
     try:
         database.add_employee(employee_id, full_name, embedding, position, department, selected_config, image_url)
-        camera.reload_faces()
+        camera_manager.reload_faces()
         return {"status": "success", "message": f"Employee {full_name} registered successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -234,7 +279,7 @@ async def employee_detail(employee_id: str, current_user: dict = Depends(auth.ge
 @app.put("/employees/{employee_id}")
 async def update_employee(employee_id: str, data: EmployeeUpdate, admin: dict = Depends(auth.get_admin_user)):
     database.update_employee(employee_id, data.full_name, data.position, data.department, data.assigned_config_id)
-    camera.reload_faces()
+    camera_manager.reload_faces()
     return {"message": "Employee updated"}
 
 @app.post("/employees/{employee_id}/upload-image")
@@ -250,7 +295,7 @@ async def upload_employee_image(
     if img is None:
         raise HTTPException(status_code=400, detail="Invalid image file")
 
-    faces = camera.app.get(img)
+    faces = CameraStream.get_face_analysis().get(img)
     if len(faces) == 0:
         raise HTTPException(status_code=400, detail="No face detected in image")
     
@@ -272,8 +317,8 @@ async def upload_employee_image(
         # Update DB
         database.update_employee_image(employee_id, image_url, embedding)
         
-        # Reload faces in camera stream
-        camera.reload_faces()
+        # Reload faces in camera manager
+        camera_manager.reload_faces()
         
         return {"status": "success", "message": "Image updated and face re-indexed", "image_path": image_url}
     except Exception as e:
@@ -367,26 +412,45 @@ async def get_stats_deprecated(current_user: dict = Depends(auth.get_current_use
 # --- Video Stream ---
 
 @app.websocket("/ws/video")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(websocket: WebSocket, camera_id: Optional[int] = None):
     await websocket.accept()
-    # Note: WebSocket auth can be tricky, for now we keep it open or check token in query param
+    
+    # If no camera_id provided, pick the first active one
+    cur_camera_id = camera_id
+    if cur_camera_id is None:
+        streams = camera_manager.get_all_streams()
+        if streams:
+            cur_camera_id = streams[0].camera_id
+    
     try:
         while True:
-            result = camera.get_processed_frame()
-            if result:
-                frame, has_unknown, has_phone, has_fire, has_unsafe_pose = result
-                if frame is not None:
-                    _, buffer = cv2.imencode('.jpg', frame)
-                    img_base64 = base64.b64encode(buffer).decode('utf-8')
-                    await websocket.send_json({
-                        "image": img_base64,
-                        "has_unknown": has_unknown,
-                        "has_phone": has_phone,
-                        "has_fire": has_fire,
-                        "has_unsafe_pose": has_unsafe_pose,
-                        "enable_alarm": camera.settings.get('enable_alarm', 'true') == 'true'
-                    })
-            await asyncio.sleep(0.033)
+            stream = camera_manager.get_stream(cur_camera_id) if cur_camera_id is not None else None
+            if stream:
+                result = stream.get_processed_frame()
+                if result:
+                    frame, has_unknown, has_phone, has_fire, has_unsafe_pose = result
+                    if frame is not None:
+                        _, buffer = cv2.imencode('.jpg', frame)
+                        img_base64 = base64.b64encode(buffer).decode('utf-8')
+                        await websocket.send_json({
+                            "camera_id": cur_camera_id,
+                            "camera_name": stream.camera_name,
+                            "image": img_base64,
+                            "has_unknown": has_unknown,
+                            "has_phone": has_phone,
+                            "has_fire": has_fire,
+                            "has_unsafe_pose": has_unsafe_pose,
+                            "enable_alarm": stream.settings.get('enable_alarm', 'true') == 'true'
+                        })
+                await asyncio.sleep(0.033)
+            else:
+                # If no stream found, wait a bit and check again (maybe it's starting)
+                await websocket.send_json({"error": "Camera not found or inactive", "camera_id": cur_camera_id})
+                await asyncio.sleep(1.0)
+                # Try to re-pick if it was None
+                if cur_camera_id is None:
+                    streams = camera_manager.get_all_streams()
+                    if streams: cur_camera_id = streams[0].camera_id
     except WebSocketDisconnect:
         pass
 

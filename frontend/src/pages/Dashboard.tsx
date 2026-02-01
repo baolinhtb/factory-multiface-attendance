@@ -1,23 +1,17 @@
 import React, { useEffect, useState, useRef } from 'react';
 import api from '../services/api';
-import { Camera, AlertTriangle, Phone, History, Clock } from 'lucide-react';
+import { LayoutDashboard, AlertTriangle, Phone, History, Clock } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import CameraPlayer from '../components/CameraPlayer';
 
 const Dashboard = () => {
     const { t } = useLanguage();
     const [stats, setStats] = useState<any[]>([]);
+    const [cameras, setCameras] = useState<any[]>([]);
     const [logs, setLogs] = useState<{ msg: string, type: string, time: string }[]>([]);
-    const [isAlerting, setIsAlerting] = useState(false);
-    const videoRef = useRef<HTMLImageElement>(null);
     const audioCtxRef = useRef<AudioContext | null>(null);
     const lastSoundTimeRef = useRef(0);
     const [alarmEnabled, setAlarmEnabled] = useState(true);
-
-    // Track previous states to avoid duplicate logs
-    const prevFireStateRef = useRef(false);
-    const prevUnknownStateRef = useRef(false);
-    const prevPhoneStateRef = useRef(false);
-    const prevPoseStateRef = useRef(false);
 
     const addLog = (msg: string, type: string) => {
         const time = new Date().toLocaleTimeString();
@@ -56,67 +50,30 @@ const Dashboard = () => {
             } catch (e) { }
         };
 
-        fetchStats();
-        const interval = setInterval(fetchStats, 5000);
-
-        const ws = new WebSocket(`ws://${window.location.hostname}:8000/ws/video`);
-        ws.onmessage = (event) => {
-            // ... existing ws logic ...
-            const data = JSON.parse(event.data);
-            if (videoRef.current) {
-                videoRef.current.src = `data:image/jpeg;base64,${data.image}`;
-            }
-
-            setAlarmEnabled(data.enable_alarm);
-
-
-            let alerting = false;
-
-            // Unknown detection - log only on state change
-            if (data.has_unknown && !prevUnknownStateRef.current) {
-                addLog(t('unknown_detected'), "error");
-                playSound();
-            }
-            prevUnknownStateRef.current = data.has_unknown;
-
-            // Phone detection - log only on state change
-            if (data.has_phone && !prevPhoneStateRef.current) {
-                addLog(t('phone_detected'), "error");
-                playSound();
-            }
-            prevPhoneStateRef.current = data.has_phone;
-
-            // Fire detection - log only on state change
-            if (data.has_fire && !prevFireStateRef.current) {
-                addLog(t('fire_detected'), "error");
-                playSound();
-            } else if (!data.has_fire && prevFireStateRef.current) {
-                // Fire disappeared
-                addLog(t('fire_cleared'), "success");
-            }
-            prevFireStateRef.current = data.has_fire;
-
-            // Pose detection - log only on state change
-            if (data.has_unsafe_pose && !prevPoseStateRef.current) {
-                addLog(t('pose_detected_warning'), "error");
-                playSound();
-            } else if (!data.has_unsafe_pose && prevPoseStateRef.current) {
-                // Pose corrected
-                addLog(t('pose_cleared'), "success");
-            }
-            prevPoseStateRef.current = data.has_unsafe_pose;
-
-            // Set alerting if any current detection
-            if (data.has_unknown || data.has_phone || data.has_fire || data.has_unsafe_pose) {
-                alerting = true;
-            }
-
-            setIsAlerting(alerting);
+        const fetchCameras = async () => {
+            try {
+                const res = await api.get('/cameras');
+                setCameras(res.data.filter((c: any) => c.is_active));
+            } catch (e) { }
         };
 
+        fetchStats();
+        fetchCameras();
+        const interval = setInterval(fetchStats, 5000);
+
+        // Periodically refresh settings for alarm status
+        const fetchSettings = async () => {
+            try {
+                const res = await api.get('/settings');
+                setAlarmEnabled(res.data.enable_alarm === 'true');
+            } catch (e) { }
+        };
+        fetchSettings();
+        const settingsInterval = setInterval(fetchSettings, 30000);
+
         return () => {
-            ws.close();
             clearInterval(interval);
+            clearInterval(settingsInterval);
         };
     }, []);
 
@@ -128,35 +85,35 @@ const Dashboard = () => {
                     position: 'relative'
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', paddingLeft: '4px' }}>
-                        <Camera size={20} color="#3b82f6" />
+                        <LayoutDashboard size={20} color="#3b82f6" />
                         <h3 style={{ fontWeight: 600 }}>{t('monitoring')}</h3>
-                        {isAlerting && (
-                            <span style={{
-                                marginLeft: 'auto',
-                                background: '#ef4444',
-                                color: 'white',
-                                padding: '4px 10px',
-                                borderRadius: '20px',
-                                fontSize: '0.75rem',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '5px',
-                                animation: 'pulse 1s infinite'
-                            }}>
-                                <AlertTriangle size={14} /> {t('warning')}
-                            </span>
-                        )}
                     </div>
+
                     <div style={{
-                        aspectRatio: '680/480',
-                        background: 'black',
-                        borderRadius: '12px',
-                        overflow: 'hidden',
-                        border: isAlerting ? '3px solid #ef4444' : '1px solid #334155',
-                        boxShadow: isAlerting ? '0 0 20px rgba(239, 68, 68, 0.4)' : 'none',
-                        transition: 'all 0.3s'
+                        display: 'grid',
+                        gridTemplateColumns: cameras.length > 1 ? 'repeat(auto-fit, minmax(300px, 1fr))' : '1fr',
+                        gap: '16px'
                     }}>
-                        <img ref={videoRef} style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Stream" />
+                        {cameras.map(cam => (
+                            <CameraPlayer
+                                key={cam.id}
+                                camera={cam}
+                                onAlert={addLog}
+                                playSound={playSound}
+                            />
+                        ))}
+                        {cameras.length === 0 && (
+                            <div style={{
+                                padding: '40px',
+                                textAlign: 'center',
+                                background: '#1e293b20',
+                                border: '1px dashed #334155',
+                                borderRadius: '12px',
+                                color: '#94a3b8'
+                            }}>
+                                Chờ kết nối camera...
+                            </div>
+                        )}
                     </div>
                 </div>
 

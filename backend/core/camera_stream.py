@@ -13,26 +13,80 @@ from core.fire_detector import FireDetector
 from core.face_recognizer import FaceRecognizer
 
 class CameraStream:
-    def __init__(self):
-        # Load settings from DB
+    # Shared AI Models to save memory
+    _face_analysis_app = None
+    _yolo_model = None
+    _pose_model = None
+    _shared_lock = threading.Lock()
+
+    @classmethod
+    def get_face_analysis(cls):
+        with cls._shared_lock:
+            if cls._face_analysis_app is None:
+                print("Initializing Shared InsightFace analysis...")
+                cls._face_analysis_app = FaceAnalysis(name='buffalo_l', providers=['CPUExecutionProvider'])
+                cls._face_analysis_app.prepare(ctx_id=0, det_size=(640, 640))
+            return cls._face_analysis_app
+
+    @classmethod
+    def get_yolo(cls):
+        with cls._shared_lock:
+            if cls._yolo_model is None:
+                print("Initializing Shared YOLO26 for object detection...")
+                model_path = 'models/yolo26n.pt' if os.path.exists('models/yolo26n.pt') else 'yolo26n.pt'
+                try:
+                    cls._yolo_model = YOLO(model_path)
+                    print(f"YOLO26 object detection model loaded: {model_path}")
+                except Exception as e:
+                    print(f"Error loading YOLO26 model: {e}. Fallback to YOLOv8.")
+                    cls._yolo_model = YOLO('yolov8n.pt')
+            return cls._yolo_model
+
+    @classmethod
+    def get_pose_yolo(cls):
+        with cls._shared_lock:
+            if cls._pose_model is None:
+                print("Initializing Shared YOLO26 Pose Detection...")
+                pose_model_path = 'models/yolo26n-pose.pt' if os.path.exists('models/yolo26n-pose.pt') else 'yolo26n-pose.pt'
+                try:
+                    cls._pose_model = YOLO(pose_model_path)
+                    print(f"YOLO26 Pose model loaded: {pose_model_path}")
+                except Exception as e:
+                    print(f"Error loading pose model: {e}")
+                    cls._pose_model = None
+            return cls._pose_model
+
+    def __init__(self, camera_config: dict = None):
+        """
+        Initialize CameraStream with a specific configuration.
+        camera_config: {id, name, type, source, is_active, description}
+        """
+        # Load global settings for thresholds
         self.settings = database.get_settings()
         
-        # Determine camera source: check camera_type setting
-        camera_type = self.settings.get('camera_type', 'usb')
-        rtsp_url = self.settings.get('rtsp_url', '').strip()
-        src = self.settings.get('camera_src', '0')
-        
-        if camera_type == 'rtsp' and rtsp_url:
-            # Use RTSP URL
-            camera_source = rtsp_url
-            print(f"Using RTSP camera: {rtsp_url}")
+        # Camera Config
+        if camera_config:
+            self.camera_id = camera_config.get('id')
+            self.camera_name = camera_config.get('name', 'Unnamed Camera')
+            self.camera_type = camera_config.get('type', 'usb')
+            self.camera_source_str = camera_config.get('source', '0')
         else:
-            # Use camera_src (USB camera ID or other source)
+            # Fallback to default single camera settings
+            self.camera_id = 0
+            self.camera_name = "Default Camera"
+            self.camera_type = self.settings.get('camera_type', 'usb')
+            self.camera_source_str = self.settings.get('rtsp_url', '') if self.camera_type == 'rtsp' else self.settings.get('camera_src', '0')
+
+        # Determine actual OpenCV source
+        if self.camera_type == 'rtsp' and self.camera_source_str:
+            self.camera_source = self.camera_source_str
+        else:
             try:
-                camera_source = int(src)
+                self.camera_source = int(self.camera_source_str)
             except:
-                camera_source = src
-            print(f"Using USB camera source: {camera_source}")
+                self.camera_source = self.camera_source_str
+
+        print(f"Initializing {self.camera_name} ({self.camera_type}) at {self.camera_source}")
             
         # AI Detection thresholds from settings
         self.face_recognition_threshold = float(self.settings.get('face_recognition_threshold', '0.45'))
@@ -41,145 +95,80 @@ class CameraStream:
         self.pose_detection_confidence = float(self.settings.get('pose_detection_confidence', '0.50'))
 
         # Initialize Camera
-        self.capture = cv2.VideoCapture(camera_source)
-        self.current_src = camera_source
+        self.capture = cv2.VideoCapture(self.camera_source)
+        self.current_src = self.camera_source
         
         if not self.capture.isOpened():
-            print(f"ERROR: Could not open video source {camera_source}")
+            print(f"ERROR: Could not open video source {self.camera_source} for {self.camera_name}")
         else:
-            print(f"SUCCESS: Video source {camera_source} opened")
+            print(f"SUCCESS: Video source {self.camera_source} opened for {self.camera_name}")
 
         self.is_running = False
         self.frame = None
         self.thread = None
         self.lock = threading.Lock()
         
-        # Initialize InsightFace
-        print("Initializing InsightFace analysis...")
-        self.app = FaceAnalysis(name='buffalo_l', providers=['CPUExecutionProvider'])
-        self.app.prepare(ctx_id=0, det_size=(640, 640))
+        # Get Shared AI Models
+        self.app = self.get_face_analysis()
+        self.yolo = self.get_yolo()
+        self.pose_yolo = self.get_pose_yolo()
         
-        # Load known faces from DB
         # Initialize Face Recognizer (FAISS)
         self.face_recognizer = FaceRecognizer()
         self.reload_faces()
 
-
-
-        # Initialize YOLO26 for object detection (phone, etc.)
-        print("Initializing YOLO26 for object detection...")
-        model_path = 'models/yolo26n.pt' if os.path.exists('models/yolo26n.pt') else 'yolo26n.pt'
-        try:
-            self.yolo = YOLO(model_path)
-            print(f"YOLO26 object detection model loaded: {model_path}")
-        except Exception as e:
-            print(f"Error loading YOLO26 model: {e}. Fallback to YOLOv8/11 if available.")
-            self.yolo = YOLO('yolov8n.pt') # Fallback
-
-        # Initialize YOLO26 for pose detection
-        print("Initializing YOLO26 Pose Detection...")
-        pose_model_path = 'models/yolo26n-pose.pt' if os.path.exists('models/yolo26n-pose.pt') else 'yolo26n-pose.pt'
-        try:
-            self.pose_yolo = YOLO(pose_model_path)
-            print(f"YOLO26 Pose model loaded: {pose_model_path}")
-        except Exception as e:
-            print(f"Error loading pose model: {e}")
-            self.pose_yolo = None
-            print("Pose detection disabled")
-        
-        # Initialize YOLO for fire detection (using custom or pretrained model)
-        print("Initializing Fire Detection model...")
         # Initialize FireDetector
-        print("Initializing Fire Detection model...")
         fire_model_path = 'models/fire_detection.pt'
         if not os.path.exists(fire_model_path):
-             # Fallback path logic or just use naive path
              fire_model_path = 'fire_detection.pt'
         
         self.fire_detector = FireDetector(
             model_path=fire_model_path,
             target_height=640,
-            iou_threshold=0.2, # User custom defaults
+            iou_threshold=0.2,
             min_confidence=self.fire_detection_confidence,
             smoke_confidence=0.75
         )
         
-        # Fire detection state
+        # Detection states
         self.fire_detected_time = None
-        self.fire_alert_cooldown = 10  # seconds between alerts
-        
-        # Pose detection state
+        self.fire_alert_cooldown = 10
         self.unsafe_pose_detected_time = None
-        self.unsafe_pose_cooldown = 5  # seconds between alerts
+        self.unsafe_pose_cooldown = 5
+        self.last_frame_time = time.time()
         
         # Font for Vietnamese labels
         self.font_path = "/System/Library/Fonts/Supplemental/Arial.ttf"
         
-        # Time tracking for phone usage
-        self.last_frame_time = time.time()
-        
         # Fall Detector
         self.fall_detector = FallDetector()
-        self.enable_fall_det = True # Default, will update from settings
+        self.enable_fall_det = self.settings.get('enable_fall_det', 'false') == 'true'
 
     def reload_faces(self):
         """Reload employees from database."""
         employees = database.get_all_employees_with_embeddings()
-        
-        # Load into FAISS
         self.face_recognizer.load_faces(employees)
         
-        # We still keep these dicts for presence tracking logic if needed, 
-        # but identification comes from FAISS now
         self.known_employee_ids = [u['id'] for u in employees]
         self.known_names = [u['name'] for u in employees]
         
         self.last_attendance_log = {} # employee_id -> last_log_time
         self.employee_presence = {} # employee_id -> last_seen_time
         self.employee_presence_state = {} # employee_id -> 'entered' or 'left'
-        print(f"Loaded {len(employees)} employees from database into FAISS.")
+        print(f"[{self.camera_name}] Loaded {len(employees)} employees into FAISS.")
 
     def update_settings(self):
-        """Fetch updated settings from DB."""
-        new_settings = database.get_settings()
+        """Fetch updated thresholds and fall det settings."""
+        self.settings = database.get_settings()
         
-        # Determine new camera source: check camera_type setting
-        new_camera_type = new_settings.get('camera_type', 'usb')
-        new_rtsp_url = new_settings.get('rtsp_url', '').strip()
-        new_src = new_settings.get('camera_src', '0')
-        
-        if new_camera_type == 'rtsp' and new_rtsp_url:
-            # Use RTSP URL
-            new_camera_source = new_rtsp_url
-        else:
-            # Use camera_src (USB camera ID or other source)
-            try:
-                new_camera_source = int(new_src)
-            except:
-                new_camera_source = new_src
-            
-        if new_camera_source != self.current_src:
-            print(f"Changing camera source to {new_camera_source}...")
-            with self.lock:
-                self.capture.release()
-                self.capture = cv2.VideoCapture(new_camera_source)
-                self.current_src = new_camera_source
-                if not self.capture.isOpened():
-                    print(f"ERROR: Could not open new video source {new_camera_source}")
-                else:
-                    print(f"SUCCESS: New video source {new_camera_source} opened")
-        
-        # Update AI thresholds
-        self.face_recognition_threshold = float(new_settings.get('face_recognition_threshold', '0.45'))
-        self.phone_detection_confidence = float(new_settings.get('phone_detection_confidence', '0.15'))
-        self.fire_detection_confidence = float(new_settings.get('fire_detection_confidence', '0.30'))
-        self.pose_detection_confidence = float(new_settings.get('pose_detection_confidence', '0.50'))
-        print(f"AI Thresholds updated: Face={self.face_recognition_threshold}, Phone={self.phone_detection_confidence}, Fire={self.fire_detection_confidence}, Pose={self.pose_detection_confidence}")
-        
-        self.settings = new_settings
-        
-        # Update Fall Detection setting
+        self.face_recognition_threshold = float(self.settings.get('face_recognition_threshold', '0.45'))
+        self.phone_detection_confidence = float(self.settings.get('phone_detection_confidence', '0.15'))
+        self.fire_detection_confidence = float(self.settings.get('fire_detection_confidence', '0.30'))
+        self.pose_detection_confidence = float(self.settings.get('pose_detection_confidence', '0.50'))
         self.enable_fall_det = self.settings.get('enable_fall_det', 'false') == 'true'
+        
+        self.fire_detector.min_confidence = self.fire_detection_confidence
+        print(f"[{self.camera_name}] AI Thresholds updated.")
 
     def get_available_cameras(self):
         """Scan for available cameras (indices 0-4)."""

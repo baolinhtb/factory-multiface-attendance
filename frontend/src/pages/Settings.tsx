@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { Settings as SettingsIcon, Save, Monitor, Bell, Eye, PhoneOff, Globe, Upload, Flame, Brain, RotateCcw, User, Activity, RefreshCw } from 'lucide-react';
+import { Settings as SettingsIcon, Save, Monitor, Bell, Eye, PhoneOff, Globe, Upload, Flame, Brain, RotateCcw, User, Activity, RefreshCw, Camera, ArrowRight } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const Settings = () => {
+    const navigate = useNavigate();
     const { refreshLanguages, t } = useLanguage();
     const [settings, setSettings] = useState<any>({
         camera_type: 'usb',
@@ -129,8 +131,8 @@ const Settings = () => {
                             }}
                         >
                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <Monitor size={20} color="#3b82f6" />
-                                <span style={{ fontWeight: 700, fontSize: '1.1rem', color: 'white' }}>{t('camera_type')}</span>
+                                <Camera size={20} color="#3b82f6" />
+                                <span style={{ fontWeight: 700, fontSize: '1.1rem', color: 'white' }}>{t('camera_settings') || 'Camera Settings'}</span>
                             </div>
                             <div style={{
                                 transform: expandedSections.includes('camera') ? 'rotate(180deg)' : 'rotate(0)',
@@ -142,178 +144,47 @@ const Settings = () => {
                         </div>
 
                         {expandedSections.includes('camera') && (
-                            <div style={{ padding: '24px', borderTop: '1px solid #1e293b', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
-                                    {/* USB Camera Card */}
-                                    <div
-                                        onClick={() => setSettings({ ...settings, camera_type: 'usb' })}
-                                        style={{
-                                            padding: '20px',
-                                            background: settings.camera_type === 'usb' ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
-                                            border: '2px solid',
-                                            borderColor: settings.camera_type === 'usb' ? '#3b82f6' : '#334155',
-                                            borderRadius: '16px',
-                                            cursor: 'pointer',
-                                            transition: 'all 0.3s',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            gap: '15px'
-                                        }}
-                                    >
-                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                <input
-                                                    type="radio"
-                                                    name="camera_type"
-                                                    value="usb"
-                                                    checked={settings.camera_type === 'usb'}
-                                                    onChange={() => setSettings({ ...settings, camera_type: 'usb' })}
-                                                    style={{ width: '20px', height: '20px', cursor: 'pointer' }}
-                                                />
-                                                <div>
-                                                    <div style={{ fontWeight: 700, color: 'white', fontSize: '1rem' }}>{t('usb_camera')}</div>
-                                                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Webcam, USB Cam</div>
-                                                </div>
-                                            </div>
-
-                                            {/* Scan Button */}
-                                            {settings.camera_type === 'usb' && (
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleScanCameras();
-                                                    }}
-                                                    disabled={scanningCameras}
-                                                    style={{
-                                                        padding: '6px 12px',
-                                                        background: '#3b82f6',
-                                                        color: 'white',
-                                                        border: 'none',
-                                                        borderRadius: '6px',
-                                                        fontSize: '0.8rem',
-                                                        cursor: 'pointer',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: '6px'
-                                                    }}
-                                                >
-                                                    <RefreshCw size={14} className={scanningCameras ? "spin" : ""} />
-                                                    {scanningCameras ? "Scanning..." : "Scan"}
-                                                </button>
-                                            )}
+                            <div style={{ padding: '24px', borderTop: '1px solid #1e293b' }}>
+                                <div style={{
+                                    padding: '24px',
+                                    background: 'rgba(59, 130, 246, 0.05)',
+                                    borderRadius: '16px',
+                                    border: '1px solid rgba(59, 130, 246, 0.2)',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '15px'
+                                }}>
+                                    <div style={{ display: 'flex', gap: '15px', alignItems: 'flex-start' }}>
+                                        <div style={{ padding: '10px', background: '#3b82f620', borderRadius: '12px' }}>
+                                            <Camera size={24} color="#3b82f6" />
                                         </div>
-
-                                        <div style={{
-                                            opacity: settings.camera_type === 'usb' ? 1 : 0.4,
-                                            transition: 'all 0.3s',
-                                            pointerEvents: settings.camera_type === 'usb' ? 'auto' : 'none'
-                                        }} onClick={(e) => e.stopPropagation()}>
-
-                                            {/* Camera List */}
-                                            {availableCameras.length > 0 && (
-                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
-                                                    {availableCameras.map((cam: any) => (
-                                                        <div
-                                                            key={cam.id}
-                                                            onClick={() => setSettings({ ...settings, camera_src: cam.id })}
-                                                            style={{
-                                                                padding: '6px 12px',
-                                                                background: settings.camera_src === cam.id ? '#3b82f6' : '#1e293b',
-                                                                border: '1px solid',
-                                                                borderColor: settings.camera_src === cam.id ? '#3b82f6' : '#334155',
-                                                                borderRadius: '8px',
-                                                                color: 'white',
-                                                                fontSize: '0.85rem',
-                                                                cursor: 'pointer',
-                                                                transition: 'all 0.2s',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                gap: '6px'
-                                                            }}
-                                                        >
-                                                            <Monitor size={14} />
-                                                            {cam.name}
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-
-                                            <input
-                                                type="text"
-                                                value={settings.camera_src}
-                                                onChange={(e) => setSettings({ ...settings, camera_src: e.target.value })}
-                                                style={{
-                                                    width: '100%',
-                                                    padding: '10px',
-                                                    background: '#1e293b',
-                                                    border: '1px solid #334155',
-                                                    borderRadius: '8px',
-                                                    color: 'white',
-                                                    outline: 'none',
-                                                    fontSize: '0.9rem'
-                                                }}
-                                                placeholder={t('camera_placeholder')}
-                                            />
-                                            <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '5px' }}>
-                                                {availableCameras.length > 0 ? "Select a detected camera or enter Index manually" : "Enter Camera Index (0, 1, 2...) manually"}
-                                            </div>
+                                        <div>
+                                            <h4 style={{ fontWeight: 700, marginBottom: '5px' }}>{t('multi_camera_management') || 'Multi-Camera Management'}</h4>
+                                            <p style={{ color: '#94a3b8', fontSize: '0.85rem', lineHeight: '1.5' }}>
+                                                {t('camera_settings_moved_desc') || 'Settings for camera sources (USB, RTSP) have been moved to a dedicated management page to support multiple cameras simultaneously.'}
+                                            </p>
                                         </div>
                                     </div>
-
-                                    {/* RTSP Camera Card */}
-                                    <div
-                                        onClick={() => setSettings({ ...settings, camera_type: 'rtsp' })}
+                                    <button
+                                        onClick={() => navigate('/cameras')}
                                         style={{
-                                            padding: '20px',
-                                            background: settings.camera_type === 'rtsp' ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
-                                            border: '2px solid',
-                                            borderColor: settings.camera_type === 'rtsp' ? '#10b981' : '#334155',
-                                            borderRadius: '16px',
+                                            padding: '12px',
+                                            background: '#3b82f6',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '10px',
+                                            fontWeight: 600,
                                             cursor: 'pointer',
-                                            transition: 'all 0.3s',
                                             display: 'flex',
-                                            flexDirection: 'column',
-                                            gap: '15px'
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '8px',
+                                            transition: 'all 0.2s'
                                         }}
                                     >
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                            <input
-                                                type="radio"
-                                                name="camera_type"
-                                                value="rtsp"
-                                                checked={settings.camera_type === 'rtsp'}
-                                                onChange={() => setSettings({ ...settings, camera_type: 'rtsp' })}
-                                                style={{ width: '20px', height: '20px', cursor: 'pointer' }}
-                                            />
-                                            <div>
-                                                <div style={{ fontWeight: 700, color: 'white', fontSize: '1rem' }}>{t('rtsp_camera')}</div>
-                                                <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Network Stream</div>
-                                            </div>
-                                        </div>
-
-                                        <div style={{
-                                            opacity: settings.camera_type === 'rtsp' ? 1 : 0.4,
-                                            transition: 'all 0.3s',
-                                            pointerEvents: settings.camera_type === 'rtsp' ? 'auto' : 'none'
-                                        }} onClick={(e) => e.stopPropagation()}>
-                                            <input
-                                                type="text"
-                                                value={settings.rtsp_url || ''}
-                                                onChange={(e) => setSettings({ ...settings, rtsp_url: e.target.value })}
-                                                style={{
-                                                    width: '100%',
-                                                    padding: '10px',
-                                                    background: '#1e293b',
-                                                    border: '1px solid #334155',
-                                                    borderRadius: '8px',
-                                                    color: 'white',
-                                                    outline: 'none',
-                                                    fontSize: '0.9rem'
-                                                }}
-                                                placeholder={t('rtsp_placeholder')}
-                                            />
-                                        </div>
-                                    </div>
+                                        {t('go_to_camera_management') || 'Go to Camera Management'}
+                                        <ArrowRight size={18} />
+                                    </button>
                                 </div>
                             </div>
                         )}

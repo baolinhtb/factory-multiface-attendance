@@ -309,4 +309,21 @@
     <string name="retake_photo">Retake</string>
     <string name="use_photo">Use this photo</string>
     <string name="camera_error">Unable to access camera. Please check browser permissions.</string>
+    <string name="camera_management">Camera Management</string>
+    <string name="camera_management_desc">Setup and manage multiple camera systems</string>
+    <string name="add_camera">Add Camera</string>
+    <string name="camera_settings">Camera Settings</string>
+    <string name="multi_camera_management">Multi-Camera Management</string>
+    <string name="camera_settings_moved_desc">Settings for camera sources (USB, RTSP) have been moved to a dedicated management page to support multiple cameras simultaneously.</string>
+    <string name="go_to_camera_management">Go to Camera Management</string>
+    <string name="edit_camera">Edit Camera</string>
+    <string name="camera_name">Camera Name</string>
+    <string name="no_cameras_setup">No cameras configured yet. Add a new camera to start monitoring.</string>
+    <string name="no_description">No description</string>
+    <string name="status_active">ACTIVE</string>
+    <string name="status_inactive">INACTIVE</string>
+    <string name="scan_again">Scan Again</string>
+    <string name="index">Index</string>
+    <string name="optional">optional</string>
+    <string name="activate_camera">Activate this camera</string>
 </resources>
