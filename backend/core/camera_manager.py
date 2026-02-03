@@ -47,7 +47,7 @@ class CameraManager:
                 # Update settings for existing stream
                 # For source change, we might need to recreate the stream or enhance CameraStream.update_settings
                 # For now, let's just trigger update_settings for thresholds
-                self.streams[cam_id].update_settings()
+                self.streams[cam_id].update_settings(config)
 
     def start_all(self):
         for stream in self.streams.values():

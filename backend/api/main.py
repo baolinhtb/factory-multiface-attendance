@@ -16,7 +16,8 @@ import xml.etree.ElementTree as ET
 import glob
 from typing import List, Optional
 from datetime import datetime, timedelta
-from pydantic import BaseModel
+from datetime import datetime, timedelta
+from pydantic import BaseModel, Field, ConfigDict
 
 from core.camera_stream import CameraStream
 from core.camera_manager import CameraManager
@@ -55,7 +56,40 @@ class ShiftUpdate(BaseModel):
     late_grace_period: int = 0
     early_grace_period: int = 0
     checkin_start: str = "00:00"
+    checkin_start: str = "00:00"
     checkout_end: str = "23:59"
+
+class CameraSettings(BaseModel):
+    face_recognition_threshold: float = Field(0.45, ge=0.0, le=1.0)
+    phone_detection_confidence: float = Field(0.15, ge=0.0, le=1.0)
+    fire_detection_confidence: float = Field(0.30, ge=0.0, le=1.0)
+    pose_detection_confidence: float = Field(0.50, ge=0.0, le=1.0)
+    enable_face_rec: bool = True
+    enable_phone_det: bool = True
+    enable_fire_det: bool = True
+    enable_pose_det: bool = True
+    # Allow extra fields for dynamic features
+    model_config = ConfigDict(extra='allow')
+
+class CameraCreate(BaseModel):
+    name: str
+    type: str = "usb"
+    source: str
+    is_active: int = 1
+    description: Optional[str] = None
+    settings: Optional[CameraSettings] = None
+
+class CameraUpdate(BaseModel):
+    name: str
+    type: str
+    source: str
+    is_active: int = 1
+    description: Optional[str] = None
+    settings: Optional[CameraSettings] = None
+
+class BulkCameraSettingsUpdate(BaseModel):
+    camera_ids: List[int]
+    settings: CameraSettings
 
 app.add_middleware(
     CORSMiddleware,
@@ -188,30 +222,37 @@ async def list_cameras(current_user: dict = Depends(auth.get_current_user)):
 
 @app.post("/cameras")
 async def add_camera(
-    name: str = Form(...),
-    type: str = Form("usb"),
-    source: str = Form(...),
-    is_active: int = Form(1),
-    description: str = Form(None),
+    camera: CameraCreate,
     admin: dict = Depends(auth.get_admin_user)
 ):
-    cam_id = database.add_camera(name, type, source, is_active, description)
+    settings_dict = camera.settings.model_dump() if camera.settings else None
+    cam_id = database.add_camera(camera.name, camera.type, camera.source, camera.is_active, camera.description, settings_dict)
     camera_manager.load_cameras()
     return {"id": cam_id, "message": "Camera added"}
 
 @app.put("/cameras/{camera_id}")
 async def update_camera(
     camera_id: int,
-    name: str = Form(...),
-    type: str = Form(...),
-    source: str = Form(...),
-    is_active: int = Form(1),
-    description: str = Form(None),
+    camera: CameraUpdate,
     admin: dict = Depends(auth.get_admin_user)
 ):
-    database.update_camera(camera_id, name, type, source, is_active, description)
+    settings_dict = camera.settings.model_dump() if camera.settings else None
+    database.update_camera(camera_id, camera.name, camera.type, camera.source, camera.is_active, camera.description, settings_dict)
     camera_manager.load_cameras()
     return {"message": "Camera updated"}
+
+@app.post("/cameras/bulk-settings")
+async def bulk_update_camera_settings(
+    payload: BulkCameraSettingsUpdate,
+    admin: dict = Depends(auth.get_admin_user)
+):
+    settings_dict = payload.settings.model_dump()
+    success = database.update_camera_settings_bulk(payload.camera_ids, settings_dict)
+    if not success:
+         raise HTTPException(status_code=500, detail="Failed to update settings for some cameras")
+    
+    camera_manager.load_cameras()
+    return {"message": "Bulk settings updated"}
 
 @app.delete("/cameras/{camera_id}")
 async def delete_camera(camera_id: int, admin: dict = Depends(auth.get_admin_user)):
@@ -440,7 +481,7 @@ async def websocket_endpoint(websocket: WebSocket, camera_id: Optional[int] = No
                             "has_phone": has_phone,
                             "has_fire": has_fire,
                             "has_unsafe_pose": has_unsafe_pose,
-                            "enable_alarm": stream.settings.get('enable_alarm', 'true') == 'true'
+                            "enable_alarm": stream.get_effective_setting('enable_alarm', True)
                         })
                 await asyncio.sleep(0.033)
             else:

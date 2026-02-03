@@ -188,9 +188,17 @@ def init_db():
                 type TEXT NOT NULL, -- 'usb' or 'rtsp'
                 source TEXT NOT NULL, -- index or URL
                 is_active INTEGER DEFAULT 1,
-                description TEXT
+                description TEXT,
+                settings TEXT -- JSON string for per-camera settings
             );
         """)
+        
+        # Migration: Add settings column if not exists
+        try:
+            cur.execute("ALTER TABLE cameras_config ADD COLUMN settings TEXT")
+            print("[DB] Added 'settings' column to cameras_config")
+        except:
+            pass
         
         # Default settings
         print("[DB] Inserting default settings...")
@@ -826,17 +834,34 @@ def update_system_user_password(user_id: int, hashed_pass: str):
 def get_all_cameras():
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("SELECT id, name, type, source, is_active, description FROM cameras_config")
+    cur.execute("SELECT id, name, type, source, is_active, description, settings FROM cameras_config")
     rows = cur.fetchall()
     conn.close()
-    return [{
-        "id": r[0],
-        "name": r[1],
-        "type": r[2],
-        "source": r[3],
-        "is_active": r[4],
-        "description": r[5]
-    } for r in rows]
+
+    
+    cameras = []
+    
+    import json
+    for r in rows:
+        settings_dict = {}
+        if len(r) > 6 and r[6]:
+            try:
+                settings_dict = json.loads(r[6])
+            except:
+                settings_dict = {}
+        
+        cameras.append({
+            "id": r[0],
+            "name": r[1],
+            "type": r[2],
+            "source": r[3],
+            "is_active": r[4],
+            "description": r[5],
+            "settings": settings_dict
+        })
+        
+    conn.close()
+    return cameras
 
 def get_camera_by_id(camera_id: int):
     conn = get_db_connection()
@@ -855,28 +880,66 @@ def get_camera_by_id(camera_id: int):
         }
     return None
 
-def add_camera(name: str, cam_type: str, source: str, is_active: int = 1, description: str = None):
+def add_camera(name: str, cam_type: str, source: str, is_active: int = 1, description: str = None, settings: dict = None):
     conn = get_db_connection()
     cur = conn.cursor()
+    import json
+    settings_json = json.dumps(settings) if settings else None
+    
     cur.execute(
-        "INSERT INTO cameras_config (name, type, source, is_active, description) VALUES (?, ?, ?, ?, ?)",
-        (name, cam_type, source, is_active, description)
+        "INSERT INTO cameras_config (name, type, source, is_active, description, settings) VALUES (?, ?, ?, ?, ?, ?)",
+        (name, cam_type, source, is_active, description, settings_json)
     )
     new_id = cur.lastrowid
     conn.commit()
     conn.close()
     return new_id
 
-def update_camera(camera_id: int, name: str, cam_type: str, source: str, is_active: int, description: str = None):
+def update_camera(camera_id: int, name: str, cam_type: str, source: str, is_active: int, description: str = None, settings: dict = None):
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("""
-        UPDATE cameras_config 
-        SET name = ?, type = ?, source = ?, is_active = ?, description = ? 
-        WHERE id = ?
-    """, (name, cam_type, source, is_active, description, camera_id))
+    import json
+    settings_json = json.dumps(settings) if settings is not None else None
+    
+    # We only update settings if provided (not None). If empty dict, it updates to empty.
+    # Logic: if settings argument is provided, update it.
+    
+    if settings is not None:
+         cur.execute("""
+            UPDATE cameras_config 
+            SET name = ?, type = ?, source = ?, is_active = ?, description = ?, settings = ?
+            WHERE id = ?
+        """, (name, cam_type, source, is_active, description, settings_json, camera_id))
+    else:
+         cur.execute("""
+            UPDATE cameras_config 
+            SET name = ?, type = ?, source = ?, is_active = ?, description = ?
+            WHERE id = ?
+        """, (name, cam_type, source, is_active, description, camera_id))
+        
     conn.commit()
     conn.close()
+
+def update_camera_settings_bulk(camera_ids: list, settings: dict):
+    """Update settings for multiple cameras."""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    import json
+    settings_json = json.dumps(settings)
+    
+    try:
+        # Create a placeholder string like (?,?,?)
+        placeholders = ','.join('?' for _ in camera_ids)
+        query = f"UPDATE cameras_config SET settings = ? WHERE id IN ({placeholders})"
+        params = [settings_json] + camera_ids
+        cur.execute(query, params)
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error bulk updating cameras: {e}")
+        return False
+    finally:
+        conn.close()
 
 def delete_camera(camera_id: int):
     conn = get_db_connection()

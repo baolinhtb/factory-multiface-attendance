@@ -190,26 +190,26 @@ const Settings = () => {
                         )}
                     </div>
 
-                    {/* 2. AI & Analysis Section */}
+                    {/* 2. General Preferences */}
                     <div style={{ borderBottom: '1px solid #334155', overflow: 'hidden' }}>
                         <div
-                            onClick={() => toggleSection('ai')}
+                            onClick={() => toggleSection('general')}
                             style={{
                                 padding: '20px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'space-between',
                                 cursor: 'pointer',
-                                background: expandedSections.includes('ai') ? '#1e293b' : 'transparent',
+                                background: expandedSections.includes('general') ? '#1e293b' : 'transparent',
                                 transition: 'all 0.3s'
                             }}
                         >
                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <Brain size={20} color="#a78bfa" />
-                                <span style={{ fontWeight: 700, fontSize: '1.1rem', color: 'white' }}>{t('ai_settings_title')}</span>
+                                <SettingsIcon size={20} color="#a78bfa" />
+                                <span style={{ fontWeight: 700, fontSize: '1.1rem', color: 'white' }}>{t('general_settings') || 'General Settings'}</span>
                             </div>
                             <div style={{
-                                transform: expandedSections.includes('ai') ? 'rotate(180deg)' : 'rotate(0)',
+                                transform: expandedSections.includes('general') ? 'rotate(180deg)' : 'rotate(0)',
                                 transition: 'transform 0.3s',
                                 color: '#94a3b8'
                             }}>
@@ -217,122 +217,10 @@ const Settings = () => {
                             </div>
                         </div>
 
-                        {expandedSections.includes('ai') && (
+                        {expandedSections.includes('general') && (
                             <div style={{ padding: '24px', borderTop: '1px solid #1e293b', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                {/* Phone Detection */}
                                 <div style={{ padding: '16px', borderRadius: '12px', background: '#1e293b50', border: '1px solid #334155' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: settings.enable_phone_det === 'true' ? '15px' : '0' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                            <PhoneOff size={20} color="#f59e0b" />
-                                            <span style={{ fontWeight: 600 }}>{t('phone_detection')}</span>
-                                        </div>
-                                        <label className="switch" style={{ position: 'relative', display: 'inline-block', width: '44px', height: '22px' }}>
-                                            <input type="checkbox" checked={settings.enable_phone_det === 'true'} onChange={(e) => setSettings({ ...settings, enable_phone_det: e.target.checked ? 'true' : 'false' })} style={{ opacity: 0, width: 0, height: 0 }} />
-                                            <span style={{ position: 'absolute', cursor: 'pointer', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: settings.enable_phone_det === 'true' ? '#f59e0b' : '#334155', transition: '.4s', borderRadius: '34px' }}>
-                                                <span style={{ position: 'absolute', content: '""', height: '14px', width: '14px', left: '4px', bottom: '4px', backgroundColor: 'white', transition: '.4s', borderRadius: '50%', transform: settings.enable_phone_det === 'true' ? 'translateX(22px)' : 'translateX(0)' }}></span>
-                                            </span>
-                                        </label>
-                                    </div>
-                                    {settings.enable_phone_det === 'true' && (
-                                        <div style={{ padding: '15px', background: '#0f172a', borderRadius: '10px' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                                <span style={{ fontSize: '0.85rem' }}>{t('phone_detection_confidence')}</span>
-                                                <button onClick={() => setSettings({ ...settings, phone_detection_confidence: '0.15' })} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '0.75rem' }}><RotateCcw size={12} /> {t('default')}</button>
-                                            </div>
-                                            <input type="range" min="0.1" max="0.9" step="0.05" value={settings.phone_detection_confidence} onChange={(e) => setSettings({ ...settings, phone_detection_confidence: e.target.value })} style={{ width: '100%', accentColor: '#f59e0b' }} />
-                                            <div style={{ textAlign: 'center', fontWeight: 700, color: '#f59e0b', fontSize: '0.9rem' }}>{settings.phone_detection_confidence}</div>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Fire Detection */}
-                                <div style={{ padding: '16px', borderRadius: '12px', background: '#1e293b50', border: '1px solid #334155' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: settings.enable_fire_det === 'true' ? '15px' : '0' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                            <Flame size={20} color="#ff6b35" />
-                                            <span style={{ fontWeight: 600 }}>{t('fire_detection')}</span>
-                                        </div>
-                                        <label className="switch" style={{ position: 'relative', display: 'inline-block', width: '44px', height: '22px' }}>
-                                            <input type="checkbox" checked={settings.enable_fire_det === 'true'} onChange={(e) => setSettings({ ...settings, enable_fire_det: e.target.checked ? 'true' : 'false' })} style={{ opacity: 0, width: 0, height: 0 }} />
-                                            <span style={{ position: 'absolute', cursor: 'pointer', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: settings.enable_fire_det === 'true' ? '#ff6b35' : '#334155', transition: '.4s', borderRadius: '34px' }}>
-                                                <span style={{ position: 'absolute', content: '""', height: '14px', width: '14px', left: '4px', bottom: '4px', backgroundColor: 'white', transition: '.4s', borderRadius: '50%', transform: settings.enable_fire_det === 'true' ? 'translateX(22px)' : 'translateX(0)' }}></span>
-                                            </span>
-                                        </label>
-                                    </div>
-                                    {settings.enable_fire_det === 'true' && (
-                                        <div style={{ padding: '15px', background: '#0f172a', borderRadius: '10px' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                                <span style={{ fontSize: '0.85rem' }}>{t('fire_detection_confidence')}</span>
-                                                <button onClick={() => setSettings({ ...settings, fire_detection_confidence: '0.30' })} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '0.75rem' }}><RotateCcw size={12} /> {t('default')}</button>
-                                            </div>
-                                            <input type="range" min="0.1" max="0.9" step="0.05" value={settings.fire_detection_confidence} onChange={(e) => setSettings({ ...settings, fire_detection_confidence: e.target.value })} style={{ width: '100%', accentColor: '#ff6b35' }} />
-                                            <div style={{ textAlign: 'center', fontWeight: 700, color: '#ff6b35', fontSize: '0.9rem' }}>{settings.fire_detection_confidence}</div>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Pose Detection */}
-                                <div style={{ padding: '16px', borderRadius: '12px', background: '#1e293b50', border: '1px solid #334155' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: settings.enable_pose_det === 'true' ? '15px' : '0' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                            <User size={20} color="#06b6d4" />
-                                            <span style={{ fontWeight: 600 }}>{t('pose_detection')}</span>
-                                        </div>
-                                        <label className="switch" style={{ position: 'relative', display: 'inline-block', width: '44px', height: '22px' }}>
-                                            <input type="checkbox" checked={settings.enable_pose_det === 'true'} onChange={(e) => setSettings({ ...settings, enable_pose_det: e.target.checked ? 'true' : 'false' })} style={{ opacity: 0, width: 0, height: 0 }} />
-                                            <span style={{ position: 'absolute', cursor: 'pointer', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: settings.enable_pose_det === 'true' ? '#06b6d4' : '#334155', transition: '.4s', borderRadius: '34px' }}>
-                                                <span style={{ position: 'absolute', content: '""', height: '14px', width: '14px', left: '4px', bottom: '4px', backgroundColor: 'white', transition: '.4s', borderRadius: '50%', transform: settings.enable_pose_det === 'true' ? 'translateX(22px)' : 'translateX(0)' }}></span>
-                                            </span>
-                                        </label>
-                                    </div>
-                                    {settings.enable_pose_det === 'true' && (
-                                        <div style={{ padding: '15px', background: '#0f172a', borderRadius: '10px' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                                <span style={{ fontSize: '0.85rem' }}>{t('pose_detection_confidence')}</span>
-                                                <button onClick={() => setSettings({ ...settings, pose_detection_confidence: '0.50' })} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '0.75rem' }}><RotateCcw size={12} /> {t('default')}</button>
-                                            </div>
-                                            <input type="range" min="0.1" max="0.9" step="0.05" value={settings.pose_detection_confidence} onChange={(e) => setSettings({ ...settings, pose_detection_confidence: e.target.value })} style={{ width: '100%', accentColor: '#06b6d4' }} />
-                                            <div style={{ textAlign: 'center', fontWeight: 700, color: '#06b6d4', fontSize: '0.9rem' }}>{settings.pose_detection_confidence}</div>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Fall Detection Card */}
-                                <div style={{ padding: '16px', borderRadius: '12px', background: '#1e293b50', border: '1px solid #334155' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                            <Activity size={20} color="#fcd34d" />
-                                            <div>
-                                                <div style={{ fontWeight: 600, color: 'white' }}>{t('fall_detection_title') || 'Phát hiện té ngã'}</div>
-                                                <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{t('fall_detection_desc') || 'Cảnh báo khi người bị ngã'}</div>
-                                            </div>
-                                        </div>
-                                        <label className="switch" style={{ position: 'relative', display: 'inline-block', width: '44px', height: '22px' }}>
-                                            <input
-                                                type="checkbox"
-                                                checked={settings.enable_fall_det === 'true'}
-                                                onChange={(e) => setSettings({ ...settings, enable_fall_det: e.target.checked ? 'true' : 'false' })}
-                                                style={{ opacity: 0, width: 0, height: 0 }}
-                                            />
-                                            <span style={{ position: 'absolute', cursor: 'pointer', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: settings.enable_fall_det === 'true' ? '#fcd34d' : '#334155', transition: '.4s', borderRadius: '34px' }}>
-                                                <span style={{ position: 'absolute', content: '""', height: '14px', width: '14px', left: '4px', bottom: '4px', backgroundColor: 'white', transition: '.4s', borderRadius: '50%', transform: settings.enable_fall_det === 'true' ? 'translateX(22px)' : 'translateX(0)' }}></span>
-                                            </span>
-                                        </label>
-                                    </div>
-                                </div>
-
-                                {/* Face & General */}
-                                <div style={{ padding: '16px', borderRadius: '12px', background: '#1e293b50', border: '1px solid #334155' }}>
-                                    <div style={{ fontWeight: 600, marginBottom: '15px' }}>{t('general_settings')}</div>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                                        <div style={{ padding: '12px', background: '#0f172a', borderRadius: '8px' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                                                <span style={{ fontSize: '0.8rem' }}>{t('face_recognition_threshold')}</span>
-                                                <button onClick={() => setSettings({ ...settings, face_recognition_threshold: '0.45' })} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '0.7rem' }}><RotateCcw size={10} /> {t('default')}</button>
-                                            </div>
-                                            <input type="range" min="0.3" max="0.7" step="0.01" value={settings.face_recognition_threshold} onChange={(e) => setSettings({ ...settings, face_recognition_threshold: e.target.value })} style={{ width: '100%', accentColor: '#a78bfa' }} />
-                                            <div style={{ textAlign: 'center', fontWeight: 700, color: '#a78bfa', fontSize: '0.85rem' }}>{settings.face_recognition_threshold}</div>
-                                        </div>
                                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                             <span style={{ fontSize: '0.9rem' }}>{t('show_age_gender')}</span>
                                             <input type="checkbox" checked={settings.show_age_gender === 'true'} onChange={(e) => setSettings({ ...settings, show_age_gender: e.target.checked ? 'true' : 'false' })} style={{ width: '18px', height: '18px' }} />

@@ -61,8 +61,8 @@ class CameraStream:
         Initialize CameraStream with a specific configuration.
         camera_config: {id, name, type, source, is_active, description}
         """
-        # Load global settings for thresholds
-        self.settings = database.get_settings()
+        # Global Settings (Fallback)
+        self.global_settings = database.get_settings()
         
         # Camera Config
         if camera_config:
@@ -70,12 +70,14 @@ class CameraStream:
             self.camera_name = camera_config.get('name', 'Unnamed Camera')
             self.camera_type = camera_config.get('type', 'usb')
             self.camera_source_str = camera_config.get('source', '0')
+            self.camera_settings = camera_config.get('settings', {}) or {}
         else:
-            # Fallback to default single camera settings
+            # Fallback
             self.camera_id = 0
             self.camera_name = "Default Camera"
-            self.camera_type = self.settings.get('camera_type', 'usb')
-            self.camera_source_str = self.settings.get('rtsp_url', '') if self.camera_type == 'rtsp' else self.settings.get('camera_src', '0')
+            self.camera_type = self.global_settings.get('camera_type', 'usb')
+            self.camera_source_str = self.global_settings.get('rtsp_url', '') if self.camera_type == 'rtsp' else self.global_settings.get('camera_src', '0')
+            self.camera_settings = {}
 
         # Determine actual OpenCV source
         if self.camera_type == 'rtsp' and self.camera_source_str:
@@ -88,11 +90,8 @@ class CameraStream:
 
         print(f"Initializing {self.camera_name} ({self.camera_type}) at {self.camera_source}")
             
-        # AI Detection thresholds from settings
-        self.face_recognition_threshold = float(self.settings.get('face_recognition_threshold', '0.45'))
-        self.phone_detection_confidence = float(self.settings.get('phone_detection_confidence', '0.15'))
-        self.fire_detection_confidence = float(self.settings.get('fire_detection_confidence', '0.30'))
-        self.pose_detection_confidence = float(self.settings.get('pose_detection_confidence', '0.50'))
+        # Initialize Settings
+        self.apply_settings()
 
         # Initialize Camera
         self.capture = cv2.VideoCapture(self.camera_source)
@@ -142,7 +141,61 @@ class CameraStream:
         
         # Fall Detector
         self.fall_detector = FallDetector()
-        self.enable_fall_det = self.settings.get('enable_fall_det', 'false') == 'true'
+        # Initial model loading based on settings is handled in apply_settings/update loop or lazy loaded
+        
+    def get_effective_setting(self, key, default_val):
+        """Get setting prioritizing Camera -> Global -> Default."""
+        # 1. Camera specific
+        if self.camera_settings and key in self.camera_settings:
+            val = self.camera_settings[key]
+            # Handle string booleans if necessary, though JSON should give bools
+            if str(val).lower() == 'true': return True
+            if str(val).lower() == 'false': return False
+            return val
+            
+        # 2. Global settings (which are strings in DB)
+        if key in self.global_settings:
+            val = self.global_settings[key]
+            if val.lower() == 'true': return True
+            if val.lower() == 'false': return False
+            return val
+            
+        # 3. Default
+        return default_val
+
+    def apply_settings(self):
+        """Apply current settings to internal variables."""
+        # Thresholds
+        self.face_recognition_threshold = float(self.get_effective_setting('face_recognition_threshold', 0.45))
+        self.phone_detection_confidence = float(self.get_effective_setting('phone_detection_confidence', 0.15))
+        self.fire_detection_confidence = float(self.get_effective_setting('fire_detection_confidence', 0.30))
+        self.pose_detection_confidence = float(self.get_effective_setting('pose_detection_confidence', 0.50))
+        
+        # Enablers
+        self.enable_face_rec = self.get_effective_setting('enable_face_rec', True)
+        self.enable_phone_det = self.get_effective_setting('enable_phone_det', True)
+        self.enable_fire_det = self.get_effective_setting('enable_fire_det', True)
+        self.enable_pose_det = self.get_effective_setting('enable_pose_det', True)
+        self.enable_fall_det = self.get_effective_setting('enable_fall_det', False)
+        
+        # Other
+        self.show_age_gender = self.get_effective_setting('show_age_gender', True)
+        
+        # Apply to sub-components
+        if hasattr(self, 'fire_detector'):
+            self.fire_detector.min_confidence = self.fire_detection_confidence
+
+        print(f"[{self.camera_name}] Settings applied: Face={self.enable_face_rec}({self.face_recognition_threshold}), "
+              f"Fire={self.enable_fire_det}({self.fire_detection_confidence}), Phone={self.enable_phone_det}")
+
+    def update_settings(self, new_config=None):
+        """Fetch updated thresholds and fall det settings."""
+        self.global_settings = database.get_settings()
+        
+        if new_config:
+            self.camera_settings = new_config.get('settings', {}) or {}
+            
+        self.apply_settings()
 
     def reload_faces(self):
         """Reload employees from database."""
@@ -157,18 +210,6 @@ class CameraStream:
         self.employee_presence_state = {} # employee_id -> 'entered' or 'left'
         print(f"[{self.camera_name}] Loaded {len(employees)} employees into FAISS.")
 
-    def update_settings(self):
-        """Fetch updated thresholds and fall det settings."""
-        self.settings = database.get_settings()
-        
-        self.face_recognition_threshold = float(self.settings.get('face_recognition_threshold', '0.45'))
-        self.phone_detection_confidence = float(self.settings.get('phone_detection_confidence', '0.15'))
-        self.fire_detection_confidence = float(self.settings.get('fire_detection_confidence', '0.30'))
-        self.pose_detection_confidence = float(self.settings.get('pose_detection_confidence', '0.50'))
-        self.enable_fall_det = self.settings.get('enable_fall_det', 'false') == 'true'
-        
-        self.fire_detector.min_confidence = self.fire_detection_confidence
-        print(f"[{self.camera_name}] AI Thresholds updated.")
 
     def get_available_cameras(self):
         """Scan for available cameras (indices 0-4)."""
@@ -228,69 +269,72 @@ class CameraStream:
             frame_to_process = self.frame.copy()
 
         processed_frame = frame_to_process
-        faces = self.app.get(frame_to_process)
+        processed_frame = frame_to_process
+        
+        # Face Recognition
         has_unknown = False
         identified_ids_in_frame = []
         
-        show_age_gender = self.settings.get('show_age_gender', 'true') == 'true'
-
-        for face in faces:
-            bbox = face.bbox.astype(int)
-            name = "Chưa nhận diện"
-            emp_id = None
-            max_score = 0.0
+        if self.enable_face_rec:
+            faces = self.app.get(frame_to_process)
             
-            # Compare with known faces
-            # Compare with known faces using FAISS
-            emp_id, name, max_score = self.face_recognizer.identify(
-                face.embedding, 
-                threshold=self.face_recognition_threshold
-            )
-            
-            if name == "Chưa nhận diện":
-                has_unknown = True
-            else:
-                identified_ids_in_frame.append(emp_id)
+            for face in faces:
+                bbox = face.bbox.astype(int)
+                name = "Chưa nhận diện"
+                emp_id = None
+                max_score = 0.0
                 
-                # Presence tracking - log enter/leave events
-                now_ts = time.time()
-                self.employee_presence[emp_id] = now_ts
+                # Compare with known faces
+                # Compare with known faces using FAISS
+                emp_id, name, max_score = self.face_recognizer.identify(
+                    face.embedding, 
+                    threshold=self.face_recognition_threshold
+                )
                 
-                # Check if this is a new entry (not seen before or previously left)
-                if emp_id not in self.employee_presence_state or self.employee_presence_state[emp_id] == 'left':
-                    database.log_employee_presence(emp_id, 'enter')
-                    self.employee_presence_state[emp_id] = 'entered'
-                    print(f"[PRESENCE] {name} ({emp_id}) entered camera view")
+                if name == "Chưa nhận diện":
+                    has_unknown = True
+                else:
+                    identified_ids_in_frame.append(emp_id)
+                    
+                    # Presence tracking - log enter/leave events
+                    now_ts = time.time()
+                    self.employee_presence[emp_id] = now_ts
+                    
+                    # Check if this is a new entry (not seen before or previously left)
+                    if emp_id not in self.employee_presence_state or self.employee_presence_state[emp_id] == 'left':
+                        database.log_employee_presence(emp_id, 'enter')
+                        self.employee_presence_state[emp_id] = 'entered'
+                        print(f"[PRESENCE] {name} ({emp_id}) entered camera view")
+                    
+                    # Log attendance periodically (e.g., every 10 seconds)
+                    if emp_id not in self.last_attendance_log or (now_ts - self.last_attendance_log[emp_id]) > 10:
+                        database.log_attendance(emp_id)
+                        self.last_attendance_log[emp_id] = now_ts
+
+                # Get age and gender
+                age = getattr(face, 'age', 0)
+                gender_val = getattr(face, 'gender', -1)
+                gender_str = "Nam" if gender_val == 1 else ("Nữ" if gender_val == 0 else "N/A")
+
+                color_bgr = (0, 255, 0) if name != "Chưa nhận diện" else (0, 0, 255)
+                color_rgb = (0, 255, 0) if name != "Chưa nhận diện" else (255, 0, 0)
+
+                # Draw bounding box
+                cv2.rectangle(processed_frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), color_bgr, 2)
                 
-                # Log attendance periodically (e.g., every 10 seconds)
-                if emp_id not in self.last_attendance_log or (now_ts - self.last_attendance_log[emp_id]) > 10:
-                    database.log_attendance(emp_id)
-                    self.last_attendance_log[emp_id] = now_ts
-
-            # Get age and gender
-            age = getattr(face, 'age', 0)
-            gender_val = getattr(face, 'gender', -1)
-            gender_str = "Nam" if gender_val == 1 else ("Nữ" if gender_val == 0 else "N/A")
-
-            color_bgr = (0, 255, 0) if name != "Chưa nhận diện" else (0, 0, 255)
-            color_rgb = (0, 255, 0) if name != "Chưa nhận diện" else (255, 0, 0)
-
-            # Draw bounding box
-            cv2.rectangle(processed_frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), color_bgr, 2)
-            
-            # Draw label with Age, Gender and Unicode support
-            display_name = f"{name}" if name != "Chưa nhận diện" else "Không rõ"
-            
-            if show_age_gender:
-                label = f"{display_name} | {gender_str}, {age}t"
-            else:
-                label = display_name
+                # Draw label with Age, Gender and Unicode support
+                display_name = f"{name}" if name != "Chưa nhận diện" else "Không rõ"
                 
-            processed_frame = self.draw_unicode_text(processed_frame, label, (bbox[0], bbox[1] - 30), color_rgb, 20)
-            
-            # Sub-label for confidence score
-            score_label = f"Match: {max_score:.2f}" if name != "Chưa nhận diện" else f"Det: {face.det_score:.2f}"
-            processed_frame = self.draw_unicode_text(processed_frame, score_label, (bbox[0], bbox[1] - 12), color_rgb, 12)
+                if self.show_age_gender:
+                    label = f"{display_name} | {gender_str}, {age}t"
+                else:
+                    label = display_name
+                    
+                processed_frame = self.draw_unicode_text(processed_frame, label, (bbox[0], bbox[1] - 30), color_rgb, 20)
+                
+                # Sub-label for confidence score
+                score_label = f"Match: {max_score:.2f}" if name != "Chưa nhận diện" else f"Det: {face.det_score:.2f}"
+                processed_frame = self.draw_unicode_text(processed_frame, score_label, (bbox[0], bbox[1] - 12), color_rgb, 12)
 
         # Phone Detection Time Tracking
         now = time.time()
@@ -303,8 +347,7 @@ class CameraStream:
         detected_fires = []
         
         # Phone Detection (from primary YOLO)
-        enable_phone_det = self.settings.get('enable_phone_det', 'true') == 'true'
-        if enable_phone_det:
+        if self.enable_phone_det:
             yolo_results = self.yolo(frame_to_process, conf=self.phone_detection_confidence, verbose=False)
             for result in yolo_results:
                 for box in result.boxes:
@@ -316,8 +359,7 @@ class CameraStream:
 
         # Fire Detection (from custom Fire YOLO)
             # Fire Detection (from custom Fire Detector)
-        enable_fire_det = self.settings.get('enable_fire_det', 'true') == 'true'
-        if enable_fire_det:
+        if self.enable_fire_det:
             # Override confidence from settings if needed, or update detector property
             self.fire_detector.min_confidence = self.fire_detection_confidence
             
@@ -432,10 +474,12 @@ class CameraStream:
         
         # Pose Detection & Fall Detection
         has_unsafe_pose = False
-        enable_pose_det = self.settings.get('enable_pose_det', 'true') == 'true'
-        self.enable_fall_det = self.settings.get('enable_fall_det', 'false') == 'true' # Refresh setting
         
-        if (enable_pose_det or self.enable_fall_det) and self.pose_yolo is not None:
+        # We need to load pose model if it's enabled and not loaded
+        if (self.enable_pose_det or self.enable_fall_det) and self.pose_yolo is None:
+             self.pose_yolo = self.get_pose_yolo()
+
+        if (self.enable_pose_det or self.enable_fall_det) and self.pose_yolo is not None:
             try:
                 # Use Tracking for Fall Detection
                 if self.enable_fall_det:
@@ -499,7 +543,7 @@ class CameraStream:
 
                                 # --- UNSAFE POSTURE LOGIC (Legacy) ---
                                 # Only run if Fall Detection didn't trigger an Alarm (to avoid clutter)
-                                elif enable_pose_det: 
+                                elif self.enable_pose_det: 
                                     nose = kpts[0]
                                     left_hip = kpts[11]
                                     right_hip = kpts[12]

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import api from '../services/api';
-import { Camera, Plus, Trash2, Edit2, CheckCircle, XCircle, RefreshCw, Monitor, Globe, Info } from 'lucide-react';
+import { Camera, Plus, Trash2, Edit2, CheckCircle, XCircle, RefreshCw, Monitor, Globe, Info, Settings, MoreHorizontal, CheckSquare, Square } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import CameraSettingsModal from '../components/CameraSettingsModal';
 
 const CameraManagement = () => {
     const { t } = useLanguage();
@@ -16,8 +17,16 @@ const CameraManagement = () => {
         type: 'usb',
         source: '0',
         is_active: 1,
+
         description: ''
     });
+
+    // Settings Modal State
+    const [showSettingsModal, setShowSettingsModal] = useState(false);
+    const [settingsCameras, setSettingsCameras] = useState<any[]>([]); // Cameras being edited (1 or many)
+
+    // Bulk Selection State
+    const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
     const fetchCameras = async () => {
         setLoading(true);
@@ -74,32 +83,102 @@ const CameraManagement = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const data = new FormData();
-            data.append('name', formData.name);
-            data.append('type', formData.type);
-            data.append('source', formData.source);
-            data.append('is_active', String(formData.is_active));
-            data.append('description', formData.description);
+            const payload = {
+                name: formData.name,
+                type: formData.type,
+                source: formData.source,
+                is_active: formData.is_active,
+                description: formData.description
+            };
 
             if (editingCam) {
-                await api.put(`/cameras/${editingCam.id}`, data);
+                await api.put(`/cameras/${editingCam.id}`, payload);
             } else {
-                await api.post('/cameras', data);
+                await api.post('/cameras', payload);
             }
             setShowModal(false);
             fetchCameras();
         } catch (e) {
+            console.error(e);
             alert("Error saving camera");
         }
     };
 
     const handleDelete = async (id: number) => {
-        if (!window.confirm("Are you sure you want to delete this camera?")) return;
+        if (!confirm(t('Are you sure you want to delete this camera?'))) return;
+        setLoading(true);
         try {
             await api.delete(`/cameras/${id}`);
             fetchCameras();
+            setSelectedIds(prev => prev.filter(pid => pid !== id));
         } catch (e) {
-            alert("Error deleting camera");
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Bulk Actions
+    const toggleSelect = (id: number) => {
+        setSelectedIds(prev =>
+            prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+        );
+    };
+
+    const handleSelectAll = () => {
+        if (selectedIds.length === cameras.length) {
+            setSelectedIds([]);
+        } else {
+            setSelectedIds(cameras.map(c => c.id));
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        if (!confirm(t(`Are you sure you want to delete ${selectedIds.length} cameras?`))) return;
+        setLoading(true);
+        try {
+            for (const id of selectedIds) {
+                await api.delete(`/cameras/${id}`);
+            }
+            fetchCameras();
+            setSelectedIds([]);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleOpenSettings = (cam: any) => {
+        setSettingsCameras([cam]);
+        setShowSettingsModal(true);
+    };
+
+    const handleOpenBulkSettings = () => {
+        const selectedCams = cameras.filter(c => selectedIds.includes(c.id));
+        setSettingsCameras(selectedCams);
+        setShowSettingsModal(true);
+    };
+
+    const handleSaveSettings = async (newSettings: any) => {
+        try {
+            if (settingsCameras.length === 1) {
+                const cam = settingsCameras[0];
+                await api.put(`/cameras/${cam.id}`, {
+                    ...cam,
+                    settings: newSettings
+                });
+            } else {
+                const ids = settingsCameras.map(c => c.id);
+                await api.post('/cameras/bulk-settings', {
+                    camera_ids: ids,
+                    settings: newSettings
+                });
+            }
+            fetchCameras();
+        } catch (e) {
+            console.error("Error saving settings:", e);
+            throw e;
         }
     };
 
@@ -129,9 +208,35 @@ const CameraManagement = () => {
                 </button>
             </div>
 
+            {/* Bulk Action Bar - Sticky Bottom */}
+            {selectedIds.length > 0 && (
+                <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40 bg-gray-900/90 backdrop-blur-md border border-gray-700 rounded-full px-6 py-3 shadow-2xl flex items-center gap-6 animate-fade-in-up">
+                    <span className="text-white font-medium">{selectedIds.length} Selected</span>
+                    <div className="h-6 w-px bg-gray-700"></div>
+                    <button
+                        onClick={handleOpenBulkSettings}
+                        className="text-blue-400 hover:text-blue-300 flex items-center gap-2 font-medium"
+                    >
+                        <Settings size={18} /> {t('settings') || 'Settings'}
+                    </button>
+                    <button
+                        onClick={handleBulkDelete}
+                        className="text-red-400 hover:text-red-300 flex items-center gap-2 font-medium"
+                    >
+                        <Trash2 size={18} /> {t('delete') || 'Delete'}
+                    </button>
+                    <button
+                        onClick={() => setSelectedIds([])}
+                        className="ml-2 text-gray-500 hover:text-gray-300"
+                    >
+                        <XCircle size={20} />
+                    </button>
+                </div>
+            )}
+
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '20px' }}>
                 {cameras.map(cam => (
-                    <div key={cam.id} className="premium-card" style={{
+                    <div key={cam.id} className={`premium-card relative group ${selectedIds.includes(cam.id) ? 'ring-2 ring-blue-500 bg-blue-900/10' : ''}`} style={{
                         padding: '20px',
                         display: 'flex',
                         flexDirection: 'column',
@@ -141,6 +246,15 @@ const CameraManagement = () => {
                         position: 'relative',
                         background: '#1e293b50'
                     }}>
+                        {/* Checkbox Overlay */}
+                        <div className="absolute top-3 left-3 z-10">
+                            <button
+                                onClick={(e) => { e.stopPropagation(); toggleSelect(cam.id); }}
+                                className={`p-1 rounded-md transition-colors ${selectedIds.includes(cam.id) ? 'bg-blue-600 text-white' : 'bg-black/50 text-gray-400 hover:bg-black/70'}`}
+                            >
+                                {selectedIds.includes(cam.id) ? <CheckSquare size={18} /> : <Square size={18} />}
+                            </button>
+                        </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                 <div style={{
@@ -162,7 +276,11 @@ const CameraManagement = () => {
                                     </span>
                                 </div>
                             </div>
-                            <div style={{ display: 'flex', gap: '8px' }}>
+
+                            <div className="flex gap-2">
+                                <button onClick={() => handleOpenSettings(cam)} className="p-2 bg-black/50 rounded-full hover:bg-blue-600 text-white transition-colors backdrop-blur-sm" title={t('settings') || 'Settings'}>
+                                    <Settings size={16} />
+                                </button>
                                 <button onClick={() => handleOpenModal(cam)} style={{ padding: '8px', borderRadius: '8px', background: '#1e293b', border: 'none', cursor: 'pointer', color: '#94a3b8' }}>
                                     <Edit2 size={16} />
                                 </button>
@@ -206,173 +324,174 @@ const CameraManagement = () => {
             </div>
 
             {/* Modal */}
-            {showModal && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0, left: 0, right: 0, bottom: 0,
-                    background: 'rgba(0,0,0,0.8)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 1000,
-                    backdropFilter: 'blur(5px)'
-                }}>
-                    <div className="premium-card" style={{
-                        width: '100%',
-                        maxWidth: '500px',
-                        padding: '30px',
-                        background: '#0f172a',
-                        border: '1px solid #334155',
-                        borderRadius: '20px'
-                    }}>
-                        <h3 style={{ marginBottom: '20px', fontWeight: 700 }}>{editingCam ? (t('edit_camera') || 'Cập nhật Camera') : (t('add_camera') || 'Thêm Camera')}</h3>
-                        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                <label style={{ fontSize: '0.875rem', color: '#94a3b8' }}>{t('camera_name') || 'Tên Camera'}</label>
-                                <input
-                                    className="premium-input"
-                                    type="text"
-                                    value={formData.name}
-                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                    placeholder="Ví dụ: Cổng số 1"
-                                    required
-                                />
-                            </div>
-
-                            <div style={{ display: 'flex', gap: '20px' }}>
-                                <div
-                                    onClick={() => setFormData({ ...formData, type: 'usb' })}
-                                    style={{
-                                        flex: 1,
-                                        padding: '12px',
-                                        borderRadius: '12px',
-                                        border: '2px solid',
-                                        borderColor: formData.type === 'usb' ? '#3b82f6' : '#334155',
-                                        background: formData.type === 'usb' ? '#3b82f610' : 'transparent',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '10px'
-                                    }}
-                                >
-                                    <Monitor size={18} color={formData.type === 'usb' ? '#3b82f6' : '#94a3b8'} />
-                                    <span style={{ fontWeight: 600 }}>USB Cam</span>
-                                </div>
-                                <div
-                                    onClick={() => setFormData({ ...formData, type: 'rtsp' })}
-                                    style={{
-                                        flex: 1,
-                                        padding: '12px',
-                                        borderRadius: '12px',
-                                        border: '2px solid',
-                                        borderColor: formData.type === 'rtsp' ? '#3b82f6' : '#334155',
-                                        background: formData.type === 'rtsp' ? '#3b82f610' : 'transparent',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '10px'
-                                    }}
-                                >
-                                    <Globe size={18} color={formData.type === 'rtsp' ? '#3b82f6' : '#94a3b8'} />
-                                    <span style={{ fontWeight: 600 }}>RTSP / Network</span>
-                                </div>
-                            </div>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <label style={{ fontSize: '0.875rem', color: '#94a3b8' }}>
-                                        {formData.type === 'usb' ? 'Index Camera (0, 1...)' : 'URL Stream (rtsp://...)'}
-                                    </label>
-                                    {formData.type === 'usb' && (
-                                        <button
-                                            type="button"
-                                            onClick={fetchPhysCameras}
-                                            disabled={scanning}
-                                            style={{ background: 'none', border: 'none', color: '#3b82f6', fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                                        >
-                                            <RefreshCw size={12} className={scanning ? 'spin' : ''} /> {t('scan_again') || 'Quét lại'}
-                                        </button>
-                                    )}
-                                </div>
-
-                                {formData.type === 'usb' && availablePhysCameras.length > 0 && (
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
-                                        {availablePhysCameras.map(cam => (
-                                            <button
-                                                key={cam.id}
-                                                type="button"
-                                                onClick={() => setFormData({ ...formData, source: cam.id })}
-                                                style={{
-                                                    padding: '4px 10px',
-                                                    fontSize: '0.75rem',
-                                                    borderRadius: '6px',
-                                                    border: '1px solid',
-                                                    borderColor: String(formData.source) === String(cam.id) ? '#3b82f6' : '#334155',
-                                                    background: String(formData.source) === String(cam.id) ? '#3b82f620' : '#1e293b',
-                                                    color: String(formData.source) === String(cam.id) ? 'white' : '#94a3b8',
-                                                    cursor: 'pointer'
-                                                }}
-                                            >
-                                                {t('index') || 'Index'} {cam.id}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-
-                                <input
-                                    className="premium-input"
-                                    type="text"
-                                    value={formData.source}
-                                    onChange={e => setFormData({ ...formData, source: e.target.value })}
-                                    placeholder={formData.type === 'usb' ? '0' : 'rtsp://admin:password@192.168.1.10:554/stream1'}
-                                    required
-                                />
-                            </div>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                <label style={{ fontSize: '0.875rem', color: '#94a3b8' }}>{t('description') || 'Mô tả'} ({t('optional') || 'tùy chọn'})</label>
-                                <textarea
-                                    className="premium-input"
-                                    value={formData.description}
-                                    onChange={e => setFormData({ ...formData, description: e.target.value })}
-                                    style={{ height: '80px', resize: 'none' }}
-                                />
-                            </div>
-
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <label className="switch" style={{ width: '40px', height: '20px' }}>
+            {
+                showModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 backdrop-blur-sm">
+                        <div className="premium-card" style={{
+                            width: '100%',
+                            maxWidth: '500px',
+                            padding: '30px',
+                            background: '#0f172a',
+                            border: '1px solid #334155',
+                            borderRadius: '20px'
+                        }}>
+                            <h3 style={{ marginBottom: '20px', fontWeight: 700 }}>{editingCam ? (t('edit_camera') || 'Cập nhật Camera') : (t('add_camera') || 'Thêm Camera')}</h3>
+                            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <label style={{ fontSize: '0.875rem', color: '#94a3b8' }}>{t('camera_name') || 'Tên Camera'}</label>
                                     <input
-                                        type="checkbox"
-                                        checked={formData.is_active === 1}
-                                        onChange={e => setFormData({ ...formData, is_active: e.target.checked ? 1 : 0 })}
+                                        className="premium-input"
+                                        type="text"
+                                        value={formData.name}
+                                        onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                        placeholder="Ví dụ: Cổng số 1"
+                                        required
                                     />
-                                    <span className="slider round"></span>
-                                </label>
-                                <span style={{ fontSize: '0.875rem' }}>{t('activate_camera') || 'Kích hoạt camera này'}</span>
-                            </div>
+                                </div>
 
-                            <div style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowModal(false)}
-                                    className="premium-button secondary"
-                                    style={{ flex: 1 }}
-                                >
-                                    {t('cancel')}
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="premium-button primary"
-                                    style={{ flex: 1 }}
-                                >
-                                    {editingCam ? t('save') : t('add_new')}
-                                </button>
-                            </div>
-                        </form>
+                                <div style={{ display: 'flex', gap: '20px' }}>
+                                    <div
+                                        onClick={() => setFormData({ ...formData, type: 'usb' })}
+                                        style={{
+                                            flex: 1,
+                                            padding: '12px',
+                                            borderRadius: '12px',
+                                            border: '2px solid',
+                                            borderColor: formData.type === 'usb' ? '#3b82f6' : '#334155',
+                                            background: formData.type === 'usb' ? '#3b82f610' : 'transparent',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '10px'
+                                        }}
+                                    >
+                                        <Monitor size={18} color={formData.type === 'usb' ? '#3b82f6' : '#94a3b8'} />
+                                        <span style={{ fontWeight: 600 }}>USB Cam</span>
+                                    </div>
+                                    <div
+                                        onClick={() => setFormData({ ...formData, type: 'rtsp' })}
+                                        style={{
+                                            flex: 1,
+                                            padding: '12px',
+                                            borderRadius: '12px',
+                                            border: '2px solid',
+                                            borderColor: formData.type === 'rtsp' ? '#3b82f6' : '#334155',
+                                            background: formData.type === 'rtsp' ? '#3b82f610' : 'transparent',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '10px'
+                                        }}
+                                    >
+                                        <Globe size={18} color={formData.type === 'rtsp' ? '#3b82f6' : '#94a3b8'} />
+                                        <span style={{ fontWeight: 600 }}>RTSP / Network</span>
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <label style={{ fontSize: '0.875rem', color: '#94a3b8' }}>
+                                            {formData.type === 'usb' ? 'Index Camera (0, 1...)' : 'URL Stream (rtsp://...)'}
+                                        </label>
+                                        {formData.type === 'usb' && (
+                                            <button
+                                                type="button"
+                                                onClick={fetchPhysCameras}
+                                                disabled={scanning}
+                                                style={{ background: 'none', border: 'none', color: '#3b82f6', fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                            >
+                                                <RefreshCw size={12} className={scanning ? 'spin' : ''} /> {t('scan_again') || 'Quét lại'}
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {formData.type === 'usb' && availablePhysCameras.length > 0 && (
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
+                                            {availablePhysCameras.map(cam => (
+                                                <button
+                                                    key={cam.id}
+                                                    type="button"
+                                                    onClick={() => setFormData({ ...formData, source: cam.id })}
+                                                    style={{
+                                                        padding: '4px 10px',
+                                                        fontSize: '0.75rem',
+                                                        borderRadius: '6px',
+                                                        border: '1px solid',
+                                                        borderColor: String(formData.source) === String(cam.id) ? '#3b82f6' : '#334155',
+                                                        background: String(formData.source) === String(cam.id) ? '#3b82f620' : '#1e293b',
+                                                        color: String(formData.source) === String(cam.id) ? 'white' : '#94a3b8',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    {t('index') || 'Index'} {cam.id}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    <input
+                                        className="premium-input"
+                                        type="text"
+                                        value={formData.source}
+                                        onChange={e => setFormData({ ...formData, source: e.target.value })}
+                                        placeholder={formData.type === 'usb' ? '0' : 'rtsp://admin:password@192.168.1.10:554/stream1'}
+                                        required
+                                    />
+                                </div>
+
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <label style={{ fontSize: '0.875rem', color: '#94a3b8' }}>{t('description') || 'Mô tả'} ({t('optional') || 'tùy chọn'})</label>
+                                    <textarea
+                                        className="premium-input"
+                                        value={formData.description}
+                                        onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                        style={{ height: '80px', resize: 'none' }}
+                                    />
+                                </div>
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <label className="switch" style={{ width: '40px', height: '20px' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.is_active === 1}
+                                            onChange={e => setFormData({ ...formData, is_active: e.target.checked ? 1 : 0 })}
+                                        />
+                                        <span className="slider round"></span>
+                                    </label>
+                                    <span style={{ fontSize: '0.875rem' }}>{t('activate_camera') || 'Kích hoạt camera này'}</span>
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowModal(false)}
+                                        className="premium-button secondary"
+                                        style={{ flex: 1 }}
+                                    >
+                                        {t('cancel')}
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="premium-button primary"
+                                        style={{ flex: 1 }}
+                                    >
+                                        {editingCam ? t('save') : t('add_new')}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+
+            <CameraSettingsModal
+                isOpen={showSettingsModal}
+                cameras={settingsCameras}
+                onClose={() => setShowSettingsModal(false)}
+                onSave={handleSaveSettings}
+                t={t}
+            />
+        </div >
     );
 };
 
