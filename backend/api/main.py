@@ -174,7 +174,8 @@ async def websocket_endpoint(websocket: WebSocket, camera_id: Optional[int] = No
                                 "camera_name": stream.camera_name,
                                 "image": img_base64,
                                 "has_unknown": has_unknown,
-                                "has_phone": has_phone,
+                                "has_phone": len(has_phone) > 0, # Keep boolean for compatibility
+                                "phone_violators": has_phone,   # Send names list
                                 "has_fire": has_fire,
                                 "has_unsafe_pose": has_unsafe_pose,
                                 "enable_alarm": stream.get_effective_setting('enable_alarm', True)

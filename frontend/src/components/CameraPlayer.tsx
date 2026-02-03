@@ -21,7 +21,7 @@ const CameraPlayer = ({ camera, onAlert, playSound }: CameraPlayerProps) => {
     // Track previous states to avoid duplicate logs
     const prevFireStateRef = useRef(false);
     const prevUnknownStateRef = useRef(false);
-    const prevPhoneStateRef = useRef(false);
+    const prevPhoneStateRef = useRef<string[]>([]);
     const prevPoseStateRef = useRef(false);
 
     useEffect(() => {
@@ -49,11 +49,24 @@ const CameraPlayer = ({ camera, onAlert, playSound }: CameraPlayerProps) => {
             }
             prevUnknownStateRef.current = data.has_unknown;
 
-            if (data.has_phone && !prevPhoneStateRef.current) {
-                onAlert?.(`${camera.name}: ${t('phone_detected')}`, "error");
-                playSound?.();
+            if (data.has_phone) {
+                // Determine if we have new violators compared to previous frame
+                const currentViolators = data.phone_violators || [];
+                const prevViolators = prevPhoneStateRef.current || [];
+
+                // Only alert if there are names we haven't alerted for in this "session"
+                // or if it's the first detection
+                const newNames = currentViolators.filter((name: string) => !prevViolators.includes(name));
+
+                if (newNames.length > 0) {
+                    const namesStr = newNames.join(", ");
+                    onAlert?.(`${camera.name}: Phát hiện ${namesStr} sử dụng điện thoại!`, "error");
+                    playSound?.();
+                }
+                prevPhoneStateRef.current = currentViolators;
+            } else {
+                prevPhoneStateRef.current = [];
             }
-            prevPhoneStateRef.current = data.has_phone;
 
             if (data.has_fire && !prevFireStateRef.current) {
                 onAlert?.(`${camera.name}: ${t('fire_detected')}`, "error");
