@@ -193,12 +193,16 @@ def init_db():
             );
         """)
         
-        # Migration: Add settings column if not exists
+        # Migration: Add settings and restricted_zones columns if not exists
         try:
             cur.execute("ALTER TABLE cameras_config ADD COLUMN settings TEXT")
             print("[DB] Added 'settings' column to cameras_config")
-        except:
-            pass
+        except: pass
+        
+        try:
+            cur.execute("ALTER TABLE cameras_config ADD COLUMN restricted_zones TEXT")
+            print("[DB] Added 'restricted_zones' column to cameras_config")
+        except: pass
         
         # Default settings
         print("[DB] Inserting default settings...")
@@ -834,10 +838,13 @@ def update_system_user_password(user_id: int, hashed_pass: str):
 def get_all_cameras():
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("SELECT id, name, type, source, is_active, description, settings FROM cameras_config")
+    # Try to fetch restricted_zones, fallback for migration status
+    try:
+        cur.execute("SELECT id, name, type, source, is_active, description, settings, restricted_zones FROM cameras_config")
+    except:
+        cur.execute("SELECT id, name, type, source, is_active, description, settings FROM cameras_config")
+    
     rows = cur.fetchall()
-    conn.close()
-
     
     cameras = []
     
@@ -845,10 +852,16 @@ def get_all_cameras():
     for r in rows:
         settings_dict = {}
         if len(r) > 6 and r[6]:
-            try:
-                settings_dict = json.loads(r[6])
-            except:
-                settings_dict = {}
+            try: settings_dict = json.loads(r[6])
+            except: settings_dict = {}
+        
+        zones_list = []
+        if len(r) > 7 and r[7]:
+            try: 
+                zones_list = json.loads(r[7])
+                if not isinstance(zones_list, list): zones_list = []
+            except: 
+                zones_list = []
         
         cameras.append({
             "id": r[0],
@@ -857,7 +870,8 @@ def get_all_cameras():
             "source": r[3],
             "is_active": r[4],
             "description": r[5],
-            "settings": settings_dict
+            "settings": settings_dict,
+            "restricted_zones": zones_list
         })
         
     conn.close()
@@ -880,36 +894,47 @@ def get_camera_by_id(camera_id: int):
         }
     return None
 
-def add_camera(name: str, cam_type: str, source: str, is_active: int = 1, description: str = None, settings: dict = None):
+def add_camera(name: str, cam_type: str, source: str, is_active: int = 1, description: str = None, settings: dict = None, restricted_zones: list = None):
     conn = get_db_connection()
     cur = conn.cursor()
     import json
     settings_json = json.dumps(settings) if settings else None
+    zones_json = json.dumps(restricted_zones) if restricted_zones else None
     
     cur.execute(
-        "INSERT INTO cameras_config (name, type, source, is_active, description, settings) VALUES (?, ?, ?, ?, ?, ?)",
-        (name, cam_type, source, is_active, description, settings_json)
+        "INSERT INTO cameras_config (name, type, source, is_active, description, settings, restricted_zones) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (name, cam_type, source, is_active, description, settings_json, zones_json)
     )
     new_id = cur.lastrowid
     conn.commit()
     conn.close()
     return new_id
 
-def update_camera(camera_id: int, name: str, cam_type: str, source: str, is_active: int, description: str = None, settings: dict = None):
+def update_camera(camera_id: int, name: str, cam_type: str, source: str, is_active: int, description: str = None, settings: dict = None, restricted_zones: list = None):
     conn = get_db_connection()
     cur = conn.cursor()
     import json
     settings_json = json.dumps(settings) if settings is not None else None
+    zones_json = json.dumps(restricted_zones) if restricted_zones is not None else None
     
-    # We only update settings if provided (not None). If empty dict, it updates to empty.
-    # Logic: if settings argument is provided, update it.
-    
-    if settings is not None:
+    if settings is not None and restricted_zones is not None:
+         cur.execute("""
+            UPDATE cameras_config 
+            SET name = ?, type = ?, source = ?, is_active = ?, description = ?, settings = ?, restricted_zones = ?
+            WHERE id = ?
+        """, (name, cam_type, source, is_active, description, settings_json, zones_json, camera_id))
+    elif settings is not None:
          cur.execute("""
             UPDATE cameras_config 
             SET name = ?, type = ?, source = ?, is_active = ?, description = ?, settings = ?
             WHERE id = ?
         """, (name, cam_type, source, is_active, description, settings_json, camera_id))
+    elif restricted_zones is not None:
+         cur.execute("""
+            UPDATE cameras_config 
+            SET name = ?, type = ?, source = ?, is_active = ?, description = ?, restricted_zones = ?
+            WHERE id = ?
+        """, (name, cam_type, source, is_active, description, zones_json, camera_id))
     else:
          cur.execute("""
             UPDATE cameras_config 

@@ -43,7 +43,8 @@ async def add_camera(camera: CameraCreate, admin: dict = Depends(auth.get_admin_
         camera.source, 
         camera.is_active, 
         camera.description, 
-        settings_dict
+        settings_dict,
+        camera.restricted_zones
     )
     camera_manager.load_cameras()
     return {"id": cam_id, "message": "Camera added"}
@@ -64,7 +65,8 @@ async def update_camera(
         camera.source, 
         camera.is_active, 
         camera.description, 
-        settings_dict
+        settings_dict,
+        camera.restricted_zones
     )
     camera_manager.load_cameras()
     return {"message": "Camera updated"}
@@ -107,3 +109,18 @@ async def delete_camera(camera_id: int, admin: dict = Depends(auth.get_admin_use
     database.delete_camera(camera_id)
     camera_manager.load_cameras()
     return {"message": "Camera deleted"}
+
+@router.get("/{camera_id}/snapshot")
+async def get_camera_snapshot(camera_id: int, admin: dict = Depends(auth.get_admin_user)):
+    """Capture a live frame from the camera for zone editing (Optimized)."""
+    from fastapi.responses import Response
+    
+    stream = camera_manager.get_stream(camera_id)
+    if not stream:
+        raise HTTPException(status_code=404, detail="Camera stream not found or inactive")
+    
+    jpeg_bytes = stream.get_snapshot_jpeg()
+    if jpeg_bytes is None:
+        raise HTTPException(status_code=503, detail="Failed to capture frame from camera")
+    
+    return Response(content=jpeg_bytes, media_type="image/jpeg")

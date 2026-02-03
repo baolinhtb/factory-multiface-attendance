@@ -23,6 +23,7 @@ const CameraPlayer = ({ camera, onAlert, playSound }: CameraPlayerProps) => {
     const prevUnknownStateRef = useRef(false);
     const prevPhoneStateRef = useRef<string[]>([]);
     const prevPoseStateRef = useRef(false);
+    const prevRestrictedStateRef = useRef<string[]>([]);
 
     useEffect(() => {
         if (!camera.is_active) return;
@@ -84,7 +85,29 @@ const CameraPlayer = ({ camera, onAlert, playSound }: CameraPlayerProps) => {
             }
             prevPoseStateRef.current = data.has_unsafe_pose;
 
-            if (data.has_unknown || data.has_phone || data.has_fire || data.has_unsafe_pose) {
+            if (data.has_restricted) {
+                const currentResViolators = data.restricted_violators || [];
+                const prevResViolators = prevRestrictedStateRef.current || [];
+                const newResNames = currentResViolators.filter((name: string) => !prevResViolators.includes(name));
+
+                if (newResNames.length > 0) {
+                    newResNames.forEach((name: string) => {
+                        onAlert?.(`${camera.name}: ${name}: đã đi vào khu vực cấm`, "error");
+                    });
+                }
+                // Persist sound while anyone is in the restricted zone
+                playSound?.();
+                prevRestrictedStateRef.current = currentResViolators;
+            } else {
+                prevRestrictedStateRef.current = [];
+            }
+
+            // Also keep fire alarm persistent
+            if (data.has_fire) {
+                playSound?.();
+            }
+
+            if (data.has_unknown || data.has_phone || data.has_fire || data.has_unsafe_pose || data.has_restricted) {
                 alerting = true;
             }
             setIsAlerting(alerting);

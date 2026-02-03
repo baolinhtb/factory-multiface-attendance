@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { X, Save, AlertTriangle, Check, Code, Sliders, RefreshCw } from 'lucide-react';
+import { X, Save, AlertTriangle, Check, Code, Sliders, RefreshCw, ShieldAlert } from 'lucide-react';
 import { z } from 'zod';
 import AceEditor from 'react-ace';
+import RestrictedZoneEditor from './RestrictedZoneEditor';
 
 // Import ace modes and themes
 import 'ace-builds/src-noconflict/mode-json';
@@ -48,8 +49,9 @@ const DEFAULT_SETTINGS = {
 };
 
 const CameraSettingsModal: React.FC<CameraSettingsModalProps> = ({ isOpen, onClose, onSave, cameras, t }) => {
-    const [activeTab, setActiveTab] = useState<'ui' | 'json'>('ui');
+    const [activeTab, setActiveTab] = useState<'ui' | 'json' | 'zones'>('ui');
     const [settings, setSettings] = useState<any>({ ...DEFAULT_SETTINGS });
+    const [zones, setZones] = useState<any[]>([]);
     const [jsonString, setJsonString] = useState<string>('');
     const [jsonError, setJsonError] = useState<string | null>(null);
     const [zodErrors, setZodErrors] = useState<Record<string, string>>({});
@@ -67,6 +69,14 @@ const CameraSettingsModal: React.FC<CameraSettingsModalProps> = ({ isOpen, onClo
             // However, verify just in case.
 
             setSettings(initialSettings);
+
+            // Convert backend arrays [x, y] back to Point objects {x, y} for the editor
+            const dbZones = cameras[0].restricted_zones || [];
+            const editorZones = dbZones.map((poly: any) =>
+                poly.map((pt: any) => ({ x: pt[0], y: pt[1] }))
+            );
+            setZones(editorZones);
+
             setJsonString(JSON.stringify(initialSettings, null, 4));
             setJsonError(null);
             setZodErrors({});
@@ -120,7 +130,16 @@ const CameraSettingsModal: React.FC<CameraSettingsModalProps> = ({ isOpen, onClo
 
         setIsSaving(true);
         try {
-            await onSave(settings);
+            // Convert Point objects {x, y} to arrays [x, y] for Backend
+            const formattedZones = zones.map((poly: any[]) =>
+                poly.map((pt: any) => [pt.x, pt.y])
+            );
+
+            const payload = {
+                settings,
+                restricted_zones: cameras.length === 1 ? formattedZones : undefined
+            };
+            await onSave(payload);
             onClose();
         } catch (e) {
             console.error(e);
@@ -269,6 +288,20 @@ const CameraSettingsModal: React.FC<CameraSettingsModalProps> = ({ isOpen, onClo
                         <Code size={16} /> Advanced JSON
                         {activeTab === 'json' && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '2px', background: '#3b82f6' }} />}
                     </button>
+                    {cameras.length === 1 && (
+                        <button
+                            style={{
+                                flex: 1, padding: '16px', fontSize: '0.875rem', fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                                cursor: 'pointer', transition: 'all 0.2s', border: 'none', position: 'relative',
+                                background: activeTab === 'zones' ? 'rgba(31, 41, 55, 0.5)' : 'transparent',
+                                color: activeTab === 'zones' ? '#ef4444' : '#9ca3af'
+                            }}
+                            onClick={() => setActiveTab('zones')}
+                        >
+                            <ShieldAlert size={16} /> Restricted Zones
+                            {activeTab === 'zones' && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '2px', background: '#ef4444' }} />}
+                        </button>
+                    )}
                 </div>
 
                 {/* Content */}
@@ -337,7 +370,7 @@ const CameraSettingsModal: React.FC<CameraSettingsModalProps> = ({ isOpen, onClo
                                 </div>
                             </div>
                         </div>
-                    ) : (
+                    ) : activeTab === 'json' ? (
                         <div style={{ height: '100%', minHeight: '400px', border: '1px solid rgba(55, 65, 81, 0.5)', borderRadius: '8px', overflow: 'hidden', boxShadow: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.05)', background: '#141414' }}>
                             <AceEditor
                                 mode="json"
@@ -363,6 +396,12 @@ const CameraSettingsModal: React.FC<CameraSettingsModalProps> = ({ isOpen, onClo
                                 </div>
                             )}
                         </div>
+                    ) : (
+                        <RestrictedZoneEditor
+                            cameraId={cameras[0].id}
+                            initialZones={zones}
+                            onZonesChange={(newZones) => setZones(newZones)}
+                        />
                     )}
                 </div>
 

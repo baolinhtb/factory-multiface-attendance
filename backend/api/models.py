@@ -54,6 +54,7 @@ class CameraCreate(BaseModel):
     is_active: int = 1
     description: Optional[str] = None
     settings: Optional[CameraSettings] = None
+    restricted_zones: Optional[List[List[List[float]]]] = None # List of polygons, each is list of [x, y]
 
 
 class CameraUpdate(BaseModel):
@@ -63,6 +64,7 @@ class CameraUpdate(BaseModel):
     is_active: int = 1
     description: Optional[str] = None
     settings: Optional[CameraSettings] = None
+    restricted_zones: Optional[List[List[List[float]]]] = None
 
 
 class CameraStatusUpdate(BaseModel):

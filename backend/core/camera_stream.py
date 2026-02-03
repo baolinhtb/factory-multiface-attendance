@@ -62,6 +62,7 @@ class CameraStream:
         """
         self.global_settings = database.get_settings()
         
+        self.camera_config = camera_config or {}
         if camera_config:
             self.camera_id = camera_config.get('id')
             self.camera_name = camera_config.get('name', 'Unnamed Camera')
@@ -81,6 +82,10 @@ class CameraStream:
             try: self.camera_source = int(self.camera_source_str)
             except: self.camera_source = self.camera_source_str
 
+        # Restricted Zones State
+        self.restricted_zones = [] 
+        self.person_restricted_states = {}
+        
         print(f"[{self.camera_name}] Initializing on {self.camera_source}")
         self.apply_settings()
 
@@ -123,6 +128,9 @@ class CameraStream:
         self.person_phone_states = {} # {emp_id: {'violation_start': ts, 'grace_frames': count}}
         self.next_phone_id = 1
         self.historical_face_width = 0 # For adaptive threshold fallback
+        
+        # Snapshot Cache (Optimized API performance)
+        self.snapshot_cache = {'jpeg': None, 'ts': 0}
         
     def get_effective_setting(self, key, default_val):
         """Get setting prioritizing Camera -> Global -> Default."""
@@ -172,16 +180,20 @@ class CameraStream:
         # Other
         self.show_age_gender = self.get_effective_setting('show_age_gender', True)
         
-        # Apply to sub-components
-        if hasattr(self, 'fire_detector'):
-            self.fire_detector.min_confidence = self.fire_detection_confidence
-
-        print(f"[{self.camera_name}] Settings applied: Face={self.enable_face_rec}, PoseAlgo={self.pose_matching_algorithm}")
+        # Restricted Zones
+        self.restricted_zones = self.camera_config.get('restricted_zones', [])
+        if self.restricted_zones is None: self.restricted_zones = []
+        
+        # Reset violation states on setting change to avoid "sticky" alarms
+        self.person_restricted_states = {}
+        
+        print(f"[{self.camera_name}] Settings applied: Face={self.enable_face_rec}, Zones={len(self.restricted_zones) if isinstance(self.restricted_zones, list) else 0}")
 
     def update_settings(self, new_config=None):
         """Fetch updated thresholds and fall det settings."""
         self.global_settings = database.get_settings()
         if new_config:
+            self.camera_config = new_config
             self.camera_settings = new_config.get('settings', {}) or {}
         self.apply_settings()
 
@@ -232,6 +244,24 @@ class CameraStream:
             if self.frame is None:
                 return None
             return self.frame.copy()
+
+    def get_snapshot_jpeg(self):
+        """Get JPEG-encoded snapshot with caching to prevent AI thread slowdown."""
+        now = time.time()
+        # Return cache if less than 1.5 seconds old
+        if self.snapshot_cache['jpeg'] and (now - self.snapshot_cache['ts'] < 1.5):
+            return self.snapshot_cache['jpeg']
+            
+        frame = self.get_frame()
+        if frame is None: return None
+        
+        # Encode with slightly lower quality to be faster
+        success, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 85])
+        if not success: return None
+        jpeg_bytes = buffer.tobytes()
+        
+        self.snapshot_cache = {'jpeg': jpeg_bytes, 'ts': now}
+        return jpeg_bytes
 
     def _calculate_iou(self, boxA, boxB):
         xA = max(boxA[0], boxB[0])
@@ -438,7 +468,29 @@ class CameraStream:
         identified_ids_in_frame = []
         has_unknown = False
         has_unsafe_pose = False
+        has_restricted = False
+        restricted_violators = set()
         text_to_draw = [] # buffer for batch drawing
+        
+        ph, pw = processed_frame.shape[:2]
+        
+        # 0. Draw Restricted Zones
+        scaled_zones = []
+        if self.restricted_zones:
+            for zone in self.restricted_zones:
+                if not zone: continue
+                scaled_zones.append(np.array([[int(p[0] * pw), int(p[1] * ph)] for p in zone], np.int32))
+            
+            overlay = processed_frame.copy()
+            for pts in scaled_zones:
+                cv2.fillPoly(overlay, [pts], (0, 0, 255))
+            cv2.addWeighted(overlay, 0.25, processed_frame, 0.75, 0, processed_frame)
+            for pts in scaled_zones:
+                cv2.polylines(processed_frame, [pts], True, (0, 0, 255), 1)
+                # Draw small label
+                cv2.putText(processed_frame, "RESTRICTED", (pts[0][0], pts[0][1] - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1)
+            
+            text_to_draw.append(("🛡️ GIÁM SÁT VÙNG CẤM: ĐANG BẬT", (pw - 250, 30), (0, 0, 255), 18))
         
         # 1. Face
         current_faces_info = [] 
@@ -552,31 +604,81 @@ class CameraStream:
                         if (now_ts - self.last_attendance_log.get(eid, 0)) > 10:
                             database.log_attendance(eid); self.last_attendance_log[eid] = now_ts
 
-                    if self.show_pose_visualization:
-                        color = (128, 128, 128) if stale else (0, 255, 0) if eid else (0, 0, 255)
-                        cv2.rectangle(processed_frame, (b[0], b[1]), (b[2], b[3]), color, 1)
-                        
-                        # Connections
-                        cc = [(0,1), (0,2), (1,3), (2,4), (5,6), (5,7), (7,9), (6,8), (8,10), (11,12), (5,11), (6,12), (11,13), (12,14), (13,15), (14,16)]
-                        for i, j in cc:
-                            if i < len(kpts) and j < len(kpts) and kpts[i][0] > 0 and kpts[j][0] > 0:
-                                cv2.line(processed_frame, (int(kpts[i][0]), int(kpts[i][1])), (int(kpts[j][0]), int(kpts[j][1])), color, 2)
-                        
-                        # Keypoints with GLOW
-                        for idx, kp in enumerate(kpts):
-                            if kp[0] > 0:
-                                if idx < 5: # Face (0:nose, 1:L-eye, 2:R-eye, 3:L-ear, 4:R-ear)
-                                    # Ultra-bright multi-layer point
-                                    cv2.circle(processed_frame, (int(kp[0]), int(kp[1])), 6, (255, 255, 255), -1)
-                                    cv2.circle(processed_frame, (int(kp[0]), int(kp[1])), 9, (0, 255, 255), 2)
-                                    # Add tiny text labels for debugging
-                                    # labels = ["N", "LE", "RE", "LA", "RA"]
-                                    # cv2.putText(processed_frame, labels[idx], (int(kp[0]), int(kp[1])-10), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
-                                else:
-                                    cv2.circle(processed_frame, (int(kp[0]), int(kp[1])), 3, color, -1)
+                        # --- Restricted Zone Detection Logic (Always Run) ---
+                        in_restricted = False
+                        detect_point = None
+                        if scaled_zones:
+                            # Use Feet (Ankles) or BBox Bottom-Center
+                            check_pts = []
+                            if kpts[15][0] > 0: check_pts.append(kpts[15]) # L Ankle
+                            if kpts[16][0] > 0: check_pts.append(kpts[16]) # R Ankle
+                            if not check_pts: check_pts.append([(b[0]+b[2])/2, b[3]]) # BBox Bottom
+                            
+                            for cp in check_pts:
+                                for szone in scaled_zones:
+                                    # Convert to float for opencv
+                                    if cv2.pointPolygonTest(szone, (float(cp[0]), float(cp[1])), False) >= 0:
+                                        in_restricted = True
+                                        detect_point = cp
+                                        break
+                                if in_restricted: break
 
-                        lbl = (f"Maybe {name}?" if stale else name)
-                        text_to_draw.append((lbl, (b[0], b[1]-35), color, 22))
+                            # DEBUG: Draw detect points in view to verify logic
+                            if self.show_pose_visualization:
+                                for cp in check_pts:
+                                    color = (0, 0, 255) if in_restricted else (0, 255, 255)
+                                    cv2.circle(processed_frame, (int(cp[0]), int(cp[1])), 5, color, -1)
+                                    cv2.circle(processed_frame, (int(cp[0]), int(cp[1])), 8, (255, 255, 255), 1)
+
+                            # Track violation state using tid (or fall back to a session-based ID if needed)
+                            # If no tid, we treat as a single anonymous person for that frame
+                            state_id = tid if tid is not None else f"anon_{id(p)}"
+                            
+                            rst = self.person_restricted_states.get(state_id, {'count': 0})
+                            if in_restricted:
+                                rst['count'] = min(8, rst['count'] + 1) # Cap at 8
+                            else:
+                                rst['count'] = max(0, rst['count'] - 2) # Drop twice as fast
+                            rst['last_seen'] = now_ts
+                            self.person_restricted_states[state_id] = rst
+                            
+                            # Trigger alarm if count is high enough
+                            if rst['count'] >= 4:
+                                has_restricted = True
+                                v_name = name if name != "Người lạ" else (f"Khách #{tid}" if tid is not None else "Người lạ")
+                                # Only add to active violators if CURRENTLY/RECENTLY in the zone
+                                restricted_violators.add(v_name)
+                                
+                                # Visual Alert on Frame
+                                cv2.rectangle(processed_frame, (b[0], b[1]), (b[2], b[3]), (0, 0, 255), 3)
+                                # Glow effect for text - Show specific name warning
+                                warning_text = f"{v_name}: đã đi vào khu vực cấm"
+                                text_to_draw.append((warning_text, (b[0], b[1]-65), (0, 0, 255), 24))
+                                if eid:
+                                    # Mark as high priority for attendance log
+                                    self.last_attendance_log[eid] = now_ts - 5 # Force some priority?
+
+                        if self.show_pose_visualization:
+                            color = (128, 128, 128) if stale else (0, 255, 0) if eid else (0, 0, 255)
+                            cv2.rectangle(processed_frame, (b[0], b[1]), (b[2], b[3]), color, 1)
+                            
+                            # Connections
+                            cc = [(0,1), (0,2), (1,3), (2,4), (5,6), (5,7), (7,9), (6,8), (8,10), (11,12), (5,11), (6,12), (11,13), (12,14), (13,15), (14,16)]
+                            for i, j in cc:
+                                if i < len(kpts) and j < len(kpts) and kpts[i][0] > 0 and kpts[j][0] > 0:
+                                    cv2.line(processed_frame, (int(kpts[i][0]), int(kpts[i][1])), (int(kpts[j][0]), int(kpts[j][1])), color, 2)
+                            
+                            # Keypoints with GLOW
+                            for idx, kp in enumerate(kpts):
+                                if kp[0] > 0:
+                                    if idx < 5: # Face
+                                        cv2.circle(processed_frame, (int(kp[0]), int(kp[1])), 6, (255, 255, 255), -1)
+                                        cv2.circle(processed_frame, (int(kp[0]), int(kp[1])), 9, (0, 255, 255), 2)
+                                    else:
+                                        cv2.circle(processed_frame, (int(kp[0]), int(kp[1])), 3, color, -1)
+
+                            lbl = (f"Maybe {name}?" if stale else name)
+                            text_to_draw.append((lbl, (b[0], b[1]-35), color, 22))
                     
                     if self.enable_fall_det and tid is not None:
                         status, _ = self.fall_detector.update(tid, kpts, now_ts)
@@ -704,10 +806,9 @@ class CameraStream:
                     if eid in self.person_phone_states: del self.person_phone_states[eid]
 
         # 8. Final Return with Active Violator Names
-        active_violators = []
+        phone_violators = []
         for eid, state in self.person_phone_states.items():
             if state['count'] >= 5 and state['grace'] > 0:
-                # Resolve Name
                 emp_name = "Unknown"
                 for f in current_faces_info:
                     if f['emp_id'] == eid: emp_name = f['name']; break
@@ -717,10 +818,18 @@ class CameraStream:
                 if emp_name == "Unknown" and hasattr(self, 'known_employee_ids') and eid in self.known_employee_ids:
                     emp_name = self.known_names[self.known_employee_ids.index(eid)]
                 
-                if emp_name not in active_violators:
-                    active_violators.append(emp_name)
+                if emp_name not in phone_violators:
+                    phone_violators.append(emp_name)
+                    
+        # List of Restricted Zone Violators
+        r_violators = list(restricted_violators)
 
-        return processed_frame, has_unknown, active_violators, has_fire, has_unsafe_pose
+        # Cleanup Restricted States
+        for t in list(self.person_restricted_states.keys()):
+            if now_ts - self.person_restricted_states[t].get('last_seen', 0) > 30:
+                del self.person_restricted_states[t]
+
+        return processed_frame, has_unknown, phone_violators, has_fire, has_unsafe_pose, r_violators, has_restricted
 
     def stop(self):
         self.is_running = False

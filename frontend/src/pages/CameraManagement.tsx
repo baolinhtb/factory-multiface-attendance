@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import api from '../services/api';
-import { Camera, Plus, Trash2, Edit2, CheckCircle, XCircle, RefreshCw, Monitor, Globe, Info, Settings, MoreHorizontal, CheckSquare, Square } from 'lucide-react';
+import {
+    Camera, Plus, Search, Trash2, Edit2, CheckCircle, XCircle, Settings, Monitor, Globe, PlusCircle, AlertCircle, RefreshCw,
+    MoreVertical, Square, CheckSquare, X
+} from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import CameraSettingsModal from '../components/CameraSettingsModal';
 
@@ -160,19 +163,23 @@ const CameraManagement = () => {
         setShowSettingsModal(true);
     };
 
-    const handleSaveSettings = async (newSettings: any) => {
+    const handleSaveSettings = async (payload: any) => {
         try {
             if (settingsCameras.length === 1) {
                 const cam = settingsCameras[0];
+                const { settings, restricted_zones } = payload;
+
                 await api.put(`/cameras/${cam.id}`, {
                     ...cam,
-                    settings: newSettings
+                    settings: settings,
+                    restricted_zones: restricted_zones
                 });
             } else {
+                const { settings } = payload;
                 const ids = settingsCameras.map(c => c.id);
                 await api.post('/cameras/bulk-settings', {
                     camera_ids: ids,
-                    settings: newSettings
+                    settings: settings
                 });
             }
             fetchCameras();
@@ -227,26 +234,55 @@ const CameraManagement = () => {
 
             {/* Bulk Action Bar - Sticky Bottom */}
             {selectedIds.length > 0 && (
-                <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40 bg-gray-900/90 backdrop-blur-md border border-gray-700 rounded-full px-6 py-3 shadow-2xl flex items-center gap-6 animate-fade-in-up">
-                    <span className="text-white font-medium">{selectedIds.length} Selected</span>
-                    <div className="h-6 w-px bg-gray-700"></div>
+                <div style={{
+                    position: 'fixed',
+                    bottom: '24px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    zIndex: 100,
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    backdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '999px',
+                    padding: '12px 24px',
+                    boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '20px',
+                    animation: 'fadeInUp 0.3s ease-out'
+                }}>
+                    <span style={{ color: 'white', fontWeight: 600, fontSize: '0.875rem' }}>{selectedIds.length} {t('selected') || 'Đã chọn'}</span>
+                    <div style={{ width: '1px', height: '20px', backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
                     <button
                         onClick={handleOpenBulkSettings}
-                        className="text-blue-400 hover:text-blue-300 flex items-center gap-2 font-medium"
+                        style={{
+                            background: 'none', border: 'none', color: '#3b82f6',
+                            display: 'flex', alignItems: 'center', gap: '8px',
+                            fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer'
+                        }}
                     >
-                        <Settings size={18} /> {t('settings') || 'Settings'}
+                        <Settings size={18} /> {t('settings') || 'Cài đặt'}
                     </button>
                     <button
                         onClick={handleBulkDelete}
-                        className="text-red-400 hover:text-red-300 flex items-center gap-2 font-medium"
+                        style={{
+                            background: 'none', border: 'none', color: '#ef4444',
+                            display: 'flex', alignItems: 'center', gap: '8px',
+                            fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer'
+                        }}
                     >
-                        <Trash2 size={18} /> {t('delete') || 'Delete'}
+                        <Trash2 size={18} /> {t('delete') || 'Xóa'}
                     </button>
                     <button
                         onClick={() => setSelectedIds([])}
-                        className="ml-2 text-gray-500 hover:text-gray-300"
+                        style={{
+                            background: 'rgba(255,255,255,0.05)', border: 'none', color: '#94a3b8',
+                            width: '24px', height: '24px', borderRadius: '50%',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            cursor: 'pointer', marginLeft: '4px'
+                        }}
                     >
-                        <XCircle size={20} />
+                        <X size={14} />
                     </button>
                 </div>
             )}
@@ -294,15 +330,15 @@ const CameraManagement = () => {
                                 </div>
                             </div>
 
-                            <div className="flex gap-2">
-                                <button onClick={() => handleOpenSettings(cam)} className="p-2 bg-black/50 rounded-full hover:bg-blue-600 text-white transition-colors backdrop-blur-sm" title={t('settings') || 'Settings'}>
-                                    <Settings size={16} />
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <button onClick={() => handleOpenSettings(cam)} style={{ padding: '10px', borderRadius: '10px', background: '#3b82f615', border: '1px solid #3b82f630', cursor: 'pointer', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title={t('settings') || 'Settings'}>
+                                    <Settings size={18} />
                                 </button>
-                                <button onClick={() => handleOpenModal(cam)} style={{ padding: '8px', borderRadius: '8px', background: '#1e293b', border: 'none', cursor: 'pointer', color: '#94a3b8' }}>
-                                    <Edit2 size={16} />
+                                <button onClick={() => handleOpenModal(cam)} style={{ padding: '10px', borderRadius: '10px', background: '#1e293b', border: '1px solid #334155', cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Edit2 size={18} />
                                 </button>
-                                <button onClick={() => handleDelete(cam.id)} style={{ padding: '8px', borderRadius: '8px', background: '#ef444420', border: 'none', cursor: 'pointer', color: '#ef4444' }}>
-                                    <Trash2 size={16} />
+                                <button onClick={() => handleDelete(cam.id)} style={{ padding: '10px', borderRadius: '10px', background: '#ef444415', border: '1px solid #ef444430', cursor: 'pointer', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Trash2 size={18} />
                                 </button>
                             </div>
                         </div>
