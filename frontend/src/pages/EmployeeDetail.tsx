@@ -45,7 +45,7 @@ const EmployeeDetail = () => {
                 api.get(`/employees/${id}`),
                 api.get(attendanceQuery),
                 api.get(phoneQuery),
-                api.get('/shift-configs')
+                api.get('/shifts/configs')
             ]);
             setEmployee(empRes.data);
             setOriginalEmployee(empRes.data);
@@ -413,7 +413,7 @@ const EmployeeDetail = () => {
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '5px', fontSize: '0.8rem', marginTop: '12px', padding: '10px 16px 0 16px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                             <span style={{ color: '#94a3b8' }}>{t('joined_date')}</span>
-                            <span style={{ color: '#cbd5e1', fontWeight: 500 }}>{new Date(employee.created_at).toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US')}</span>
+                            <span style={{ color: '#cbd5e1', fontWeight: 500 }}>{new Date(employee.created_at.replace(' ', 'T')).toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US')}</span>
                         </div>
                         {isEditing ? (
                             <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>

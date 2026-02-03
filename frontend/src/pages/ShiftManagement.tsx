@@ -19,7 +19,7 @@ const ShiftManagement = () => {
         setLoading(true);
         setError(null);
         try {
-            const configRes = await api.get('/shift-configs');
+            const configRes = await api.get('/shifts/configs');
             setConfigs(configRes.data);
             if (configRes.data.length > 0 && !selectedConfigId) {
                 const defaultConf = configRes.data.find((c: any) => c.is_default) || configRes.data[0];
@@ -56,7 +56,7 @@ const ShiftManagement = () => {
         if (!newConfigName.trim()) return;
 
         try {
-            await api.post('/shift-configs', { name: newConfigName.trim(), is_default: 0 });
+            await api.post('/shifts/configs', { name: newConfigName.trim(), is_default: 0 });
             setNewConfigName('');
             setShowAddConfigModal(false);
             await fetchData();
@@ -69,7 +69,7 @@ const ShiftManagement = () => {
     const handleDeleteConfig = async (id: number) => {
         if (!window.confirm(t('confirm_delete_config'))) return;
         try {
-            await api.delete(`/shift-configs/${id}`);
+            await api.delete(`/shifts/configs/${id}`);
             if (selectedConfigId === id) setSelectedConfigId(null);
             fetchData();
         } catch (e: any) {
@@ -83,7 +83,7 @@ const ShiftManagement = () => {
 
         setIsSaving(true);
         try {
-            await api.put(`/shift-configs/${selectedConfigId}`, config);
+            await api.put(`/shifts/configs/${selectedConfigId}`, config);
             alert(t('save_config_success'));
         } catch (e: any) {
             alert(e.response?.data?.detail || t('update_config_error'));
@@ -96,7 +96,7 @@ const ShiftManagement = () => {
         const config = configs.find(c => c.id === id);
         if (!config) return;
         try {
-            await api.put(`/shift-configs/${id}`, { ...config, is_default: 1 });
+            await api.put(`/shifts/configs/${id}`, { ...config, is_default: 1 });
             fetchData();
         } catch (e) { }
     };

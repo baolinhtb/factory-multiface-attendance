@@ -920,6 +920,20 @@ def update_camera(camera_id: int, name: str, cam_type: str, source: str, is_acti
     conn.commit()
     conn.close()
 
+def update_camera_status(camera_id: int, is_active: int):
+    """Update only the active status of a camera."""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        UPDATE cameras_config 
+        SET is_active = ?
+        WHERE id = ?
+    """, (is_active, camera_id))
+        
+    conn.commit()
+    conn.close()
+
 def update_camera_settings_bulk(camera_ids: list, settings: dict):
     """Update settings for multiple cameras."""
     conn = get_db_connection()

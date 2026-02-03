@@ -19,6 +19,7 @@ const CameraSettingsSchema = z.object({
     enable_phone_det: z.boolean().optional(),
     enable_fire_det: z.boolean().optional(),
     enable_pose_det: z.boolean().optional(),
+    show_pose_visualization: z.boolean().optional(),
     show_age_gender: z.boolean().optional(),
     enable_alarm: z.boolean().optional(),
     // Allow extra fields
@@ -41,6 +42,7 @@ const DEFAULT_SETTINGS = {
     enable_phone_det: true,
     enable_fire_det: true,
     enable_pose_det: true,
+    show_pose_visualization: true,
     show_age_gender: true,
     enable_alarm: true
 };
@@ -329,6 +331,7 @@ const CameraSettingsModal: React.FC<CameraSettingsModalProps> = ({ isOpen, onClo
                                 </h3>
                                 <div style={{ paddingLeft: '12px', borderLeft: '2px solid #1f2937', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                     {renderSwitch('enable_pose_det', 'Enable Pose Detection')}
+                                    {renderSwitch('show_pose_visualization', 'Show Pose Visualization')}
                                     {renderSwitch('enable_fall_det', 'Enable Fall Alarm')}
                                     {(settings.enable_pose_det || settings.enable_fall_det) && renderSlider('pose_detection_confidence', 'Confidence Threshold')}
                                 </div>

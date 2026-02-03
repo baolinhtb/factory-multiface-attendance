@@ -6,11 +6,20 @@ insightface
 onnxruntime
 python-multipart
 websockets
-psycopg2-binary
 python-dotenv
 ultralytics
 pandas
 openpyxl
 faiss-cpu
 ollama
+scipy
+# Async database support
+aiosqlite
+# Rate limiting
+slowapi
+# JWT and security
+python-jose[cryptography]
+passlib[bcrypt]
+# Legacy support (deprecated - use aiosqlite instead)
+psycopg2-binary
 

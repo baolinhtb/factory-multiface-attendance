@@ -33,7 +33,7 @@ const EmployeeManagement = () => {
 
     const fetchConfigs = async () => {
         try {
-            const res = await api.get('/shift-configs');
+            const res = await api.get('/shifts/configs');
             setConfigs(res.data);
         } catch (e) { }
     };
@@ -147,7 +147,7 @@ const EmployeeManagement = () => {
                                             <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{emp.department || 'N/A'}</div>
                                         </td>
                                         <td style={{ padding: '15px 12px', color: '#94a3b8', fontSize: '0.85rem' }}>
-                                            {new Date(emp.created_at).toLocaleDateString('vi-VN')}
+                                            {new Date(emp.created_at.replace(' ', 'T')).toLocaleDateString('vi-VN')}
                                         </td>
                                         <td style={{ padding: '15px 12px', textAlign: 'right' }}>
                                             <button

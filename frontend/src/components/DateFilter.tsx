@@ -38,7 +38,7 @@ const DateFilter = ({ onDateChange, initialFilterValue = 'today' }: DateFilterPr
     useEffect(() => {
         const fetchPresets = async () => {
             try {
-                const res = await api.get('/date-filter-presets');
+                const res = await api.get('/attendance/date-filter-presets');
                 setPresets(res.data);
             } catch (e) {
                 console.error('Error fetching date filter presets', e);

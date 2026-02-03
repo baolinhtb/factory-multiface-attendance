@@ -182,6 +182,23 @@ const CameraManagement = () => {
         }
     };
 
+    const handleToggleStatus = async (id: number, currentStatus: number) => {
+        try {
+            const newStatus = currentStatus === 1 ? 0 : 1;
+            // Optimistic update
+            setCameras(prev => prev.map(c =>
+                c.id === id ? { ...c, is_active: newStatus } : c
+            ));
+
+            await api.patch(`/cameras/${id}/status`, { is_active: newStatus });
+        } catch (e) {
+            console.error(e);
+            // Revert on error
+            fetchCameras();
+            alert("Failed to update status");
+        }
+    };
+
     return (
         <div style={{ padding: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
@@ -297,30 +314,66 @@ const CameraManagement = () => {
                         <div style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '8px',
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
-                            color: cam.is_active ? '#10b981' : '#ef4444'
+                            justifyContent: 'space-between',
+                            marginTop: 'auto',
+                            paddingTop: '10px',
+                            borderTop: '1px solid #33415520'
                         }}>
-                            {cam.is_active ? <CheckCircle size={14} /> : <XCircle size={14} />}
-                            {cam.is_active ? (t('status_active') || 'ACTIVE') : (t('status_inactive') || 'INACTIVE')}
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                color: cam.is_active ? '#10b981' : '#64748b'
+                            }}>
+                                {cam.is_active ? <CheckCircle size={14} /> : <XCircle size={14} />}
+                                {cam.is_active ? (t('status_active') || 'ACTIVE') : (t('status_inactive') || 'INACTIVE')}
+                            </div>
+
+                            <div
+                                onClick={() => handleToggleStatus(cam.id, cam.is_active)}
+                                style={{
+                                    width: '44px',
+                                    height: '24px',
+                                    backgroundColor: cam.is_active ? '#3b82f6' : '#334155',
+                                    borderRadius: '999px',
+                                    position: 'relative',
+                                    cursor: 'pointer',
+                                    transition: 'background-color 0.3s'
+                                }}
+                            >
+                                <div style={{
+                                    width: '18px',
+                                    height: '18px',
+                                    backgroundColor: 'white',
+                                    borderRadius: '50%',
+                                    position: 'absolute',
+                                    top: '3px',
+                                    left: cam.is_active ? '23px' : '3px',
+                                    transition: 'left 0.3s',
+                                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                                }} />
+                            </div>
                         </div>
                     </div>
                 ))}
 
-                {cameras.length === 0 && !loading && (
-                    <div style={{
-                        gridColumn: '1 / -1',
-                        textAlign: 'center',
-                        padding: '60px',
-                        background: '#1e293b20',
-                        borderRadius: '16px',
-                        border: '2px dashed #334155'
-                    }}>
-                        <Camera size={48} color="#475569" style={{ marginBottom: '16px' }} />
-                        <p style={{ color: '#94a3b8' }}>{t('no_cameras_setup') || 'No cameras configured yet. Add a new camera to start monitoring.'}</p>
-                    </div>
-                )}
+                {
+                    cameras.length === 0 && !loading && (
+                        <div style={{
+                            gridColumn: '1 / -1',
+                            textAlign: 'center',
+                            padding: '60px',
+                            background: '#1e293b20',
+                            borderRadius: '16px',
+                            border: '2px dashed #334155'
+                        }}>
+                            <Camera size={48} color="#475569" style={{ marginBottom: '16px' }} />
+                            <p style={{ color: '#94a3b8' }}>{t('no_cameras_setup') || 'No cameras configured yet. Add a new camera to start monitoring.'}</p>
+                        </div>
+                    )
+                }
             </div>
 
             {/* Modal */}
