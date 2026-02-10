@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import api from '../services/api';
-import { Lock, User, ShieldCheck } from 'lucide-react';
+import { Lock, User, ShieldCheck, Settings } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface LoginProps {
@@ -119,6 +119,35 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                         {loading ? t('authenticating') : t('login_btn')}
                     </button>
                 </form>
+            </div>
+
+            {/* API Configuration Helper */}
+            <div style={{ position: 'fixed', bottom: '20px', right: '20px' }}>
+                <button
+                    onClick={() => {
+                        const current = localStorage.getItem('backend_base_url') || 'http://localhost:8000';
+                        const newUrl = prompt("Enter Backend API URL:", current);
+                        if (newUrl) {
+                            localStorage.setItem('backend_base_url', newUrl);
+                            window.location.reload();
+                        }
+                    }}
+                    style={{
+                        background: 'rgba(30, 41, 59, 0.8)',
+                        border: '1px solid #334155',
+                        borderRadius: '50%',
+                        width: '40px',
+                        height: '40px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        color: '#94a3b8'
+                    }}
+                    title="Configure API URL"
+                >
+                    <Settings size={20} />
+                </button>
             </div>
         </div>
     );

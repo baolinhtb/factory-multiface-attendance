@@ -3,7 +3,79 @@
 > vite
 
 
-  VITE v5.4.21  ready in 136 ms
+  VITE v5.4.21  ready in 160 ms
 
   ➜  Local:   http://localhost:3000/
   ➜  Network: http://172.20.10.3:3000/
+2:59:52 PM [vite] hmr update /src/pages/Login.tsx
+2:59:58 PM [vite] hmr update /src/pages/Login.tsx
+3:02:08 PM [vite] hmr update /src/components/CameraPlayer.tsx
+3:02:08 PM [vite] Internal server error: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/src/components/CameraPlayer.tsx: 'import' and 'export' may only appear at the top level. (28:4)
+
+  26 |     const prevRestrictedStateRef = useRef<string[]>([]);
+  27 |
+> 28 |     import { getApiBaseUrl } from '../services/api';
+     |     ^
+  29 |
+  30 |     useEffect(() => {
+  31 |         if (!camera.is_active) return;
+  Plugin: vite:react-babel
+  File: /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/src/components/CameraPlayer.tsx:28:4
+  26 |      const prevRestrictedStateRef = useRef<string[]>([]);
+  27 |  
+  28 |      import { getApiBaseUrl } from '../services/api';
+     |      ^
+  29 |  
+  30 |      useEffect(() => {
+      at constructor (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:365:19)
+      at TypeScriptParserMixin.raise (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:6599:19)
+      at TypeScriptParserMixin.parseStatementContent (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:12861:18)
+      at TypeScriptParserMixin.parseStatementContent (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:9508:18)
+      at TypeScriptParserMixin.parseStatementLike (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:12757:17)
+      at TypeScriptParserMixin.parseStatementListItem (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:12737:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:13306:61)
+      at TypeScriptParserMixin.parseBlockBody (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:13299:10)
+      at TypeScriptParserMixin.parseBlock (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:13287:10)
+      at TypeScriptParserMixin.parseFunctionBody (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:12090:24)
+      at TypeScriptParserMixin.parseArrowExpression (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:12065:10)
+      at TypeScriptParserMixin.parseParenAndDistinguishExpression (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:11677:12)
+      at TypeScriptParserMixin.parseExprAtom (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:11321:23)
+      at TypeScriptParserMixin.parseExprAtom (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:4764:20)
+      at TypeScriptParserMixin.parseExprSubscripts (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:11071:23)
+      at TypeScriptParserMixin.parseUpdate (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:11056:21)
+      at TypeScriptParserMixin.parseMaybeUnary (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:11036:23)
+      at TypeScriptParserMixin.parseMaybeUnary (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:9827:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:10889:61)
+      at TypeScriptParserMixin.parseExprOps (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:10894:23)
+      at TypeScriptParserMixin.parseMaybeConditional (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:10871:23)
+      at TypeScriptParserMixin.parseMaybeAssign (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:10821:21)
+      at TypeScriptParserMixin.parseMaybeAssign (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:9776:20)
+      at /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:10790:39
+      at TypeScriptParserMixin.allowInAnd (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:12411:16)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:10790:17)
+      at TypeScriptParserMixin.parseVar (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:13374:91)
+      at TypeScriptParserMixin.parseVarStatement (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:13220:10)
+      at TypeScriptParserMixin.parseVarStatement (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:9408:31)
+      at TypeScriptParserMixin.parseStatementContent (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:12841:23)
+      at TypeScriptParserMixin.parseStatementContent (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:9508:18)
+      at TypeScriptParserMixin.parseStatementLike (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:12757:17)
+      at TypeScriptParserMixin.parseModuleItem (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:12734:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:13306:36)
+      at TypeScriptParserMixin.parseBlockBody (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:13299:10)
+      at TypeScriptParserMixin.parseProgram (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:12612:10)
+      at TypeScriptParserMixin.parseTopLevel (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:12602:25)
+      at TypeScriptParserMixin.parse (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:14478:25)
+      at TypeScriptParserMixin.parse (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:10116:18)
+      at parse (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/parser/lib/index.js:14512:38)
+      at parser (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/core/lib/parser/index.js:41:34)
+      at parser.next (<anonymous>)
+      at normalizeFile (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/core/lib/transformation/normalize-file.js:64:37)
+      at normalizeFile.next (<anonymous>)
+      at run (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/core/lib/transformation/index.js:22:50)
+      at run.next (<anonymous>)
+      at transform (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/@babel/core/lib/transform.js:22:33)
+      at transform.next (<anonymous>)
+      at step (/Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/gensync/index.js:261:32)
+      at /Volumes/SNE/linhdb/work/SmartCore/demo-ai/factory multiface attendance app/frontend/node_modules/gensync/index.js:273:13
+3:02:55 PM [vite] hmr update /src/components/CameraPlayer.tsx
+3:03:13 PM [vite] hmr update /src/components/CameraPlayer.tsx

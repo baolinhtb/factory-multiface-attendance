@@ -78,10 +78,16 @@ class CameraStream:
 
         if self.camera_type == 'rtsp' and self.camera_source_str:
             self.camera_source = self.camera_source_str
+            # Force TCP for RTSP stability (prevents corrupt frames/gray screen)
+            os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp"
+            print(f"[{self.camera_name}] Enforcing RTSP Transport: TCP")
         else:
             try: self.camera_source = int(self.camera_source_str)
             except: self.camera_source = self.camera_source_str
-
+        
+        # Reset OPENCV_FFMPEG_CAPTURE_OPTIONS if not RTSP to avoid side effects? 
+        # Actually it's an env var so it persists. It's safer to set it only if needed.
+        
         # Restricted Zones State
         self.restricted_zones = [] 
         self.person_restricted_states = {}

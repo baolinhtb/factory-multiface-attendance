@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Camera, AlertTriangle, Maximize2, Minimize2 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { getApiBaseUrl } from '../services/api';
 
 interface CameraPlayerProps {
     camera: {
@@ -28,7 +29,13 @@ const CameraPlayer = ({ camera, onAlert, playSound }: CameraPlayerProps) => {
     useEffect(() => {
         if (!camera.is_active) return;
 
-        const ws = new WebSocket(`ws://${window.location.hostname}:8000/ws/video?camera_id=${camera.id}`);
+        // Determine WebSocket URL from API Base URL
+        const apiBase = getApiBaseUrl(); // e.g. http://192.168.1.5:8000
+        const wsProtocol = apiBase.startsWith('https') ? 'wss' : 'ws';
+        // Remove protocol (http:// or https://) to get the host
+        const host = apiBase.replace(/^https?:\/\//, '');
+
+        const ws = new WebSocket(`${wsProtocol}://${host}/ws/video?camera_id=${camera.id}`);
 
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
