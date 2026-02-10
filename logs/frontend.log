@@ -3,11 +3,7 @@
 > vite
 
 
-  VITE v5.4.21  ready in 130 ms
+  VITE v5.4.21  ready in 136 ms
 
   ➜  Local:   http://localhost:3000/
   ➜  Network: http://172.20.10.3:3000/
-12:17:12 AM [vite] hmr update /src/components/CameraPlayer.tsx
-12:25:11 AM [vite] hmr update /src/pages/CameraManagement.tsx
-12:26:49 AM [vite] hmr update /src/pages/CameraManagement.tsx
-12:27:24 AM [vite] hmr update /src/pages/CameraManagement.tsx

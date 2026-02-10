@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { MousePointer2, Plus, Trash2, Camera, RefreshCw, Check, AlertCircle } from 'lucide-react';
-import { API_URL } from '../services/api';
+import { getApiBaseUrl } from '../services/api';
 
 interface Point {
     x: number; // 0-1 relative
@@ -36,7 +36,7 @@ const RestrictedZoneEditor: React.FC<RestrictedZoneEditorProps> = ({ cameraId, i
         setError(null);
         try {
             const token = localStorage.getItem('token');
-            const url = `${API_URL}/cameras/${cameraId}/snapshot`;
+            const url = `${getApiBaseUrl()}/cameras/${cameraId}/snapshot`;
 
             const response = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${token}` }

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../services/api';
+import api, { getApiBaseUrl, setApiBaseUrl } from '../services/api';
 import { Settings as SettingsIcon, Save, Monitor, Bell, Eye, PhoneOff, Globe, Upload, Flame, Brain, RotateCcw, User, Activity, RefreshCw, Camera, ArrowRight } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
@@ -27,6 +27,11 @@ const Settings = () => {
         ollama_timeout: '120',
         ollama_enabled: 'true'
     });
+    const [backendProtocol, setBackendProtocol] = useState('http');
+    const [backendHost, setBackendHost] = useState('');
+    const [backendPort, setBackendPort] = useState('8000');
+    const [backendTestState, setBackendTestState] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+    const [backendTestMessage, setBackendTestMessage] = useState('');
     const [loading, setLoading] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [expandedSections, setExpandedSections] = useState<string[]>([]);
@@ -66,6 +71,19 @@ const Settings = () => {
         fetchData();
     }, []);
 
+    useEffect(() => {
+        try {
+            const url = new URL(getApiBaseUrl());
+            setBackendProtocol(url.protocol.replace(':', '') || 'http');
+            setBackendHost(url.hostname || window.location.hostname);
+            setBackendPort(url.port || '8000');
+        } catch {
+            setBackendProtocol('http');
+            setBackendHost(window.location.hostname);
+            setBackendPort('8000');
+        }
+    }, []);
+
     const handleSaveSettings = async () => {
         setLoading(true);
         try {
@@ -76,6 +94,45 @@ const Settings = () => {
             alert(t('error_save_settings') || 'Error saving settings');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleSaveBackend = () => {
+        const host = backendHost.trim();
+        if (!host) {
+            alert(t('backend_host_required') || 'Please enter backend IP/host');
+            return;
+        }
+        const port = (backendPort || '8000').trim();
+        const url = `${backendProtocol}://${host}:${port}`;
+        setApiBaseUrl(url);
+        alert(t('backend_updated') || 'Backend updated. Reloading...');
+        window.location.reload();
+    };
+
+    const handleTestBackend = async () => {
+        const host = backendHost.trim();
+        if (!host) {
+            alert(t('backend_host_required') || 'Please enter backend IP/host');
+            return;
+        }
+        const port = (backendPort || '8000').trim();
+        const base = `${backendProtocol}://${host}:${port}`.replace(/\/+$/, '');
+        const testUrl = `${base}/health`;
+        setBackendTestState('testing');
+        setBackendTestMessage('');
+        try {
+            const res = await fetch(testUrl, { method: 'GET' });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                throw new Error(data?.detail || `HTTP ${res.status}`);
+            }
+            const status = data?.status || 'healthy';
+            setBackendTestState('success');
+            setBackendTestMessage(`${t('backend_connected') || 'Connected'}: ${status}`);
+        } catch (e: any) {
+            setBackendTestState('error');
+            setBackendTestMessage(e?.message || 'Connection failed');
         }
     };
 
@@ -190,7 +247,120 @@ const Settings = () => {
                         )}
                     </div>
 
-                    {/* 2. General Preferences */}
+                    {/* 2. Backend Connection */}
+                    <div style={{ borderBottom: '1px solid #334155', overflow: 'hidden' }}>
+                        <div
+                            onClick={() => toggleSection('backend')}
+                            style={{
+                                padding: '20px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                cursor: 'pointer',
+                                background: expandedSections.includes('backend') ? '#1e293b' : 'transparent',
+                                transition: 'all 0.3s'
+                            }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <Monitor size={20} color="#22c55e" />
+                                <span style={{ fontWeight: 700, fontSize: '1.1rem', color: 'white' }}>
+                                    {t('backend_connection') || 'Backend Connection'}
+                                </span>
+                            </div>
+                            <div style={{
+                                transform: expandedSections.includes('backend') ? 'rotate(180deg)' : 'rotate(0)',
+                                transition: 'transform 0.3s',
+                                color: '#94a3b8'
+                            }}>
+                                <SettingsIcon size={18} />
+                            </div>
+                        </div>
+
+                        {expandedSections.includes('backend') && (
+                            <div style={{ padding: '24px', borderTop: '1px solid #1e293b', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                    <label style={{ minWidth: '90px', fontSize: '0.85rem', color: '#94a3b8' }}>{t('protocol') || 'Protocol'}</label>
+                                    <select
+                                        value={backendProtocol}
+                                        onChange={(e) => setBackendProtocol(e.target.value)}
+                                        style={{ padding: '10px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: 'white', outline: 'none' }}
+                                    >
+                                        <option value="http">http</option>
+                                        <option value="https">https</option>
+                                    </select>
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                    <label style={{ minWidth: '90px', fontSize: '0.85rem', color: '#94a3b8' }}>{t('backend_ip') || 'IP/Host'}</label>
+                                    <input
+                                        type="text"
+                                        value={backendHost}
+                                        onChange={(e) => setBackendHost(e.target.value)}
+                                        placeholder="192.168.1.10"
+                                        style={{ flex: 1, padding: '10px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: 'white', outline: 'none' }}
+                                    />
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                    <label style={{ minWidth: '90px', fontSize: '0.85rem', color: '#94a3b8' }}>{t('port') || 'Port'}</label>
+                                    <input
+                                        type="number"
+                                        value={backendPort}
+                                        onChange={(e) => setBackendPort(e.target.value)}
+                                        placeholder="8000"
+                                        style={{ width: '140px', padding: '10px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: 'white', outline: 'none' }}
+                                    />
+                                </div>
+
+                                <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                                    {t('current_api_url') || 'Current API URL'}: {backendProtocol}://{backendHost || window.location.hostname}:{backendPort || '8000'}
+                                </div>
+
+                                <button
+                                    onClick={handleSaveBackend}
+                                    style={{
+                                        padding: '12px',
+                                        background: '#22c55e',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '8px',
+                                        cursor: 'pointer',
+                                        fontWeight: 600
+                                    }}
+                                >
+                                    {t('apply_backend') || 'Apply Backend Connection'}
+                                </button>
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <button
+                                        onClick={handleTestBackend}
+                                        disabled={backendTestState === 'testing'}
+                                        style={{
+                                            padding: '10px 12px',
+                                            background: '#0ea5e9',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '8px',
+                                            cursor: backendTestState === 'testing' ? 'not-allowed' : 'pointer',
+                                            fontWeight: 600
+                                        }}
+                                    >
+                                        {backendTestState === 'testing' ? (t('testing') || 'Testing...') : (t('test_connection') || 'Test Connection')}
+                                    </button>
+                                    {backendTestMessage && (
+                                        <span style={{
+                                            fontSize: '0.8rem',
+                                            color: backendTestState === 'success' ? '#22c55e' : '#f97316'
+                                        }}>
+                                            {backendTestMessage}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* 3. General Preferences */}
                     <div style={{ borderBottom: '1px solid #334155', overflow: 'hidden' }}>
                         <div
                             onClick={() => toggleSection('general')}
@@ -235,7 +405,7 @@ const Settings = () => {
                         )}
                     </div>
 
-                    {/* 3. Ollama AI Configuration */}
+                    {/* 4. Ollama AI Configuration */}
                     <div style={{ borderBottom: '1px solid #334155', overflow: 'hidden' }}>
                         <div
                             onClick={() => toggleSection('ollama')}
@@ -356,7 +526,7 @@ const Settings = () => {
                         )}
                     </div>
 
-                    {/* 4. Language Section */}
+                    {/* 5. Language Section */}
                     <div style={{ borderBottom: '1px solid #334155', overflow: 'hidden' }}>
                         <div
                             onClick={() => toggleSection('lang')}
