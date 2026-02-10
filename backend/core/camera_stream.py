@@ -32,7 +32,25 @@ class CameraStream:
 
     def load_yolo_model(self):
         """Load per-instance YOLO model for object detection."""
-        print(f"[{self.camera_name}] Loading YOLO26 for object detection...")
+        
+        # 1. Try Loading RKNN (NPU) Model on Orange Pi 5
+        if os.uname().machine == 'aarch64':
+            rknn_path = 'models/yolo26n.rknn' if os.path.exists('models/yolo26n.rknn') else 'yolo26n.rknn'
+            # Check default YOLOv8 name too
+            if not os.path.exists(rknn_path):
+                 if os.path.exists('models/yolov8n.rknn'): rknn_path = 'models/yolov8n.rknn'
+                 elif os.path.exists('yolov8n.rknn'): rknn_path = 'yolov8n.rknn'
+
+            if os.path.exists(rknn_path):
+                print(f"[{self.camera_name}] Loading NPU Model: {rknn_path}")
+                try:
+                    from core.rknn_yolo import RKNNYolo
+                    return RKNNYolo(rknn_path)
+                except Exception as e:
+                    print(f"[{self.camera_name}] RKNN Load Failed: {e}. Fallback to CPU.")
+
+        # 2. Fallback to Standard PyTorch/ONNX (CPU)
+        print(f"[{self.camera_name}] Loading YOLO26 (CPU) for object detection...")
         model_path = 'models/yolo26n.pt' if os.path.exists('models/yolo26n.pt') else 'yolo26n.pt'
         try:
             return YOLO(model_path)
@@ -85,8 +103,14 @@ class CameraStream:
             try: self.camera_source = int(self.camera_source_str)
             except: self.camera_source = self.camera_source_str
         
-        # Reset OPENCV_FFMPEG_CAPTURE_OPTIONS if not RTSP to avoid side effects? 
-        # Actually it's an env var so it persists. It's safer to set it only if needed.
+        # Check for Rockchip NPU / ORANGE PI 5
+        # Note: True NPU usage requires converting models to .rknn format.
+        # This is a placeholder to allow future NPU integration.
+        # For now, we optimize CPU threads for ARM.
+        if os.uname().machine == 'aarch64':
+             print(f"[{self.camera_name}] Detected ARM/NPU Environment (Orange Pi 5?)")
+             # Set OpenCV to using slightly less threads to leave room for NPU/YOLO
+             cv2.setNumThreads(2)
         
         # Restricted Zones State
         self.restricted_zones = [] 
@@ -96,6 +120,13 @@ class CameraStream:
         self.apply_settings()
 
         self.capture = cv2.VideoCapture(self.camera_source)
+        
+        # Optimize for Low Latency
+        try:
+            # Set buffer size to 1 to always get the latest frame
+            self.capture.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+        except: pass
+        
         if not self.capture.isOpened():
             print(f"[{self.camera_name}] ERROR: Could not open source {self.camera_source}")
         
@@ -239,18 +270,20 @@ class CameraStream:
 
     def update(self):
         while self.is_running:
+            # Read freely to drain buffer
             ret, frame = self.capture.read()
             if ret:
                 with self.lock:
                     self.frame = frame
-            time.sleep(0.01)
-
+            else:
+                # If reading fails, small sleep to prevent CPU spike
+                time.sleep(0.01)
+                
     def get_frame(self):
         with self.lock:
             if self.frame is None:
                 return None
             return self.frame.copy()
-
     def get_snapshot_jpeg(self):
         """Get JPEG-encoded snapshot with caching to prevent AI thread slowdown."""
         now = time.time()

@@ -88,6 +88,60 @@ def startup_event():
         else:
             database.update_system_user_password(admin_user["id"], hashed_pass)
             logger.info("Default admin password synchronized.")
+
+        # --- Hardware & Model Info Logging ---
+        import platform
+        import psutil
+        
+        uname = platform.uname()
+        machine = uname.machine
+        system = uname.system
+        
+        logger.info("="*40)
+        logger.info(f"System Information: {system} {uname.release}")
+        logger.info(f"Architecture: {machine}")
+        logger.info(f"CPU Cores: {psutil.cpu_count(logical=False)} Physical, {psutil.cpu_count(logical=True)} Logical")
+        
+        if machine == 'aarch64':
+             logger.info("✅ Detected ARM64 Environment (Likely Orange Pi / Raspberry Pi)")
+             # Check for NPU Libraries
+             try:
+                 import rknnlite
+                 logger.info(f"✅ RKNN-Toolkit-Lite2 Detected (Version: {rknnlite.__version__ if hasattr(rknnlite, '__version__') else 'Unknown'})")
+                 logger.info("   NPU Acceleration Available.")
+             except ImportError:
+                 logger.info("⚠️ RKNN-Toolkit-Lite2 NOT found. NPU will NOT be used.")
+                 logger.info("   Run 'bash backend/scripts/setup_rknn_lite.sh' to install.")
+        else:
+             logger.info(f"ℹ️ Standard Environment ({machine}). Using CPU/GPU (if available).")
+
+        # Check for Models
+        logger.info("-" * 20)
+        logger.info("Checking AI Models...")
+        
+        model_files = {
+            'YOLO Detection (NPU)': 'backend/models/yolo26n.rknn',
+            'YOLO Detection (NPU-v8)': 'backend/models/yolov8n.rknn', 
+            'YOLO Detection (CPU)': 'backend/models/yolo26n.pt',
+            'YOLO Detection (CPU-v8)': 'yolov8n.pt',
+            'Pose Detection': 'backend/models/yolo11n-pose.pt',
+            'Fire Detection': 'backend/models/fire_detection.pt'
+        }
+        
+        for name, path in model_files.items():
+            # Handle relative paths check
+            full_path = os.path.abspath(path)
+            # Also check relative to current dir
+            alt_path = path if os.path.exists(path) else (path.split('/')[-1] if os.path.exists(path.split('/')[-1]) else None)
+            
+            if alt_path:
+                logger.info(f"  [FOUND] {name}: {alt_path}")
+            else:
+                 if 'NPU' in name and machine != 'aarch64': continue # Skip NPU warnings on PC
+                 logger.info(f"  [MISSING] {name}")
+        
+        logger.info("="*40)
+        # -------------------------------------
         
         # Start the camera manager
         camera_manager.load_cameras()
