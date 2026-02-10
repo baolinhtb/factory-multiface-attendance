@@ -57,5 +57,19 @@ echo -e "  Docs: http://127.0.0.1:8000/docs"
 echo -e "${YELLOW}Press Ctrl+C to stop${NC}"
 echo ""
 
-# Run in foreground
-exec python main.py
+# Run the backend
+# distinct from exec so we can catch the exit code
+python main.py
+EXIT_CODE=$?
+
+echo ""
+if [ $EXIT_CODE -eq 0 ]; then
+    echo -e "${GREEN}Backend stopped gracefully.${NC}"
+else
+    echo -e "${RED}Backend crashed with exit code $EXIT_CODE${NC}"
+fi
+
+echo ""
+echo -e "${BLUE}Press Enter to close this window...${NC}"
+read
+
